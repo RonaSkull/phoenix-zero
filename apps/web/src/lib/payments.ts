@@ -169,6 +169,14 @@ function asaasApiKey(): string {
   return String(process.env.ASAAS_API_KEY || '').trim();
 }
 
+function asaasCustomerCpfCnpj(): string | null {
+  const env = String(process.env.ASAAS_CUSTOMER_CPF_CNPJ || '').trim();
+  if (env) return env;
+  const mode = String(process.env.ASAAS_ENV || '').trim().toLowerCase();
+  if (mode === 'sandbox') return '11144477735';
+  return null;
+}
+
 async function asaasFetch(path: string, init: RequestInit): Promise<Response> {
   const key = asaasApiKey();
   const url = `${asaasBaseUrl()}${path}`;
@@ -191,9 +199,15 @@ async function ensureAsaasCustomerId(params: {
   const cached = db.asaasCustomerByTenantId[params.tenantId];
   if (cached) return { ok: true, customerId: cached };
 
+  const cpfCnpj = asaasCustomerCpfCnpj();
+
   const res = await asaasFetch('/v3/customers', {
     method: 'POST',
-    body: JSON.stringify({ name: params.tenantName || params.tenantId, externalReference: params.tenantId })
+    body: JSON.stringify({
+      name: params.tenantName || params.tenantId,
+      externalReference: params.tenantId,
+      ...(cpfCnpj ? { cpfCnpj } : {})
+    })
   });
   if (!res.ok) {
     const txt = await res.text().catch(() => '');
