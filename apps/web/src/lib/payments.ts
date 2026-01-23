@@ -238,13 +238,16 @@ async function createAsaasPixCharge(params: {
   const customer = await ensureAsaasCustomerId({ tenantId: params.tenantId, tenantName: params.tenantName });
   if (!customer.ok) return customer;
 
+  const mode = String(process.env.ASAAS_ENV || '').trim().toLowerCase();
+  const amountCents = mode === 'sandbox' ? Math.max(500, Math.trunc(params.amountCents)) : Math.trunc(params.amountCents);
+
   const dueDate = new Date(Date.now() + 48 * 3600 * 1000).toISOString().slice(0, 10);
   const res = await asaasFetch('/v3/payments', {
     method: 'POST',
     body: JSON.stringify({
       customer: customer.customerId,
       billingType: 'PIX',
-      value: Number(moneyToBrl(params.amountCents)),
+      value: Number(moneyToBrl(amountCents)),
       dueDate,
       description: params.description,
       externalReference: params.externalReference
