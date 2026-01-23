@@ -1,0 +1,64 @@
+{
+  "platforms": [
+    {
+      "key": "whatsapp",
+      "name": "WhatsApp",
+      "ua": "WhatsApp/2.23.0",
+      "notes": "Preview via og tags + og:image. Cache agressivo; exige HTTPS público em produção."
+    },
+    {
+      "key": "telegram",
+      "name": "Telegram",
+      "ua": "TelegramBot (like TwitterBot)",
+      "notes": "Preview via og tags; costuma respeitar twitter tags também."
+    },
+    {
+      "key": "instagram",
+      "name": "Instagram",
+      "ua": "Instagram 155.0.0.37.107",
+      "notes": "Preview geralmente herdado do Facebook stack; exige HTTPS público."
+    },
+    {
+      "key": "linkedin",
+      "name": "LinkedIn",
+      "ua": "LinkedInBot/1.0",
+      "notes": "Crawler dedicado (LinkedInBot)."
+    },
+    {
+      "key": "tiktok",
+      "name": "TikTok",
+      "ua": "TikTok 26.2.1",
+      "notes": "Varia; ainda assim og:image + title/desc são críticos."
+    },
+    {
+      "key": "youtube",
+      "name": "YouTube/Googlebot",
+      "ua": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+      "notes": "Não é o preview do YouTube em si, mas valida stack Googlebot/crawler."
+    },
+    {
+      "key": "discord",
+      "name": "Discord",
+      "ua": "Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)",
+      "notes": "Unfurl via og tags."
+    },
+    {
+      "key": "slack",
+      "name": "Slack",
+      "ua": "Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)",
+      "notes": "Unfurl via og tags."
+    },
+    {
+      "key": "twitter",
+      "name": "X/Twitter",
+      "ua": "Twitterbot/1.0",
+      "notes": "twitter:card + twitter:image ajudam."
+    },
+    {
+      "key": "facebook",
+      "name": "Facebook",
+      "ua": "facebookexternalhit/1.1",
+      "notes": "Crawler clássico do OG."
+    }
+  ]
+}

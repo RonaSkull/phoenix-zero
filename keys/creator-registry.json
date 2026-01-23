@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "creators": {
+    "demo": {
+      "ed25519PublicKeyB64Url": "6Jfs_WSn2SK_tkHeNSvYM-wW9TjR4_eN1FmuRr6hzk8=",
+      "pqPublicKeyB64Url": "08Def11VG9_onaADcmdWRbKB5YmliuClHEzjq5uftr4YoIPS-wy8M64_2C57v0ozwX3nOrd5KHY0f3C9ewA8Ug==",
+      "updatedAt": "2026-01-13T00:00:00.000Z",
+      "note": "Demo registry entry (dev/local)"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: phoenix-zero-web
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev && npm --prefix ./apps/web ci --include=dev && npx tsc -p ./libs/phoenix-zero/tsconfig.build.json && npm --prefix ./apps/web run build
+    startCommand: npm --prefix ./apps/web run start -- -p $PORT
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: NODE_ENV
+        value: production
+      - key: PHOENIX_ZERO_TMP_DIR
+        value: /tmp/phoenix-zero/tmp
+      - key: PHOENIX_ZERO_ADMIN_TOKEN
+        generateValue: true
+      - key: PAYMENTS_PIX_PROVIDER
+        value: asaas
+      - key: ASAAS_ENV
+        value: sandbox
+      - key: ASAAS_API_KEY
+        sync: false
+      - key: ASAAS_WEBHOOK_SECRET
+        generateValue: true

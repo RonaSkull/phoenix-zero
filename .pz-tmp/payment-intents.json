@@ -1,0 +1,221 @@
+{
+  "version": 2,
+  "intents": {
+    "pay_p_6ytvhKSRZnkf7Y": {
+      "id": "pay_p_6ytvhKSRZnkf7Y",
+      "createdAt": "2026-01-22T16:28:05.193Z",
+      "updatedAt": "2026-01-22T16:28:05.224Z",
+      "tenantId": "t_WkXCquEvSjJ6-kEf",
+      "provider": "pix",
+      "status": "paid",
+      "currency": "BRL",
+      "amountCents": 996,
+      "pricingProfileId": "default",
+      "pricingVersionId": "pv_test_a",
+      "providerPaymentId": "pix_demo",
+      "checkoutUrl": "/checkout/pay_p_6ytvhKSRZnkf7Y",
+      "instructions": "Send PIX to complete payment (provider integration pending)",
+      "lineItems": [
+        {
+          "product": "video_protection",
+          "exposure": "public",
+          "persistence": "short",
+          "guaranteeWindow": "30d",
+          "proofGrade": "legal",
+          "authenticityLevel": "legal",
+          "units": 1,
+          "durationSeconds": 60
+        }
+      ],
+      "breakdown": {
+        "lineTotalsCents": [
+          996
+        ]
+      }
+    },
+    "pay_xmz9lKfOJ8ETcFI1": {
+      "id": "pay_xmz9lKfOJ8ETcFI1",
+      "createdAt": "2026-01-22T17:33:23.907Z",
+      "updatedAt": "2026-01-22T17:33:23.936Z",
+      "tenantId": "t_xP0cROeCVBaCyfkE",
+      "provider": "pix",
+      "status": "paid",
+      "currency": "BRL",
+      "amountCents": 157,
+      "pricingProfileId": "default",
+      "providerPaymentId": "pix_LFBURiMLhGxab2RE",
+      "checkoutUrl": "/checkout/pay_xmz9lKfOJ8ETcFI1",
+      "instructions": "Send PIX to complete payment (provider integration pending)",
+      "lineItems": [
+        {
+          "product": "video_protection",
+          "exposure": "public",
+          "units": 1,
+          "durationSeconds": 30,
+          "guaranteeWindow": "7d",
+          "authenticityLevel": "social"
+        }
+      ],
+      "breakdown": {
+        "lineTotalsCents": [
+          157
+        ]
+      }
+    },
+    "pay_u_abc7L3ddigu_o-": {
+      "id": "pay_u_abc7L3ddigu_o-",
+      "createdAt": "2026-01-22T18:02:37.093Z",
+      "updatedAt": "2026-01-22T18:02:37.093Z",
+      "tenantId": "t_IFObsrErpkwguSQf",
+      "provider": "pix",
+      "status": "pending",
+      "currency": "BRL",
+      "amountCents": 996,
+      "pricingProfileId": "default",
+      "pricingVersionId": "pv_test_a",
+      "providerPaymentId": "pix_tCKIITzjmFsdD8DU",
+      "checkoutUrl": "/checkout/pay_u_abc7L3ddigu_o-",
+      "instructions": "Send PIX to complete payment (provider integration pending)",
+      "lineItems": [
+        {
+          "product": "video_protection",
+          "exposure": "public",
+          "persistence": "short",
+          "guaranteeWindow": "30d",
+          "proofGrade": "legal",
+          "authenticityLevel": "legal",
+          "units": 1,
+          "durationSeconds": 60
+        }
+      ],
+      "breakdown": {
+        "lineTotalsCents": [
+          996
+        ]
+      }
+    },
+    "pay_b_XDiQjMKapJMBa8": {
+      "id": "pay_b_XDiQjMKapJMBa8",
+      "createdAt": "2026-01-22T18:02:37.107Z",
+      "updatedAt": "2026-01-22T18:02:37.107Z",
+      "tenantId": "t_IFObsrErpkwguSQf",
+      "provider": "card",
+      "status": "pending",
+      "currency": "BRL",
+      "amountCents": 996,
+      "pricingProfileId": "default",
+      "pricingVersionId": "pv_test_a",
+      "providerPaymentId": "card_vSi6dl4pnYNplYBp",
+      "checkoutUrl": "/checkout/pay_b_XDiQjMKapJMBa8",
+      "instructions": "Complete card payment (provider integration pending)",
+      "lineItems": [
+        {
+          "product": "video_protection",
+          "exposure": "public",
+          "persistence": "short",
+          "guaranteeWindow": "30d",
+          "proofGrade": "legal",
+          "authenticityLevel": "legal",
+          "units": 1,
+          "durationSeconds": 60
+        }
+      ],
+      "breakdown": {
+        "lineTotalsCents": [
+          996
+        ]
+      }
+    },
+    "pay_pP1fM83oPxiuYuwF": {
+      "id": "pay_pP1fM83oPxiuYuwF",
+      "createdAt": "2026-01-22T18:02:37.139Z",
+      "updatedAt": "2026-01-22T18:02:37.194Z",
+      "tenantId": "t_IFObsrErpkwguSQf",
+      "provider": "crypto",
+      "status": "paid",
+      "currency": "BRL",
+      "amountCents": 996,
+      "pricingProfileId": "default",
+      "pricingVersionId": "pv_test_a",
+      "providerPaymentId": "crypto_vDzPemklCE6uXkdW",
+      "checkoutUrl": "/checkout/pay_pP1fM83oPxiuYuwF",
+      "instructions": "Complete crypto payment (provider integration pending)",
+      "lineItems": [
+        {
+          "product": "video_protection",
+          "exposure": "public",
+          "persistence": "short",
+          "guaranteeWindow": "30d",
+          "proofGrade": "legal",
+          "authenticityLevel": "legal",
+          "units": 1,
+          "durationSeconds": 60
+        }
+      ],
+      "breakdown": {
+        "lineTotalsCents": [
+          996
+        ]
+      }
+    },
+    "pay_-Ukkjj8x0OSAfx19": {
+      "id": "pay_-Ukkjj8x0OSAfx19",
+      "createdAt": "2026-01-22T18:15:57.692Z",
+      "updatedAt": "2026-01-22T18:15:57.692Z",
+      "tenantId": "t_JNVJgIbRXEmKMrDA",
+      "provider": "pix",
+      "status": "pending",
+      "currency": "BRL",
+      "amountCents": 415,
+      "pricingProfileId": "default",
+      "providerPaymentId": "pix_3MXOhbur5oHlh6tP",
+      "checkoutUrl": "/checkout/pay_-Ukkjj8x0OSAfx19",
+      "instructions": "Send PIX to complete payment (provider integration pending)",
+      "lineItems": [
+        {
+          "product": "video_protection",
+          "exposure": "public",
+          "units": 1,
+          "durationSeconds": 60,
+          "guaranteeWindow": "30d",
+          "authenticityLevel": "legal"
+        }
+      ],
+      "breakdown": {
+        "lineTotalsCents": [
+          415
+        ]
+      }
+    },
+    "pay_OxBfdRYZf7owm2JH": {
+      "id": "pay_OxBfdRYZf7owm2JH",
+      "createdAt": "2026-01-22T18:40:35.514Z",
+      "updatedAt": "2026-01-22T18:40:35.628Z",
+      "tenantId": "t_UWg54_8STAePGvME",
+      "provider": "pix",
+      "status": "paid",
+      "currency": "BRL",
+      "amountCents": 415,
+      "pricingProfileId": "default",
+      "providerPaymentId": "pix_nbLRKM_B-fKX_E0e",
+      "checkoutUrl": "/checkout/pay_OxBfdRYZf7owm2JH",
+      "instructions": "Send PIX to complete payment (provider integration pending)",
+      "lineItems": [
+        {
+          "product": "video_protection",
+          "exposure": "public",
+          "units": 1,
+          "durationSeconds": 60,
+          "guaranteeWindow": "30d",
+          "authenticityLevel": "legal"
+        }
+      ],
+      "breakdown": {
+        "lineTotalsCents": [
+          415
+        ]
+      }
+    }
+  },
+  "asaasCustomerByTenantId": {}
+}

@@ -1,0 +1,49 @@
+{
+  "runId": "1768051270915",
+  "outDir": "D:\\redessociaisvideo3s\\benchmarks\\presets-smoke\\1768051270915",
+  "durations": [
+    3
+  ],
+  "platforms": [
+    "default"
+  ],
+  "variants": [
+    "crf32"
+  ],
+  "results": [
+    {
+      "durationSeconds": 3,
+      "presetId": "default:3-6s",
+      "paths": {
+        "input": "D:\\redessociaisvideo3s\\benchmarks\\presets-smoke\\1768051270915\\inputs\\default-3s.mp4",
+        "watermarked": "D:\\redessociaisvideo3s\\benchmarks\\presets-smoke\\1768051270915\\watermarked\\default-3s.mp4",
+        "proof": "D:\\redessociaisvideo3s\\benchmarks\\presets-smoke\\1768051270915\\proofs\\default-3s.proof.json",
+        "variants": {
+          "crf32": "D:\\redessociaisvideo3s\\benchmarks\\presets-smoke\\1768051270915\\variants\\crf32\\default-3s.mp4"
+        }
+      },
+      "verify": {
+        "watermarked": {
+          "ok": true,
+          "signatureOk": true,
+          "watermarkOk": true,
+          "watermarkBitErrors": 0,
+          "watermarkBitCount": 16,
+          "temporalOk": true,
+          "temporalMad": 0
+        },
+        "variants": {
+          "crf32": {
+            "ok": true,
+            "signatureOk": true,
+            "watermarkOk": true,
+            "watermarkBitErrors": 0,
+            "watermarkBitCount": 16,
+            "temporalOk": true,
+            "temporalMad": 0.041666666666666664
+          }
+        }
+      }
+    }
+  ]
+}

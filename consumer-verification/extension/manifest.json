@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Verificação de Autenticidade (MVP)",
+  "version": "0.1.0",
+  "description": "Detecta proof.json na página e exibe um badge de autenticidade.",
+  "permissions": ["storage", "tabs"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_title": "Verificação",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-script.js"],
+      "run_at": "document_end"
+    }
+  ]
+}

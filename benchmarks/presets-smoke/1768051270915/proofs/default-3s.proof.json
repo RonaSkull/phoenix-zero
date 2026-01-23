@@ -1,0 +1,88 @@
+{
+  "version": 3,
+  "createdAt": "2026-01-10T13:21:14.462Z",
+  "preset": {
+    "id": "default:3-6s",
+    "durationSeconds": 3
+  },
+  "media": {
+    "mimeType": "video/mp4",
+    "byteLength": 0
+  },
+  "temporal": {
+    "alg": "signalstats_yavg_v1",
+    "cfg": {
+      "fps": 8,
+      "scale": 64,
+      "targetLen": 24,
+      "quant": 4
+    },
+    "samples": [
+      32,
+      32,
+      32,
+      32,
+      33,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32,
+      32
+    ],
+    "hashB64Url": "Wt26sEQVlPhJoisH7c9qWydI90xyXz9nz56mqWBdla8=",
+    "madThreshold": 12
+  },
+  "watermark": {
+    "alg": "roi_luma_delta_v1",
+    "payloadByteLength": 2,
+    "payloadB64Url": "FAM=",
+    "bitCount": 16,
+    "startFrame": 6,
+    "frameInterval": 3,
+    "repeatPerBit": 2,
+    "brightnessDelta": 0.03,
+    "rois": [
+      {
+        "x": 0.2,
+        "y": 0.2,
+        "w": 0.6,
+        "h": 0.6
+      },
+      {
+        "x": 0.1,
+        "y": 0.1,
+        "w": 0.35,
+        "h": 0.35
+      },
+      {
+        "x": 0.55,
+        "y": 0.55,
+        "w": 0.35,
+        "h": 0.35
+      }
+    ]
+  },
+  "signatureMode": "compat",
+  "hybridSignature": {
+    "ed25519": {
+      "signatureB64Url": "tG16AZkMM9lpheh-TOlUsr_ZxZOU-6jNi1ZV-XtNp27Q1SDJOfy9CHyu1Q2dMfzJLXADb6pISiUBP3qVlu0ZBA==",
+      "publicKeyB64Url": "YKuZLrFhSgcbZ6Lcdeevs4LBDnhMfF5CbONLJPVSMQI="
+    },
+    "mode": "compat",
+    "hybridId": "VJDxJCDp0Tn9n0Z9dbUolo"
+  }
+}

@@ -1,0 +1,828 @@
+:root {
+  --pz-bg: #000000;
+  --pz-fg: #e7ecf5;
+  --pz-muted: rgba(255, 255, 255, 0.4);
+  --pz-muted-2: rgba(255, 255, 255, 0.28);
+  --pz-border: rgba(255, 255, 255, 0.1);
+  --pz-surface: rgba(255, 255, 255, 0.04);
+  --pz-surface-2: rgba(255, 255, 255, 0.02);
+  --pz-accent: #00ffc8;
+  --pz-accent-2: #6d4dff;
+  --pz-accent-3: #2e77ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--pz-bg);
+  color: var(--pz-fg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  border: 2px solid rgba(0, 0, 0, 0.55);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+@keyframes pzGridMove {
+  0% {
+    background-position: 0px 0px;
+  }
+  100% {
+    background-position: 80px 80px;
+  }
+}
+
+@keyframes pzGlowPulse {
+  0% {
+    opacity: 0.28;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: translateX(-50%) scale(1.08);
+  }
+  100% {
+    opacity: 0.28;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+@keyframes pzStripeMove {
+  0% {
+    transform: translateX(0px);
+  }
+  100% {
+    transform: translateX(20px);
+  }
+}
+
+@keyframes pzDotPulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes pzBarWave {
+  0% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+  100% {
+    transform: scaleY(0.35);
+  }
+}
+
+.pz-shell {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: radial-gradient(1200px 600px at 20% 15%, rgba(46, 119, 255, 0.2), rgba(0, 0, 0, 0)),
+    radial-gradient(900px 520px at 80% 30%, rgba(109, 77, 255, 0.18), rgba(0, 0, 0, 0)),
+    linear-gradient(135deg, #0b1220 0%, #111a2e 45%, #0b1220 100%);
+  color: var(--pz-fg);
+}
+
+.pz-shell--scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.pz-shell--scroll .pz-container {
+  height: auto;
+  min-height: 100%;
+}
+
+.pz-shell--vivid {
+  background: radial-gradient(1100px 640px at 20% 12%, rgba(0, 255, 200, 0.16), rgba(0, 0, 0, 0)),
+    radial-gradient(1000px 560px at 80% 28%, rgba(255, 72, 168, 0.12), rgba(0, 0, 0, 0)),
+    linear-gradient(135deg, #071112 0%, #0a1a1c 45%, #05070c 100%);
+}
+
+.pz-shell--vivid .pz-glow {
+  background: radial-gradient(circle, rgba(0, 255, 200, 0.07) 0%, transparent 70%),
+    radial-gradient(circle, rgba(255, 72, 168, 0.05) 10%, transparent 70%);
+}
+
+.pz-shell--mono {
+  background: radial-gradient(1100px 520px at 50% 0%, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0)),
+    radial-gradient(900px 520px at 50% 10%, rgba(0, 255, 200, 0.05), rgba(0, 0, 0, 0)),
+    linear-gradient(180deg, #000 0%, #05070c 100%);
+}
+
+.pz-shell--mono .pz-grid {
+  opacity: 0.02;
+}
+
+.pz-shell--mono .pz-glow {
+  opacity: 0.25;
+}
+
+.pz-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: repeating-linear-gradient(0deg, #fff 0px, #fff 1px, transparent 1px, transparent 2px),
+    repeating-linear-gradient(90deg, #fff 0px, #fff 1px, transparent 1px, transparent 2px);
+  background-size: 80px 80px;
+  animation: pzGridMove 60s linear infinite;
+}
+
+.pz-glow {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 640px;
+  height: 420px;
+  border-radius: 999px;
+  filter: blur(120px);
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(0, 255, 200, 0.065) 0%, transparent 70%);
+  animation: pzGlowPulse 8s ease-in-out infinite;
+}
+
+.pz-container {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  min-height: 0;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pz-topline {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.pz-kicker {
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.pz-rule {
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.12), transparent);
+}
+
+.pz-subtitle {
+  margin-top: 8px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.06em;
+}
+
+.pz-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  text-decoration: none;
+  width: fit-content;
+}
+
+.pz-back:hover {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.pz-center {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.pz-title {
+  text-align: center;
+  font-size: 54px;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .pz-title {
+    font-size: 40px;
+  }
+}
+
+.pz-title-hint {
+  text-align: center;
+  margin-top: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  letter-spacing: 0.02em;
+}
+
+.pz-options {
+  margin-top: 30px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  width: 100%;
+  max-width: 880px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.pz-usecases {
+  width: 100%;
+  max-width: 920px;
+  margin-left: auto;
+  margin-right: auto;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(10px);
+  padding: 14px;
+}
+
+.pz-usecases-title {
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 900;
+}
+
+.pz-usecases-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.pz-usecase {
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 12px 12px;
+}
+
+.pz-usecase-head {
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: 0.02em;
+}
+
+.pz-usecase-body {
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+  .pz-usecases-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 800px) {
+  .pz-options {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pz-split-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 12px;
+  align-items: stretch;
+  min-height: 0;
+}
+
+.pz-split-live {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 360px);
+  gap: 12px;
+  min-height: 0;
+}
+
+.pz-split-single {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  min-height: 0;
+}
+
+@media (max-width: 1100px) {
+  .pz-split-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .pz-split-live {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .pz-container {
+    padding: 14px;
+  }
+}
+
+.pz-option {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid var(--pz-border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.015) 100%);
+  backdrop-filter: blur(10px);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 250ms ease, border-color 250ms ease, background 250ms ease;
+}
+
+.pz-option:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.pz-option-inner {
+  position: relative;
+  padding: 26px;
+}
+
+.pz-letter {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 18px;
+}
+
+.pz-letter-shadow {
+  font-size: 88px;
+  font-weight: 200;
+  color: rgba(255, 255, 255, 0.1);
+  line-height: 1;
+}
+
+.pz-letter-glow {
+  position: absolute;
+  inset: 0;
+  font-size: 88px;
+  font-weight: 200;
+  line-height: 1;
+  background: linear-gradient(135deg, #ffffff 0%, rgba(0, 255, 200, 0.3) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.pz-option-meta {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.pz-option-title {
+  margin-top: 6px;
+  font-size: 28px;
+  font-weight: 300;
+}
+
+.pz-option-desc {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.86);
+  max-width: 380px;
+}
+
+.pz-option-arrow {
+  margin-top: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.pz-option-arrow-line {
+  height: 1px;
+  width: 32px;
+  background: rgba(255, 255, 255, 0.2);
+  transition: width 250ms ease, background 250ms ease;
+}
+
+.pz-option:hover .pz-option-arrow-line {
+  width: 40px;
+  background: rgba(0, 255, 200, 0.35);
+}
+
+.pz-option--live::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 250ms ease;
+  background: radial-gradient(circle, rgba(0, 255, 200, 0.1) 0%, transparent 70%);
+  filter: blur(22px);
+}
+
+.pz-option--live:hover::before {
+  opacity: 1;
+}
+
+.pz-option--live::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  opacity: 0.6;
+  background: repeating-linear-gradient(90deg, transparent 0px, transparent 8px, rgba(0, 255, 200, 0.08) 8px, rgba(0, 255, 200, 0.08) 10px);
+  transform: translateX(0px);
+  animation: pzStripeMove 1.5s linear infinite;
+  mask-image: linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%);
+  pointer-events: none;
+}
+
+.pz-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 16px;
+  backdrop-filter: blur(10px);
+}
+
+.pz-card--subtle {
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.pz-card-flat {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0px;
+  padding: 24px;
+}
+
+.pz-card-flat--subtle {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0px;
+  padding: 12px;
+}
+
+@media (max-width: 720px) {
+  .pz-card-flat {
+    padding: 16px;
+  }
+}
+
+.pz-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.32);
+}
+
+.pz-scroll {
+  overflow: auto;
+  min-height: 0;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.28) rgba(255, 255, 255, 0.06);
+}
+
+.pz-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  animation: pzDotPulse 1.5s ease-in-out infinite;
+}
+
+.pz-signal-bars {
+  display: flex;
+  gap: 3px;
+  height: 48px;
+  align-items: flex-end;
+}
+
+.pz-signal-bar {
+  width: 6px;
+  height: 100%;
+  transform-origin: bottom;
+  background: rgba(255, 255, 255, 0.12);
+  animation: pzBarWave 0.85s ease-in-out infinite;
+}
+
+.pz-signal-bar:nth-child(2) {
+  animation-delay: 0.08s;
+}
+
+.pz-signal-bar:nth-child(3) {
+  animation-delay: 0.16s;
+}
+
+.pz-signal-bar:nth-child(4) {
+  animation-delay: 0.24s;
+}
+
+.pz-video-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #000;
+  overflow: hidden;
+}
+
+.pz-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pz-live-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 255, 200, 0.3);
+  color: #fff;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.pz-live-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--pz-accent);
+  box-shadow: 0 0 8px rgba(0, 255, 200, 0.45);
+  animation: pzDotPulse 1.5s ease-in-out infinite;
+}
+
+.pz-time-badge {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.pz-field {
+  display: grid;
+  gap: 6px;
+}
+
+.pz-field-label {
+  font-weight: 700;
+  font-size: 13px;
+  color: #d7deee;
+}
+
+.pz-input,
+.pz-select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--pz-fg);
+  outline: none;
+}
+
+.pz-input:focus,
+.pz-select:focus {
+  border-color: rgba(0, 255, 200, 0.35);
+  box-shadow: 0 0 0 4px rgba(0, 255, 200, 0.08);
+}
+
+.pz-select {
+  appearance: none;
+}
+
+.pz-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  font-weight: 900;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 200ms ease, border-color 200ms ease, background 200ms ease;
+}
+
+.pz-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.26);
+}
+
+.pz-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.pz-btn-primary {
+  background: linear-gradient(135deg, #2e77ff 0%, #6d4dff 100%);
+}
+
+.pz-btn-accent {
+  background: linear-gradient(135deg, #00ffc8 0%, #23c55e 55%, #2e77ff 100%);
+}
+
+.pz-btn-invert {
+  background: rgba(255, 255, 255, 0.92);
+  color: #000;
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.pz-btn-invert:hover {
+  border-color: rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.98);
+}
+
+.pz-btn-ghost {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.pz-btn-ghost:hover {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+details.pz-json-modal {
+  position: relative;
+}
+
+details.pz-json-modal summary {
+  list-style: none;
+}
+
+details.pz-json-modal summary::-webkit-details-marker {
+  display: none;
+}
+
+details.pz-json-modal .pz-json-modal-open {
+  display: none;
+}
+
+details.pz-json-modal[open] .pz-json-modal-open {
+  display: inline;
+}
+
+details.pz-json-modal[open] .pz-json-modal-closed {
+  display: none;
+}
+
+details.pz-json-modal[open]::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+  z-index: 9998;
+}
+
+details.pz-json-modal[open] > summary {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 10000;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(0, 0, 0, 0.55);
+}
+
+details.pz-json-modal[open] > .pz-json-modal-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(980px, calc(100vw - 36px));
+  max-height: min(72vh, 680px);
+  overflow: auto;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.68);
+  backdrop-filter: blur(10px);
+  padding: 12px;
+  z-index: 9999;
+}
+
+.pz-btn-sm {
+  padding: 8px 12px;
+  font-weight: 800;
+}
+
+.pz-link {
+  color: #cde1ff;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.pz-link:hover {
+  text-decoration: underline;
+}
+
+.pz-drop {
+  border: 1px dashed rgba(255, 255, 255, 0.22);
+  border-radius: 16px;
+  padding: 14px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.pz-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 720px) {
+  .pz-grid-2col {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pz-footer {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.pz-footer a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.pz-footer a:hover {
+  color: rgba(0, 255, 200, 0.35);
+}

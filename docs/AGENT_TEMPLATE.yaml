@@ -1,0 +1,140 @@
+version: 1
+name: PhoenixZeroAgenticSeller
+language: pt-BR
+
+runtime:
+  transport: http
+  base_url_env: PHOENIX_ZERO_BASE_URL
+  auth:
+    tenant_api_key_env: PHOENIX_ZERO_TENANT_API_KEY
+    header_name: x-api-key
+
+capabilities:
+  pricing:
+    preview:
+      method: POST
+      path: /api/pricing/preview
+    quote:
+      method: POST
+      path: /api/pricing/quote
+  checkout:
+    create:
+      method: POST
+      path: /api/checkout/create
+    status:
+      method: GET
+      path: /api/checkout/status
+  billing:
+    account:
+      method: GET
+      path: /api/billing/account
+  value_endpoints:
+    time_anchor:
+      method: POST
+      path: /api/time-anchor
+    live_stream:
+      method: GET
+      path: /api/live-stream
+
+policy:
+  guardrail_402:
+    description: "Se um endpoint de valor retornar 402 Payment required, o agente deve criar checkout e aguardar confirmação antes de repetir a execução."
+    on_402:
+      - action: call.checkout.create
+      - action: explain_payment
+      - action: poll.checkout.status
+      - action: call.billing.account
+      - action: retry.value_endpoint
+
+conversation_flow:
+  - id: intake
+    goal: "Coletar contexto mínimo para precificar e executar."
+    ask:
+      product:
+        question: "O que você quer proteger? (video | live | audio | image | report)"
+      duration_seconds:
+        question: "Qual a duração (segundos)? (se não souber, diga 0)"
+      size_bytes:
+        question: "Qual o tamanho em bytes? (se não souber, diga 0)"
+      guarantee_window:
+        question: "Janela de garantia (7d | 30d | 1y | unknown)?"
+      proof_grade:
+        question: "Nível de prova (social | legal | forensic | unknown)?"
+      exposure:
+        question: "Exposição (public | private | unknown)?"
+      persistence:
+        question: "Persistência (ephemeral | persistent | unknown)?"
+      provider_hint:
+        question: "Meio de pagamento (pix | crypto | card)?"
+
+  - id: price
+    goal: "Gerar preço dinâmico e justificar em linguagem natural."
+    steps:
+      - call: pricing.preview
+        input:
+          product: "${product}_protection"
+          guaranteeWindow: "${guarantee_window}"
+          proofGrade: "${proof_grade}"
+          exposure: "${exposure}"
+          persistence: "${persistence}"
+          units: 1
+          durationSeconds: "${duration_seconds}"
+          sizeBytes: "${size_bytes}"
+      - speak:
+          template: "Esse ${product} com garantia ${guarantee_window} e nível ${proof_grade} custa ${finalPriceCents} ${currency}. Quer seguir com o pagamento?"
+
+  - id: checkout
+    goal: "Criar cobrança programática e instruir o usuário a pagar."
+    when: "${user_confirms_payment} == true"
+    steps:
+      - call: checkout.create
+        input:
+          providerHint: "${provider_hint}"
+          currency: "${currency}"
+          lineItems:
+            - product: "${product}_protection"
+              operation: "protect_${product}"
+              guaranteeWindow: "${guarantee_window}"
+              proofGrade: "${proof_grade}"
+              exposure: "${exposure}"
+              persistence: "${persistence}"
+              units: 1
+              durationSeconds: "${duration_seconds}"
+              sizeBytes: "${size_bytes}"
+      - speak:
+          template: "Pagamento criado. Use o link ${checkoutUrl} (ou siga as instruções: ${instructions}). Me avise quando pagar."
+
+  - id: wait_for_payment
+    goal: "Confirmar pagamento com segurança e liberar acesso."
+    steps:
+      - call: checkout.status
+        input:
+          query:
+            paymentId: "${paymentId}"
+      - if:
+          condition: "${status} == 'paid'"
+          then:
+            - call: billing.account
+            - speak:
+                template: "Confirmado. Acesso liberado (billing ativo). Vou executar agora."
+          else:
+            - speak:
+                template: "Ainda não confirmou (status: ${status}). Vou checar de novo em alguns segundos."
+
+  - id: deliver_value
+    goal: "Executar um endpoint de valor após pagamento (exemplo: time-anchor)."
+    steps:
+      - call: value_endpoints.live_stream
+        input: {}
+      - call: value_endpoints.time_anchor
+        input:
+          action: create
+          kind: vod
+          contentCommitB64Url: "${content_commit_b64url}"
+      - on_error:
+          when_status: 402
+          action: policy.guardrail_402
+
+notes:
+  - "Este YAML é um template agnóstico. Adapte o executor (LLM/agent) para interpretar call/speak/if." 
+  - "Os endpoints Phoenix Zero de stamp geralmente exigem upload multipart; para agentes conversacionais, prefira fluxos por URL ou integrações que tenham acesso ao arquivo." 

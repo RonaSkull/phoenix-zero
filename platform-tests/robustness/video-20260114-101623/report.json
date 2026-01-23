@@ -1,0 +1,251 @@
+{
+  "ok": true,
+  "inputVideo": "D:\\redessociaisvideo3s\\platform-tests\\output\\watermarked.mp4",
+  "proofPath": "D:\\redessociaisvideo3s\\platform-tests\\proofs\\original.proof.json",
+  "outDir": "D:\\redessociaisvideo3s\\platform-tests\\robustness\\video-20260114-101623",
+  "results": [
+    {
+      "platform": "whatsapp",
+      "outFile": "D:\\redessociaisvideo3s\\platform-tests\\robustness\\video-20260114-101623\\whatsapp.mp4",
+      "verify": {
+        "ok": true,
+        "signature": {
+          "ok": true,
+          "ed25519Ok": true,
+          "pqOk": true,
+          "mode": "strict",
+          "pqPresent": true,
+          "pqAvailable": true
+        },
+        "watermark": {
+          "ok": true,
+          "bestStartFrame": 4,
+          "bestBitErrors": 0
+        },
+        "temporal": {
+          "ok": true,
+          "mad": 0,
+          "madThreshold": 12,
+          "extractedHashB64Url": "mSvKEu8NYX7uJg5WBX1_2QfubeKD3WI-XtlkOrsW5cg=",
+          "expectedHashB64Url": "mSvKEu8NYX7uJg5WBX1_2QfubeKD3WI-XtlkOrsW5cg="
+        }
+      }
+    },
+    {
+      "platform": "instagram",
+      "outFile": "D:\\redessociaisvideo3s\\platform-tests\\robustness\\video-20260114-101623\\instagram.mp4",
+      "verify": {
+        "ok": true,
+        "signature": {
+          "ok": true,
+          "ed25519Ok": true,
+          "pqOk": true,
+          "mode": "strict",
+          "pqPresent": true,
+          "pqAvailable": true
+        },
+        "watermark": {
+          "ok": true,
+          "bestStartFrame": 4,
+          "bestBitErrors": 0
+        },
+        "temporal": {
+          "ok": true,
+          "mad": 0,
+          "madThreshold": 12,
+          "extractedHashB64Url": "mSvKEu8NYX7uJg5WBX1_2QfubeKD3WI-XtlkOrsW5cg=",
+          "expectedHashB64Url": "mSvKEu8NYX7uJg5WBX1_2QfubeKD3WI-XtlkOrsW5cg="
+        }
+      }
+    },
+    {
+      "platform": "tiktok",
+      "outFile": "D:\\redessociaisvideo3s\\platform-tests\\robustness\\video-20260114-101623\\tiktok.mp4",
+      "verify": {
+        "ok": true,
+        "signature": {
+          "ok": true,
+          "ed25519Ok": true,
+          "pqOk": true,
+          "mode": "strict",
+          "pqPresent": true,
+          "pqAvailable": true
+        },
+        "watermark": {
+          "ok": true,
+          "bestStartFrame": 4,
+          "bestBitErrors": 0
+        },
+        "temporal": {
+          "ok": true,
+          "mad": 0,
+          "madThreshold": 12,
+          "extractedHashB64Url": "mSvKEu8NYX7uJg5WBX1_2QfubeKD3WI-XtlkOrsW5cg=",
+          "expectedHashB64Url": "mSvKEu8NYX7uJg5WBX1_2QfubeKD3WI-XtlkOrsW5cg="
+        }
+      }
+    },
+    {
+      "platform": "linkedin",
+      "outFile": "D:\\redessociaisvideo3s\\platform-tests\\robustness\\video-20260114-101623\\linkedin.mp4",
+      "verify": {
+        "ok": true,
+        "signature": {
+          "ok": true,
+          "ed25519Ok": true,
+          "pqOk": true,
+          "mode": "strict",
+          "pqPresent": true,
+          "pqAvailable": true
+        },
+        "watermark": {
+          "ok": true,
+          "bestStartFrame": 4,
+          "bestBitErrors": 0
+        },
+        "temporal": {
+          "ok": true,
+          "mad": 0,
+          "madThreshold": 12,
+          "extractedHashB64Url": "mSvKEu8NYX7uJg5WBX1_2QfubeKD3WI-XtlkOrsW5cg=",
+          "expectedHashB64Url": "mSvKEu8NYX7uJg5WBX1_2QfubeKD3WI-XtlkOrsW5cg="
+        }
+      }
+    },
+    {
+      "platform": "twitter",
+      "outFile": "D:\\redessociaisvideo3s\\platform-tests\\robustness\\video-20260114-101623\\twitter.mp4",
+      "verify": {
+        "ok": true,
+        "signature": {
+          "ok": true,
+          "ed25519Ok": true,
+          "pqOk": true,
+          "mode": "strict",
+          "pqPresent": true,
+          "pqAvailable": true
+        },
+        "watermark": {
+          "ok": true,
+          "bestStartFrame": 4,
+          "bestBitErrors": 0
+        },
+        "temporal": {
+          "ok": true,
+          "mad": 0,
+          "madThreshold": 12,
+          "extractedHashB64Url": "mSvKEu8NYX7uJg5WBX1_2QfubeKD3WI-XtlkOrsW5cg=",
+          "expectedHashB64Url": "mSvKEu8NYX7uJg5WBX1_2QfubeKD3WI-XtlkOrsW5cg="
+        }
+      }
+    },
+    {
+      "platform": "telegram",
+      "outFile": "D:\\redessociaisvideo3s\\platform-tests\\robustness\\video-20260114-101623\\telegram.mp4",
+      "verify": {
+        "ok": true,
+        "signature": {
+          "ok": true,
+          "ed25519Ok": true,
+          "pqOk": true,
+          "mode": "strict",
+          "pqPresent": true,
+          "pqAvailable": true
+        },
+        "watermark": {
+          "ok": true,
+          "bestStartFrame": 4,
+          "bestBitErrors": 0
+        },
+        "temporal": {
+          "ok": true,
+          "mad": 0,
+          "madThreshold": 12,
+          "extractedHashB64Url": "mSvKEu8NYX7uJg5WBX1_2QfubeKD3WI-XtlkOrsW5cg=",
+          "expectedHashB64Url": "mSvKEu8NYX7uJg5WBX1_2QfubeKD3WI-XtlkOrsW5cg="
+        }
+      }
+    },
+    {
+      "platform": "discord",
+      "outFile": "D:\\redessociaisvideo3s\\platform-tests\\robustness\\video-20260114-101623\\discord.mp4",
+      "verify": {
+        "ok": true,
+        "signature": {
+          "ok": true,
+          "ed25519Ok": true,
+          "pqOk": true,
+          "mode": "strict",
+          "pqPresent": true,
+          "pqAvailable": true
+        },
+        "watermark": {
+          "ok": true,
+          "bestStartFrame": 4,
+          "bestBitErrors": 0
+        },
+        "temporal": {
+          "ok": true,
+          "mad": 0,
+          "madThreshold": 12,
+          "extractedHashB64Url": "mSvKEu8NYX7uJg5WBX1_2QfubeKD3WI-XtlkOrsW5cg=",
+          "expectedHashB64Url": "mSvKEu8NYX7uJg5WBX1_2QfubeKD3WI-XtlkOrsW5cg="
+        }
+      }
+    },
+    {
+      "platform": "slack",
+      "outFile": "D:\\redessociaisvideo3s\\platform-tests\\robustness\\video-20260114-101623\\slack.mp4",
+      "verify": {
+        "ok": true,
+        "signature": {
+          "ok": true,
+          "ed25519Ok": true,
+          "pqOk": true,
+          "mode": "strict",
+          "pqPresent": true,
+          "pqAvailable": true
+        },
+        "watermark": {
+          "ok": true,
+          "bestStartFrame": 4,
+          "bestBitErrors": 0
+        },
+        "temporal": {
+          "ok": true,
+          "mad": 0,
+          "madThreshold": 12,
+          "extractedHashB64Url": "mSvKEu8NYX7uJg5WBX1_2QfubeKD3WI-XtlkOrsW5cg=",
+          "expectedHashB64Url": "mSvKEu8NYX7uJg5WBX1_2QfubeKD3WI-XtlkOrsW5cg="
+        }
+      }
+    },
+    {
+      "platform": "youtube",
+      "outFile": "D:\\redessociaisvideo3s\\platform-tests\\robustness\\video-20260114-101623\\youtube.mp4",
+      "verify": {
+        "ok": true,
+        "signature": {
+          "ok": true,
+          "ed25519Ok": true,
+          "pqOk": true,
+          "mode": "strict",
+          "pqPresent": true,
+          "pqAvailable": true
+        },
+        "watermark": {
+          "ok": true,
+          "bestStartFrame": 4,
+          "bestBitErrors": 0
+        },
+        "temporal": {
+          "ok": true,
+          "mad": 0,
+          "madThreshold": 12,
+          "extractedHashB64Url": "mSvKEu8NYX7uJg5WBX1_2QfubeKD3WI-XtlkOrsW5cg=",
+          "expectedHashB64Url": "mSvKEu8NYX7uJg5WBX1_2QfubeKD3WI-XtlkOrsW5cg="
+        }
+      }
+    }
+  ]
+}

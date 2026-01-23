@@ -1,0 +1,108 @@
+{
+  "ok": true,
+  "inputImage": "(generated)",
+  "dumpDir": "D:\\redessociaisvideo3s\\platform-tests\\robustness\\image-20260115-152945",
+  "watermark": {
+    "payloadB64Url": "EzfA3lIRqhA=",
+    "bitCount": 64,
+    "repeatPerBit": 2,
+    "brightnessDelta": 0.03,
+    "grid": {
+      "x": 0.1,
+      "y": 0.1,
+      "w": 0.8,
+      "h": 0.8,
+      "rows": 16,
+      "cols": 16
+    },
+    "analysisSize": 512
+  },
+  "fingerprint": {
+    "alg": "dhash_v1",
+    "maxHammingDistance": 16
+  },
+  "maxBitErrors": 2,
+  "results": [
+    {
+      "platform": "whatsapp",
+      "ok": true,
+      "watermarkOk": true,
+      "bestBitErrors": 1,
+      "dhashDistance": 1,
+      "dhashOk": true,
+      "outFile": "D:\\redessociaisvideo3s\\platform-tests\\robustness\\image-20260115-152945\\whatsapp.jpg"
+    },
+    {
+      "platform": "instagram",
+      "ok": true,
+      "watermarkOk": true,
+      "bestBitErrors": 1,
+      "dhashDistance": 1,
+      "dhashOk": true,
+      "outFile": "D:\\redessociaisvideo3s\\platform-tests\\robustness\\image-20260115-152945\\instagram.jpg"
+    },
+    {
+      "platform": "tiktok",
+      "ok": true,
+      "watermarkOk": true,
+      "bestBitErrors": 1,
+      "dhashDistance": 1,
+      "dhashOk": true,
+      "outFile": "D:\\redessociaisvideo3s\\platform-tests\\robustness\\image-20260115-152945\\tiktok.jpg"
+    },
+    {
+      "platform": "linkedin",
+      "ok": true,
+      "watermarkOk": true,
+      "bestBitErrors": 1,
+      "dhashDistance": 2,
+      "dhashOk": true,
+      "outFile": "D:\\redessociaisvideo3s\\platform-tests\\robustness\\image-20260115-152945\\linkedin.jpg"
+    },
+    {
+      "platform": "twitter",
+      "ok": true,
+      "watermarkOk": true,
+      "bestBitErrors": 1,
+      "dhashDistance": 2,
+      "dhashOk": true,
+      "outFile": "D:\\redessociaisvideo3s\\platform-tests\\robustness\\image-20260115-152945\\twitter.jpg"
+    },
+    {
+      "platform": "telegram",
+      "ok": true,
+      "watermarkOk": true,
+      "bestBitErrors": 1,
+      "dhashDistance": 0,
+      "dhashOk": true,
+      "outFile": "D:\\redessociaisvideo3s\\platform-tests\\robustness\\image-20260115-152945\\telegram.jpg"
+    },
+    {
+      "platform": "discord",
+      "ok": true,
+      "watermarkOk": true,
+      "bestBitErrors": 1,
+      "dhashDistance": 0,
+      "dhashOk": true,
+      "outFile": "D:\\redessociaisvideo3s\\platform-tests\\robustness\\image-20260115-152945\\discord.jpg"
+    },
+    {
+      "platform": "slack",
+      "ok": true,
+      "watermarkOk": true,
+      "bestBitErrors": 1,
+      "dhashDistance": 0,
+      "dhashOk": true,
+      "outFile": "D:\\redessociaisvideo3s\\platform-tests\\robustness\\image-20260115-152945\\slack.jpg"
+    },
+    {
+      "platform": "youtube",
+      "ok": true,
+      "watermarkOk": true,
+      "bestBitErrors": 1,
+      "dhashDistance": 0,
+      "dhashOk": true,
+      "outFile": "D:\\redessociaisvideo3s\\platform-tests\\robustness\\image-20260115-152945\\youtube.jpg"
+    }
+  ]
+}

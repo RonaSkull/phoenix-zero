@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Phoenix Zero — Seletor de Perfil de Âncora</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #0b1220;
+        --panel: #0f1a33;
+        --text: #e6edf6;
+        --muted: #9fb2cc;
+        --border: rgba(255, 255, 255, 0.12);
+        --accent: #60a5fa;
+        --ok: #22c55e;
+        --warn: #f59e0b;
+        --bad: #ef4444;
+      }
+
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background: radial-gradient(1000px 600px at 20% 10%, rgba(96, 165, 250, 0.25), transparent 60%),
+          radial-gradient(900px 500px at 70% 20%, rgba(34, 197, 94, 0.18), transparent 60%),
+          var(--bg);
+        color: var(--text);
+        margin: 0;
+        padding: 40px 16px;
+      }
+
+      .container {
+        max-width: 880px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+        letter-spacing: -0.02em;
+      }
+
+      p {
+        margin: 0 0 16px;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      @media (min-width: 900px) {
+        .grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .card {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+      }
+
+      label {
+        display: block;
+        margin: 12px 0 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      select,
+      input[type="number"] {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.25);
+        color: var(--text);
+        outline: none;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .btn {
+        margin-top: 16px;
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(96, 165, 250, 0.6);
+        background: rgba(96, 165, 250, 0.18);
+        color: var(--text);
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      .btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .badge.ok {
+        color: rgba(34, 197, 94, 1);
+        border-color: rgba(34, 197, 94, 0.35);
+        background: rgba(34, 197, 94, 0.08);
+      }
+
+      .badge.warn {
+        color: rgba(245, 158, 11, 1);
+        border-color: rgba(245, 158, 11, 0.35);
+        background: rgba(245, 158, 11, 0.08);
+      }
+
+      pre {
+        margin: 12px 0 0;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.25);
+        overflow: auto;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .small {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 10px;
+      }
+
+      .error {
+        color: rgba(239, 68, 68, 1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Phoenix Zero — Seletor de Perfil de Âncora</h1>
+      <p>
+        Demo interna para vendas/onboarding. Responda o questionário e o backend sugere um <span class="badge">anchorProfileId</span>.
+        Endpoint usado: <span class="badge">POST /api/suggest-profile</span>
+      </p>
+
+      <div class="grid">
+        <div class="card">
+          <div class="row">
+            <div>
+              <label>Tipo de conteúdo</label>
+              <select id="isLive">
+                <option value="true">Live</option>
+                <option value="false">VOD</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Setor</label>
+              <select id="sector">
+                <option value="social">Social</option>
+                <option value="sports">Sports</option>
+                <option value="media">Media</option>
+                <option value="finance">Finance</option>
+                <option value="health">Health</option>
+                <option value="government">Government</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>Timing da verificação</label>
+              <select id="verificationTiming">
+                <option value="during">Durante</option>
+                <option value="after">Depois</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Duração da sessão (segundos)</label>
+              <input id="sessionDurationSec" type="number" min="0" step="1" value="120" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>Risco alto de fraude</label>
+              <select id="highFraudRisk">
+                <option value="false">Não</option>
+                <option value="true">Sim</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Rede instável (mobile/jitter)</label>
+              <select id="unstableNetwork">
+                <option value="false">Não</option>
+                <option value="true">Sim</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>Precisa funcionar offline</label>
+              <select id="needsOfflineVerification">
+                <option value="false">Não</option>
+                <option value="true">Sim</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Exige PQC</label>
+              <select id="requiresPqc">
+                <option value="false">Não</option>
+                <option value="true">Sim</option>
+              </select>
+            </div>
+          </div>
+
+          <button id="btn" class="btn">Sugerir perfil</button>
+          <div class="small">
+            Acesse: <span class="badge">http://localhost:3000/demo-anchor-selector.html</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div>
+            <span id="status" class="badge">idle</span>
+          </div>
+          <pre id="out">{}</pre>
+          <div id="err" class="small error"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+
+      function bool(v) {
+        return String(v) === 'true';
+      }
+
+      function setStatus(kind) {
+        const el = $('status');
+        el.className = 'badge';
+        if (kind === 'ok') el.classList.add('ok');
+        if (kind === 'warn') el.classList.add('warn');
+        el.textContent = kind;
+      }
+
+      $('btn').addEventListener('click', async () => {
+        $('err').textContent = '';
+        setStatus('loading');
+        $('btn').disabled = true;
+
+        const payload = {
+          isLive: bool($('isLive').value),
+          sector: $('sector').value,
+          verificationTiming: $('verificationTiming').value,
+          sessionDurationSec: Number($('sessionDurationSec').value || '0'),
+          highFraudRisk: bool($('highFraudRisk').value),
+          unstableNetwork: bool($('unstableNetwork').value),
+          needsOfflineVerification: bool($('needsOfflineVerification').value),
+          requiresPqc: bool($('requiresPqc').value)
+        };
+
+        try {
+          const res = await fetch('/api/suggest-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          const json = await res.json().catch(() => ({}));
+          $('out').textContent = JSON.stringify({ request: payload, response: json }, null, 2);
+
+          if (json && json.ok) {
+            setStatus('ok');
+          } else {
+            setStatus('warn');
+            $('err').textContent = (json && json.reason) || 'Erro ao sugerir perfil';
+          }
+        } catch (e) {
+          setStatus('warn');
+          $('err').textContent = e && e.message ? e.message : String(e);
+        } finally {
+          $('btn').disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>
