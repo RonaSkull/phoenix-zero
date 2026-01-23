@@ -397,10 +397,6 @@ async function main() {
     if (realMode && realProvider !== 'crypto') {
       skip(`real mode provider is '${realProvider}' (skipping crypto)`);
     }
-
-    if (!realMode && !nowPaymentsApiKey) {
-      skip('NOWPAYMENTS_API_KEY not set (skipping provider-dependent crypto flow)');
-    }
     const t = await createTenant({ baseUrl, adminToken, name: `stress-l2-${Date.now()}` });
 
     const created = await checkoutCreate({

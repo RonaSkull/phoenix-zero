@@ -12,6 +12,20 @@ function jsonUtf8Headers(extra: Record<string, string> = {}): Record<string, str
   };
 }
 
+function canonicalNowPaymentsBody(body: any): string {
+  if (!body || typeof body !== 'object') return '';
+  const keys = Object.keys(body).sort();
+  const sorted: Record<string, any> = {};
+  for (const k of keys) sorted[k] = (body as any)[k];
+  return JSON.stringify(sorted);
+}
+
+function safeEqHex(aHex: string, bHex: string): boolean {
+  const a = Buffer.from(String(aHex || '').trim(), 'utf8');
+  const b = Buffer.from(String(bHex || '').trim(), 'utf8');
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 export async function POST(req: Request) {
   const secret = String(process.env.NOWPAYMENTS_IPN_SECRET || '').trim();
   const raw = await req.text().catch(() => '');
@@ -19,12 +33,23 @@ export async function POST(req: Request) {
     return Response.json({ ok: false, reason: 'Invalid JSON body' }, { status: 400, headers: jsonUtf8Headers() });
   }
 
+  const body = ((): any => {
+    try {
+      return JSON.parse(raw) as any;
+    } catch {
+      return null;
+    }
+  })();
+  if (!body || typeof body !== 'object') {
+    return Response.json({ ok: false, reason: 'Invalid JSON body' }, { status: 400, headers: jsonUtf8Headers() });
+  }
+
   if (secret) {
     const got = String(req.headers.get('x-nowpayments-sig') || '').trim();
-    const expected = createHmac('sha512', secret).update(raw, 'utf8').digest('hex');
-    const a = Buffer.from(got, 'utf8');
-    const b = Buffer.from(expected, 'utf8');
-    const ok = a.length === b.length && timingSafeEqual(a, b);
+    const canonical = canonicalNowPaymentsBody(body);
+    const expectedCanonical = canonical ? createHmac('sha512', secret).update(canonical, 'utf8').digest('hex') : '';
+    const expectedRaw = createHmac('sha512', secret).update(raw, 'utf8').digest('hex');
+    const ok = (expectedCanonical && safeEqHex(got, expectedCanonical)) || safeEqHex(got, expectedRaw);
     if (!ok) {
       return Response.json({ ok: false, reason: 'Unauthorized' }, { status: 401, headers: jsonUtf8Headers() });
     }
@@ -33,11 +58,6 @@ export async function POST(req: Request) {
       { ok: false, reason: 'Missing NOWPAYMENTS_IPN_SECRET' },
       { status: 500, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
     );
-  }
-
-  const body = JSON.parse(raw) as any;
-  if (!body || typeof body !== 'object') {
-    return Response.json({ ok: false, reason: 'Invalid JSON body' }, { status: 400, headers: jsonUtf8Headers() });
   }
 
   const normalized = body as NormalizedWebhookEvent;

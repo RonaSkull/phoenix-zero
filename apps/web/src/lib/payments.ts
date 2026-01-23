@@ -292,15 +292,26 @@ async function createNowPaymentsInvoice(params: {
   const apiKey = nowPaymentsApiKey();
   if (!apiKey) return { ok: false, reason: 'NOWPAYMENTS_API_KEY is not set' };
 
+  const publicBaseRaw = String(process.env.PHOENIX_ZERO_PUBLIC_BASE_URL || '').trim();
+  const publicBase = publicBaseRaw ? publicBaseRaw.replace(/\/+$/g, '') : '';
+  const ipnCallbackUrl = publicBase ? `${publicBase}/api/webhooks/nowpayments` : undefined;
+  const successUrl = publicBase ? `${publicBase}/checkout/${encodeURIComponent(params.orderId)}` : undefined;
+  const cancelUrl = publicBase ? `${publicBase}/checkout/${encodeURIComponent(params.orderId)}` : undefined;
+
+  const payload: Record<string, any> = {
+    price_amount: params.priceAmount,
+    price_currency: params.priceCurrency,
+    pay_currency: params.payCurrency,
+    order_id: params.orderId,
+    order_description: params.orderDescription
+  };
+  if (ipnCallbackUrl) payload.ipn_callback_url = ipnCallbackUrl;
+  if (successUrl) payload.success_url = successUrl;
+  if (cancelUrl) payload.cancel_url = cancelUrl;
+
   const res = await nowPaymentsFetch('/v1/invoice', {
     method: 'POST',
-    body: JSON.stringify({
-      price_amount: params.priceAmount,
-      price_currency: params.priceCurrency,
-      pay_currency: params.payCurrency,
-      order_id: params.orderId,
-      order_description: params.orderDescription
-    })
+    body: JSON.stringify(payload)
   });
 
   if (!res.ok) {
