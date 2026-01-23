@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 type JsonResponse = { status: number; ok: boolean; text: string; json: any | null };
@@ -52,7 +52,7 @@ function classificationCopy(sourceVector: string): { title: string; subtitle: st
   return { title: 'Analise concluida.', subtitle: 'Este conteudo foi identificado como video gravado.' };
 }
 
-export default function PricingProtectPage() {
+function PricingProtectPageInner() {
   const router = useRouter();
   const sp = useSearchParams();
   const sessionId = (sp.get('sessionId') || '').trim();
@@ -606,5 +606,13 @@ export default function PricingProtectPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function PricingProtectPage() {
+  return (
+    <Suspense>
+      <PricingProtectPageInner />
+    </Suspense>
   );
 }

@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 type ApiResponse = { ok: boolean; reason?: string; state?: any };
 
-export default function PricingClassifyPage() {
+function PricingClassifyPageInner() {
   const router = useRouter();
   const sp = useSearchParams();
   const sessionId = (sp.get('sessionId') || '').trim();
@@ -143,5 +143,13 @@ export default function PricingClassifyPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function PricingClassifyPage() {
+  return (
+    <Suspense>
+      <PricingClassifyPageInner />
+    </Suspense>
   );
 }
