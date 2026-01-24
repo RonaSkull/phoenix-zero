@@ -73,9 +73,12 @@ export async function POST(req: Request) {
   }
 
   if (!paymentId) {
+    if (eventId) {
+      await markWebhookEventProcessed({ provider: 'asaas', eventId });
+    }
     return Response.json(
-      { ok: false, reason: 'Unknown payment (missing providerPaymentId mapping)' },
-      { status: 400, headers: jsonUtf8Headers() }
+      { ok: true, ignored: true, reason: 'Unknown payment (missing providerPaymentId mapping)' },
+      { status: 200, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
     );
   }
 
