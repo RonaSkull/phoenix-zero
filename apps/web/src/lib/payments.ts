@@ -427,7 +427,15 @@ async function computeTotalCents(params: {
   let total = 0;
 
   for (const li of params.lineItems) {
-    const operation = (li?.operation || '').trim() || productToDefaultOperation(String(li?.product || 'video'));
+    const product = String(li?.product || 'video');
+    const opInput = String(li?.operation || '').trim();
+    const opFromProduct = productToDefaultOperation(product);
+
+    let operation = opInput || opFromProduct;
+    if (opInput && typeof pricingProfile.basePriceCentsByOp[operation] !== 'number') {
+      operation = productToDefaultOperation(operation);
+    }
+
     const unitsInput = Number(li?.units ?? NaN);
     const units = Number.isFinite(unitsInput) ? clampInt(unitsInput, 1, 1_000_000) : 1;
 
@@ -523,6 +531,8 @@ export async function createPaymentIntent(params: {
 
     const provider = normalizeProvider(params.providerHint);
 
+    let amountCents = computed.amountCents;
+
     const id = `pay_${b64Url(randomBytes(12))}`;
     const createdAt = nowIso();
 
@@ -536,10 +546,12 @@ export async function createPaymentIntent(params: {
           : 'Complete crypto payment (provider integration pending)';
 
     if (provider === 'pix' && paymentsPixProvider() === 'asaas' && asaasApiKey()) {
+      const mode = String(process.env.ASAAS_ENV || '').trim().toLowerCase();
+      const amountCentsForCharge = mode === 'sandbox' ? Math.max(500, Math.trunc(amountCents)) : Math.trunc(amountCents);
       const asaas = await createAsaasPixCharge({
         tenantId,
         tenantName: tenant.name,
-        amountCents: computed.amountCents,
+        amountCents: amountCentsForCharge,
         description: `Phoenix Zero payment ${id}`,
         externalReference: id
       });
@@ -547,6 +559,8 @@ export async function createPaymentIntent(params: {
       providerPaymentId = asaas.providerPaymentId;
       checkoutUrl = asaas.checkoutUrl;
       instructions = asaas.instructions;
+
+      amountCents = amountCentsForCharge;
     }
 
     if (provider === 'crypto' && paymentsCryptoProvider() === 'nowpayments' && nowPaymentsApiKey()) {
@@ -570,7 +584,7 @@ export async function createPaymentIntent(params: {
       provider,
       status: 'pending',
       currency,
-      amountCents: computed.amountCents,
+      amountCents,
       pricingProfileId,
       pricingVersionId,
       providerPaymentId,
