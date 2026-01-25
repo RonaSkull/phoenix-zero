@@ -25,6 +25,20 @@ export async function POST(req: Request) {
         currency?: string;
         providerHint?: string;
         lineItems?: CheckoutLineItem[];
+        proofMeta?: {
+          agentId?: string;
+          taskId?: string;
+          taskType?: string;
+          taskInputHash?: string;
+          taskOutputHash?: string;
+          agentEd25519PublicKeyB64Url?: string;
+          agentEd25519SignatureB64Url?: string;
+
+          customerContact?: {
+            whatsappNumber?: string;
+            telegramChatId?: string;
+          };
+        };
       };
 
   if (!body || typeof body !== 'object') {
@@ -48,7 +62,8 @@ export async function POST(req: Request) {
     pricingVersionId,
     currency,
     providerHint: String(body.providerHint || '').trim() || undefined,
-    lineItems
+    lineItems,
+    proofMeta: body.proofMeta
   });
 
   if (!out.ok) {
