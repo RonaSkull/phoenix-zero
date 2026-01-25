@@ -12,7 +12,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: PHOENIX_ZERO_TMP_DIR
-        value: /tmp/phoenix-zero/tmp
+        value: /opt/phoenix-zero/tmp
       - key: PHOENIX_ZERO_ADMIN_TOKEN
         generateValue: true
       - key: PAYMENTS_PIX_PROVIDER
