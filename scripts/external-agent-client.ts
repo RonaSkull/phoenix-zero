@@ -244,6 +244,9 @@ async function main() {
     body: {
       id: simEventId,
       event: { id: simEventId },
+      provider: 'pix',
+      providerPaymentId,
+      status: 'paid',
       payment: {
         id: providerPaymentId,
         status: 'CONFIRMED',
@@ -261,6 +264,9 @@ async function main() {
     body: {
       id: simEventId,
       event: { id: simEventId },
+      provider: 'pix',
+      providerPaymentId,
+      status: 'paid',
       payment: {
         id: providerPaymentId,
         status: 'CONFIRMED',
@@ -336,6 +342,9 @@ async function main() {
     body: {
       id: refundEventId,
       event: { id: refundEventId },
+      provider: 'pix',
+      providerPaymentId,
+      status: 'failed',
       payment: {
         id: providerPaymentId,
         status: 'REFUNDED',
