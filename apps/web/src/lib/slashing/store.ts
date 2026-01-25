@@ -12,6 +12,10 @@ function isoAtMs(ms: number): string {
   return new Date(ms).toISOString();
 }
 
+function nowIso(): string {
+  return new Date().toISOString();
+}
+
 function b64Url(buf: Uint8Array): string {
   return Buffer.from(buf)
     .toString('base64')
