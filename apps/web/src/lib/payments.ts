@@ -61,6 +61,21 @@ export type PaymentIntent = {
 
   lineItems: CheckoutLineItem[];
 
+  proofMeta?: {
+    agentId: string;
+    taskId?: string;
+    taskType: string;
+    taskInputHash: string;
+    taskOutputHash: string;
+    agentEd25519PublicKeyB64Url?: string;
+    agentEd25519SignatureB64Url?: string;
+
+    customerContact?: {
+      whatsappNumber?: string;
+      telegramChatId?: string;
+    };
+  };
+
   breakdown: {
     lineTotalsCents: number[];
   };
@@ -467,6 +482,20 @@ export async function createPaymentIntent(params: {
   currency: string;
   providerHint?: string;
   lineItems: CheckoutLineItem[];
+  proofMeta?: {
+    agentId?: string;
+    taskId?: string;
+    taskType?: string;
+    taskInputHash?: string;
+    taskOutputHash?: string;
+    agentEd25519PublicKeyB64Url?: string;
+    agentEd25519SignatureB64Url?: string;
+
+    customerContact?: {
+      whatsappNumber?: string;
+      telegramChatId?: string;
+    };
+  };
 }): Promise<{ ok: true; intent: PaymentIntent } | { ok: false; reason: string }> {
   try {
     const tenantId = String(params.tenantId || '').trim();
@@ -548,6 +577,31 @@ export async function createPaymentIntent(params: {
       checkoutUrl,
       instructions,
       lineItems: items,
+      proofMeta:
+        params.proofMeta &&
+        String(params.proofMeta.agentId || '').trim() &&
+        String(params.proofMeta.taskType || '').trim() &&
+        String(params.proofMeta.taskInputHash || '').trim() &&
+        String(params.proofMeta.taskOutputHash || '').trim()
+          ? {
+              agentId: String(params.proofMeta.agentId || '').trim(),
+              taskId: String(params.proofMeta.taskId || '').trim() || undefined,
+              taskType: String(params.proofMeta.taskType || '').trim(),
+              taskInputHash: String(params.proofMeta.taskInputHash || '').trim(),
+              taskOutputHash: String(params.proofMeta.taskOutputHash || '').trim(),
+              agentEd25519PublicKeyB64Url: String(params.proofMeta.agentEd25519PublicKeyB64Url || '').trim() || undefined,
+              agentEd25519SignatureB64Url: String(params.proofMeta.agentEd25519SignatureB64Url || '').trim() || undefined,
+              customerContact:
+                params.proofMeta.customerContact &&
+                (String(params.proofMeta.customerContact.whatsappNumber || '').trim() ||
+                  String(params.proofMeta.customerContact.telegramChatId || '').trim())
+                  ? {
+                      whatsappNumber: String(params.proofMeta.customerContact.whatsappNumber || '').trim() || undefined,
+                      telegramChatId: String(params.proofMeta.customerContact.telegramChatId || '').trim() || undefined
+                    }
+                  : undefined
+            }
+          : undefined,
       breakdown: { lineTotalsCents: computed.lineTotalsCents }
     };
 
@@ -574,6 +628,9 @@ export async function updatePaymentIntentStatus(params: {
   status: PaymentStatus;
   provider?: PaymentProvider;
   providerPaymentId?: string;
+  paidAt?: string;
+  sourceEventId?: string;
+  lastUpdatedBy?: string;
 }): Promise<{ ok: true; intent: PaymentIntent } | { ok: false; reason: string }> {
   try {
     const paymentId = String(params.paymentId || '').trim();
@@ -622,6 +679,39 @@ export async function updatePaymentIntentStatus(params: {
 
     db.intents[paymentId] = next;
     await saveDb(db);
+
+    if (!wasPaid && status === 'paid') {
+      await import('./payment-proofs')
+        .then(async (m) => {
+          const proof = await m.ensurePaymentProofForIntent(next);
+          if (!proof) return;
+
+          await import('./settlement/store')
+            .then((s) =>
+              s.ensureSettlementForProof({
+                proof,
+                paidAt: String(params.paidAt || '').trim() || undefined,
+                sourceEventId: String(params.sourceEventId || '').trim() || undefined,
+                lastUpdatedBy: String(params.lastUpdatedBy || '').trim() || 'system'
+              })
+            )
+            .catch((e) => {
+              const message = e instanceof Error ? e.message : String(e);
+              console.warn('[SETTLEMENT] ensure failed', { paymentId: next.id, proofId: proof.id, message });
+            });
+
+          await import('./customer-notify')
+            .then((n) => n.notifyCustomerForPaidProof({ proofId: proof.id }))
+            .catch((e) => {
+              const message = e instanceof Error ? e.message : String(e);
+              console.warn('[CUSTOMER_NOTIFY] failed', { paymentId: next.id, proofId: proof.id, message });
+            });
+        })
+        .catch((e) => {
+          const message = e instanceof Error ? e.message : String(e);
+          console.warn('[PPO] ensure failed', { paymentId: next.id, provider: next.provider, providerPaymentId: next.providerPaymentId, message });
+        });
+    }
     return { ok: true, intent: next };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Unknown error';
