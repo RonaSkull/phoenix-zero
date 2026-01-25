@@ -10,6 +10,21 @@ function jsonUtf8Headers(extra: Record<string, string> = {}): Record<string, str
   };
 }
 
+function paidAtFromBody(body: any): string | undefined {
+  const t = String(
+    body?.payment?.confirmedDate ||
+      body?.payment?.paymentDate ||
+      body?.payment?.clientPaymentDate ||
+      body?.payment?.dateCreated ||
+      body?.event?.payment?.confirmedDate ||
+      body?.event?.payment?.paymentDate ||
+      body?.event?.payment?.clientPaymentDate ||
+      body?.event?.payment?.dateCreated ||
+      ''
+  ).trim();
+  return t || undefined;
+}
+
 export async function POST(req: Request) {
   const expectedToken = String(process.env.ASAAS_WEBHOOK_SECRET || '').trim();
   if (expectedToken) {
@@ -77,12 +92,29 @@ export async function POST(req: Request) {
       await markWebhookEventProcessed({ provider: 'asaas', eventId });
     }
     return Response.json(
-      { ok: true, ignored: true, reason: 'Unknown payment (missing providerPaymentId mapping)' },
+      {
+        ok: true,
+        ignored: true,
+        reason: 'Unknown payment (missing providerPaymentId mapping)',
+        providerPaymentId,
+        asaasPaymentId,
+        asaasStatusRaw,
+        normalizedStatus: status,
+        eventId
+      },
       { status: 200, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
     );
   }
 
-  const res = await updatePaymentIntentStatus({ paymentId, status, provider: 'pix', providerPaymentId });
+  const res = await updatePaymentIntentStatus({
+    paymentId,
+    status,
+    provider: 'pix',
+    providerPaymentId,
+    paidAt: paidAtFromBody(body),
+    sourceEventId: eventId || undefined,
+    lastUpdatedBy: 'webhook:asaas'
+  });
 
   if (!res.ok) {
     return Response.json({ ok: false, reason: res.reason }, { status: 400, headers: jsonUtf8Headers() });
@@ -92,5 +124,29 @@ export async function POST(req: Request) {
     await markWebhookEventProcessed({ provider: 'asaas', eventId });
   }
 
-  return Response.json({ ok: true }, { status: 200, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) });
+  const shouldRevert = asaasStatusRaw === 'REFUNDED' || asaasStatusRaw === 'CHARGEBACK_REQUESTED';
+  if (shouldRevert && providerPaymentId) {
+    await import('../../../../lib/payment-proofs')
+      .then((m) => m.getPaymentProofByProviderPaymentId({ provider: 'pix', providerPaymentId }))
+      .then(async (proof) => {
+        if (!proof) return;
+        await import('../../../../lib/settlement/store').then((s) =>
+          s.revertSettlement({ proofId: proof.id, sourceEventId: eventId || undefined, lastUpdatedBy: 'webhook:asaas' })
+        );
+      })
+      .catch(() => {
+      });
+  }
+
+  return Response.json(
+    {
+      ok: true,
+      updated: true,
+      paymentId,
+      providerPaymentId,
+      normalizedStatus: status,
+      eventId
+    },
+    { status: 200, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
+  );
 }
