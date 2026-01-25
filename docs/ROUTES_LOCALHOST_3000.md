@@ -67,6 +67,17 @@ A ideia é você conseguir olhar para a árvore e entender:
     - `pageUrl` (opcional, contexto)
 - **Status:** **Pronta**.
 
+### `/verify/[proofId]` (PPO público — verificação pública por id)
+- **O que é (produto):** página pública para validar e exibir uma prova de pagamento (PPO) confirmada, compartilhável por link.
+- **Parte técnica:** `apps/web/src/app/verify/[proofId]/page.tsx`.
+  - Carrega o PPO por `proofId` e exibe JSON público.
+- **Status:** **Pronta**.
+
+### `/provas` (PPO público — lista)
+- **O que é (produto):** lista pública das últimas provas confirmadas (`paid_confirmed`).
+- **Parte técnica:** `apps/web/src/app/provas/page.tsx`.
+- **Status:** **Pronta**.
+
 ### `/verify-image` (UI de verificação por URL — imagem)
 - **O que é (produto):** UI equivalente ao `/verify`, mas para imagens.
 - **Parte técnica:** `apps/web/src/app/verify-image/page.tsx` + `verify-image-client`.
@@ -395,6 +406,72 @@ Esses arquivos são servidos diretamente do `public/` e ficam disponíveis em `h
     - `what=events|watchlist`
     - `limit=N`
 - **Status:** **Pronta** (ferramenta interna).
+
+---
+
+## 5.4) API de pagamentos + PPO (agentic)
+
+Essas rotas fecham o loop de monetização e execução condicional:
+
+### Checkout / PaymentIntent
+
+### `POST /api/checkout/create`
+- **Produto:** cria uma intenção de pagamento (checkout) com provider plugável.
+- **Status:** **Pronta**.
+
+### `GET /api/checkout/status?paymentId=...`
+- **Produto:** consulta status do pagamento.
+- **Status:** **Pronta**.
+
+### Webhooks
+
+### `POST /api/webhooks/pix`
+- **Produto:** reconcilia status PIX (Asaas) por `providerPaymentId`.
+- **Auth (quando configurado):** header `asaas-access-token` deve bater `ASAAS_WEBHOOK_SECRET`.
+- **Status:** **Pronta**.
+
+### `POST /api/webhooks/nowpayments`
+- **Produto:** reconcilia status cripto por `providerPaymentId`.
+- **Auth (quando configurado):** header `x-nowpayments-sig` (HMAC) com `NOWPAYMENTS_IPN_SECRET`.
+- **Status:** **Pronta**.
+
+### PPO (Payment Proof Object)
+
+### `GET /api/payment-proofs/[id]`
+- **Produto:** consulta um PPO por id (read-only, escopado por tenant).
+- **Status:** **Pronta**.
+
+### Agentic PPO endpoints
+
+### `GET /api/agents/[agentId]/proofs`
+- **Produto:** lista PPOs do agente (tenant-scoped).
+- **Status:** **Pronta**.
+
+### `GET /api/agents/[agentId]/ledger`
+- **Produto:** ledger derivado (read-only) + `rootHashB64Url`.
+- **Status:** **Pronta**.
+
+### `GET /api/agents/[agentId]/gate`
+- **Produto:** autorização para executar por `taskId`/`taskType` (opcional `requireSignature=1`).
+- **Status:** **Pronta**.
+
+### `POST /api/agents/[agentId]/execute`
+- **Produto:** endpoint mínimo de execução protegida (usado pelo stress test L11/L12).
+- **Status:** **Pronta**.
+
+### Settlement (liquidação/reversão)
+
+### `GET /api/agents/[agentId]/settlements`
+- **Produto:** lista settlements do agente (tenant-scoped).
+- **Status:** **Pronta**.
+
+### `POST /api/admin/settlement/advance`
+- **Produto:** avança settlements pendentes para `settled` (admin).
+- **Status:** **Pronta**.
+
+### `POST /api/admin/settlement/revert`
+- **Produto:** reverte settlement (ex.: refund/chargeback) (admin).
+- **Status:** **Pronta**.
 
 ---
 

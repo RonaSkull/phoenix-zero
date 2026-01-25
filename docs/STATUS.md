@@ -113,11 +113,57 @@ Observação: o `temporal.hashB64Url` pode mudar após re-encode (o que é esper
 - Webhooks com reconciliação por `providerPaymentId` + hardening mínimo (token/IPN + idempotência): implementado.
 - Quando `PaymentIntent.status=paid`: transiciona `BillingAccount.status=paid` e registra evento `payment_received` no `usage-ledger`: implementado.
 - Guardrails de produto (endpoints de valor exigem `BillingAccount` ativo e retornam `402 Payment required` quando bloqueado): implementado.
+- Pricing/amount:
+  - `lineItems.operation` aceita aliases (ex.: `video_protection`) e é normalizado para operações canônicas (`protect_video`, etc.).
+  - Em `ASAAS_ENV=sandbox`, o valor do PIX segue mínimo de `500` centavos e o `amountCents` do `PaymentIntent` fica consistente com o cobrado.
+
+### PPO + Agent Ledger + Gate (agentic)
+
+- PPO (Payment Proof Object): derivado de pagamentos `paid`, persistido em `payment-proofs.json`: implementado.
+- Verificação de identidade (Ed25519) para `proofMeta` (L7+): implementado.
+- Agent Ledger read-only com hash determinístico `rootHashB64Url`: implementado.
+- PPO Gate (`GET /api/agents/[agentId]/gate`): implementado.
+- Enforcement no ponto de execução (server-side): `executeWithPPOGate()` (`apps/web/src/lib/ppo-gate.ts`) + endpoint mínimo `POST /api/agents/[agentId]/execute`: implementado.
+
+PPO público (link compartilhável):
+- Página pública da prova: `/verify/<proofId>`: implementado.
+- Lista pública: `/provas` (últimas `paid_confirmed`): implementado.
+
+Settlement (liquidação/reversão):
+- `GET /api/agents/[agentId]/settlements`: implementado.
+- `POST /api/admin/settlement/advance`: implementado.
+- `POST /api/admin/settlement/revert`: implementado.
+
+Validação:
+- `agentic-stress-test.ts`: L1-L22 OK (L3 depende de `ASAAS_API_KEY` para criar PaymentIntent PIX via Asaas).
+
+Notas de operação:
+- Se o backend estiver com `ASAAS_WEBHOOK_SECRET` setado, o stress test também precisa ter `ASAAS_WEBHOOK_SECRET` (para enviar o header `asaas-access-token`). Caso contrário, testes PIX ficam `SKIPPED` por `401`.
+- Documentação step-by-step: `docs/AGENTIC_STRESS_TEST_RUNBOOK.md`.
+
+Documentos de auditoria/overview:
+- Threat model: `docs/THREAT_MODEL.md`
+- Fluxo de arquitetura: `docs/ARCHITECTURE_FLOW.md`
+- Invariantes: `docs/INVARIANTS.md`
+- Glossário: `docs/GLOSSARY.md`
+- Checklist de segurança: `docs/SECURITY_CHECKLIST.md`
+- Template de case real: `docs/CASE_REAL_PHOENIX_ZERO.md`
+
+Nota de segurança:
+- Se secrets foram expostos em texto (admin token, Asaas key/secret), revogue/rotacione e substitua por novos. Não armazene secrets em docs.
 
 ### Pendente
 - “Locking” de períodos com regras (idempotência por janela, evitar snapshots duplicados).
 - Domínio + hospedagem para registrar webhooks reais em produção.
 - Stripe (pagamento real) + validação de assinatura do webhook.
+
+### Próximo passo (agentic payments)
+
+- Habilitar modo real do Asaas (quando `ASAAS_API_KEY` estiver disponível) e rodar o stress test em `AGENTIC_STRESS_REAL=1`.
+- Persistência/produção:
+  - configurar disco persistente no Render e setar `PHOENIX_ZERO_TMP_DIR` para evitar perda de estado (intents/PPO/settlements) em restart/múltiplas instâncias.
+  - adicionar observabilidade (logs/alerts) para falhas de webhook, dedupe e assinatura inválida.
+- Notificação WhatsApp (Z-API): configurar credenciais e validar envio 1x após `paid_confirmed`.
 
 ## QA / Anti-bypass
 

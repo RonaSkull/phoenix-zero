@@ -26,7 +26,21 @@ O foco é manter um **contrato único e estável** de checkout para clientes e a
 - Webhooks:
   - `POST /api/webhooks/pix` (Asaas + payload normalizado; token + idempotência): **ok**
   - `POST /api/webhooks/stripe` (normalizado; stub): **ok**
-  - `POST /api/webhooks/nowpayments` (invoice real por env; assinatura IPN + idempotência): **ok**
+  - `POST /api/webhooks/nowpayments` (invoice real por env; assinatura IPN + idempotência; webhook reconcilia por providerPaymentId): **ok**
+
+### PPO / prova pública / settlement (loop completo)
+- PPO (Payment Proof Object) criado automaticamente quando `PaymentIntent.status=paid`: **ok**
+- Prova pública:
+  - `/verify/<proofId>`: **ok**
+  - `/provas` (lista pública das últimas `paid_confirmed`): **ok**
+- Settlement (liquidação/reversão): **ok**
+  - `GET /api/agents/<agentId>/settlements`
+  - `POST /api/admin/settlement/advance`
+  - `POST /api/admin/settlement/revert`
+
+### Pricing/amount (consistência)
+- `lineItems.operation` aceita aliases (ex.: `video_protection`) e é normalizado para operações canônicas do pricing (`protect_video`, etc.): **ok**
+- Em `ASAAS_ENV=sandbox`, o PIX respeita mínimo de `500` centavos e o `amountCents` gravado no `PaymentIntent`/PPO/settlement fica consistente com o cobrado: **ok**
 
 ### Billing (dinheiro → produto)
 - `BillingAccount` (persistência em `tmp/billing-accounts.json`): **ok**
@@ -47,6 +61,7 @@ Isso significa:
 - **Aprovação do cadastro/limites** no Asaas (quando aplicável)
 - **Domínio + hospedagem** para registrar webhooks reais em produção
 - **Stripe**: integrar pagamento real e validar assinatura do webhook (`stripe-signature`)
+- **Persistência (Render)**: configurar disco persistente e setar `PHOENIX_ZERO_TMP_DIR` para evitar perda de estado em restart/múltiplas instâncias
 
 ---
 
@@ -186,6 +201,11 @@ Atualmente aceita:
 Hardening implementado:
 - valida `asaas-access-token` quando `ASAAS_WEBHOOK_SECRET` estiver setado
 - idempotência por `eventId`
+
+Nota (local / stress test):
+- o `401` no webhook quase sempre significa que o processo do backend não está com `ASAAS_WEBHOOK_SECRET` setado (ou está com valor diferente do enviado).
+- o `agentic-stress-test.ts` só envia o header `asaas-access-token` quando `ASAAS_WEBHOOK_SECRET` também está setado no processo do stress test.
+- se você mudar env vars, reinicie o backend (`npm run dev:web`).
 
 ---
 
