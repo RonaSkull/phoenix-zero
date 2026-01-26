@@ -2,7 +2,11 @@ const webpack = require('webpack');
 
 module.exports = (phase) => {
   return {
-    experimental: { externalDir: true, serverComponentsExternalPackages: ['sharp'] },
+    experimental: {
+      externalDir: true,
+      serverComponentsExternalPackages: ['sharp']
+    },
+    allowedDevOrigins: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5173'],
     transpilePackages: ['@phoenix-zero/core'],
     distDir: '.next',
     async headers() {

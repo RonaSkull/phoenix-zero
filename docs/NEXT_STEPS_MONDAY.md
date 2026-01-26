@@ -8,6 +8,13 @@
   - Asaas (sandbox e/ou produção) está pedindo **validação por SMS** para liberar a integração/chave.
   - Isso impede configurar `ASAAS_API_KEY` agora.
 
+## Status técnico (local)
+
+- PPO + Gate + Enforcement: implementado.
+- `agentic-stress-test.ts`:
+  - L1-L12: OK (quando `ASAAS_WEBHOOK_SECRET` está setado no processo do backend e no stress test)
+  - L3: SKIPPED quando `ASAAS_API_KEY` não está configurado
+
 ## O que dá pra fazer hoje (sem Asaas): testar NOWPayments (cripto)
 
 ### Observação sobre SMS
@@ -108,6 +115,9 @@ No Render → Service → Environment:
 - `ASAAS_API_KEY=...` (secret)
 - `ASAAS_WEBHOOK_SECRET=...` (já existe no Blueprint; copiar valor para o Asaas)
 
+Nota:
+- em DEV/local, se `ASAAS_WEBHOOK_SECRET` estiver setado, o webhook PIX exige o header `asaas-access-token`. Se você alterar env vars, reinicie o backend.
+
 ### 3) Webhook no Asaas
 
 No Asaas → Integrações → Webhooks:
@@ -145,3 +155,18 @@ npx tsx .\agentic-stress-test.ts
 
 - **Nunca commitar** `ASAAS_API_KEY`, `NOWPAYMENTS_API_KEY`, `NOWPAYMENTS_IPN_SECRET`.
 - Guardar apenas no Render → Environment.
+
+## Próximos passos (pós-L12)
+
+1) Habilitar testes reais do Asaas
+- configurar `ASAAS_API_KEY` (sandbox primeiro)
+- rodar `AGENTIC_STRESS_REAL=1` com PIX real
+
+2) Introduzir settlement (L13+)
+- separar: PPO (pagamento confirmado) vs saldo liquidado (settled)
+- adicionar estado de settlement em eventos de valor e/ou ledger derivado
+
+3) Hardening de produção
+- rotação de secrets (`ASAAS_WEBHOOK_SECRET`, IPN)
+- observabilidade (logs/alerts por falhas de webhook, dedupe, invalid signature)
+- testes de regressão no CI (dry-run)

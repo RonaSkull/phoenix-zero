@@ -62,6 +62,14 @@ Um log append-only (jsonl) que registra:
 - eventos de valor (ex: `payment_received`)
 - contexto, preço, plano, pilUnits
 
+### E) PPO + Gate + Enforcement (execução condicional)
+
+Para fechar o loop de **pagamento → execução**, o sistema usa:
+
+- PPO (Payment Proof Object): prova determinística derivada de `PaymentIntent.status=paid`
+- PPO Gate: autorização por `agentId` + `taskId`/`taskType`
+- Enforcement: wrapper server-side obrigatório para ações com efeito real
+
 ---
 
 ## Implementação no Phoenix Zero (onde fica cada peça)
@@ -115,6 +123,12 @@ O agente deve guardar:
 - `checkoutUrl`
 - `instructions`
 
+Opcional (recomendado para agentic hardening):
+- `proofMeta.taskId`
+- assinatura Ed25519 do `proofMeta`:
+  - `agentEd25519PublicKeyB64Url`
+  - `agentEd25519SignatureB64Url`
+
 ### 3) Agente aguarda confirmação
 Polling mínimo:
 - `GET /api/checkout/status?paymentId=...`
@@ -133,8 +147,16 @@ Ao transicionar pra `paid`:
 - registra `payment_received` no ledger
 
 ### 6) Produto libera execução
-O produto (ou o agente) consulta:
+O produto (ou o agente) consulta guardrails por duas camadas:
+
+1) Guardrail por tenant (acesso geral):
 - `GET /api/billing/account` → `isActive`
+
+2) Guardrail por tarefa (capacidade agentic):
+- `GET /api/agents/[agentId]/gate?taskId=...&requireSignature=1`
+
+E a execução com efeito real deve passar por:
+- `executeWithPPOGate()` (`apps/web/src/lib/ppo-gate.ts`)
 
 ---
 

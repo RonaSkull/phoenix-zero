@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { postgresEnabled, readKvJson, writeKvJson } from './pg-kv';
 import { phoenixZeroTmpDir } from './tmp-dir';
 import { activateBillingAccount } from './billing-accounts';
 import { getTenantById } from './tenants';
@@ -137,29 +138,43 @@ async function readJsonMaybe<T>(path: string): Promise<T | null> {
 }
 
 async function loadDb(): Promise<PaymentsDb> {
-  const json = await readJsonMaybe<any>(dbPath());
-  if (!json || (json.version !== 1 && json.version !== 2)) {
-    return { version: 2, intents: {}, asaasCustomerByTenantId: {} };
-  }
+  const kvKey = 'payment-intents';
+  const jsonFromPg = postgresEnabled() ? await readKvJson<any>(kvKey) : null;
+  const jsonFromFile = jsonFromPg ? null : await readJsonMaybe<any>(dbPath());
+  const json = jsonFromPg || jsonFromFile;
 
-  if (json.version === 2) {
-    return {
+  let normalized: PaymentsDb;
+  if (!json || (json.version !== 1 && json.version !== 2)) {
+    normalized = { version: 2, intents: {}, asaasCustomerByTenantId: {} };
+  } else if (json.version === 2) {
+    normalized = {
       version: 2,
       intents: typeof json.intents === 'object' && json.intents ? json.intents : {},
       asaasCustomerByTenantId:
         typeof json.asaasCustomerByTenantId === 'object' && json.asaasCustomerByTenantId ? json.asaasCustomerByTenantId : {}
     };
+  } else {
+    const v1 = json as PaymentsDbV1;
+    normalized = {
+      version: 2,
+      intents: typeof v1.intents === 'object' && v1.intents ? v1.intents : {},
+      asaasCustomerByTenantId: {}
+    };
   }
 
-  const v1 = json as PaymentsDbV1;
-  return {
-    version: 2,
-    intents: typeof v1.intents === 'object' && v1.intents ? v1.intents : {},
-    asaasCustomerByTenantId: {}
-  };
+  if (!jsonFromPg && jsonFromFile && postgresEnabled()) {
+    await writeKvJson(kvKey, normalized);
+  }
+
+  return normalized;
 }
 
 async function saveDb(db: PaymentsDb): Promise<void> {
+  const kvKey = 'payment-intents';
+  if (postgresEnabled()) {
+    await writeKvJson(kvKey, db);
+    return;
+  }
   await mkdir(phoenixZeroTmpDir(), { recursive: true });
   await writeFile(dbPath(), JSON.stringify(db, null, 2) + '\n', 'utf8');
 }

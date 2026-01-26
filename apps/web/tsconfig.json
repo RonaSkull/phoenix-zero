@@ -3,7 +3,8 @@
   "compilerOptions": {
     "jsx": "preserve",
     "types": [
-      "node"
+      "node",
+      "pg"
     ],
     "plugins": [
       {

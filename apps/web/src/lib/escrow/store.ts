@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { postgresEnabled, readKvJson, writeKvJson } from '../pg-kv';
 import { phoenixZeroTmpDir } from '../tmp-dir';
 import { computeAgentLedger } from '../agent-ledger';
 
@@ -33,18 +34,32 @@ async function readJsonMaybe<T>(path: string): Promise<T | null> {
 }
 
 async function loadDb(): Promise<EscrowDb> {
-  const json = await readJsonMaybe<any>(dbPath());
-  if (!json || json.version !== 1) {
-    return { version: 1, entries: {}, byIdempotencyKey: {} };
+  const kvKey = 'escrow';
+  const jsonFromPg = postgresEnabled() ? await readKvJson<any>(kvKey) : null;
+  const jsonFromFile = jsonFromPg ? null : await readJsonMaybe<any>(dbPath());
+  const json = jsonFromPg || jsonFromFile;
+
+  const normalized: EscrowDb = !json || json.version !== 1
+    ? { version: 1, entries: {}, byIdempotencyKey: {} }
+    : {
+        version: 1,
+        entries: typeof json.entries === 'object' && json.entries ? json.entries : {},
+        byIdempotencyKey: typeof json.byIdempotencyKey === 'object' && json.byIdempotencyKey ? json.byIdempotencyKey : {}
+      };
+
+  if (!jsonFromPg && jsonFromFile && postgresEnabled()) {
+    await writeKvJson(kvKey, normalized);
   }
-  return {
-    version: 1,
-    entries: typeof json.entries === 'object' && json.entries ? json.entries : {},
-    byIdempotencyKey: typeof json.byIdempotencyKey === 'object' && json.byIdempotencyKey ? json.byIdempotencyKey : {}
-  };
+
+  return normalized;
 }
 
 async function saveDb(db: EscrowDb): Promise<void> {
+  const kvKey = 'escrow';
+  if (postgresEnabled()) {
+    await writeKvJson(kvKey, db);
+    return;
+  }
   await mkdir(phoenixZeroTmpDir(), { recursive: true });
   await writeFile(dbPath(), JSON.stringify(db, null, 2) + '\n', 'utf8');
 }

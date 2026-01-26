@@ -7,6 +7,13 @@
   "scripts": {
     "bootstrap": "npm install && npm --prefix ./apps/web install && npm --prefix ./apps/mobile install",
     "make:testvideo": "tsx ./scripts/phoenix-zero-make-test-video.ts",
+    "test:agentic": "tsx ./agentic-stress-test.ts",
+    "test:agentic:real": "powershell -NoProfile -Command \"$env:AGENTIC_STRESS_REAL='1'; $env:AGENTIC_STRESS_REAL_PROVIDER='pix'; tsx ./agentic-stress-test.ts\"",
+    "test:agentic:real:pix": "powershell -NoProfile -Command \"$env:AGENTIC_STRESS_REAL='1'; $env:AGENTIC_STRESS_REAL_PROVIDER='pix'; tsx ./agentic-stress-test.ts\"",
+    "test:agentic:real:crypto": "powershell -NoProfile -Command \"$env:AGENTIC_STRESS_REAL='1'; $env:AGENTIC_STRESS_REAL_PROVIDER='crypto'; tsx ./agentic-stress-test.ts\"",
+    "test:agentic:e2e": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/agentic-stress-e2e.ps1 -Mode deterministic",
+    "test:agentic:e2e:real:pix": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/agentic-stress-e2e.ps1 -Mode real:pix",
+    "test:agentic:e2e:real:crypto": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/agentic-stress-e2e.ps1 -Mode real:crypto",
     "dev:web": "npm --prefix ./apps/web run dev",
     "start:web": "npm --prefix ./apps/web run start --",
     "dev:mobile": "npm --prefix ./apps/mobile run start",

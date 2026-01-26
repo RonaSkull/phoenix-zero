@@ -2,6 +2,7 @@ import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { postgresEnabled, readKvJson, writeKvJson } from './pg-kv';
 import { phoenixZeroTmpDir } from './tmp-dir';
 
 export type TenantStatus = 'active' | 'paused';
@@ -150,27 +151,56 @@ export async function resolveTenantBySessionToken(sessionToken: string): Promise
 }
 
 async function loadTenantsDb(): Promise<TenantsDb> {
-  const json = await readJsonMaybe<TenantsDb>(tenantsDbPath());
-  if (!json || json.version !== 1 || typeof json.tenants !== 'object' || typeof json.apiKeyHashIndex !== 'object') {
-    return { version: 1, tenants: {}, apiKeyHashIndex: {} };
+  const kvKey = 'tenants';
+  const jsonFromPg = postgresEnabled() ? await readKvJson<TenantsDb>(kvKey) : null;
+  const jsonFromFile = jsonFromPg ? null : await readJsonMaybe<TenantsDb>(tenantsDbPath());
+  const json = jsonFromPg || jsonFromFile;
+
+  const normalized: TenantsDb =
+    !json || json.version !== 1 || typeof (json as any).tenants !== 'object' || typeof (json as any).apiKeyHashIndex !== 'object'
+      ? { version: 1, tenants: {}, apiKeyHashIndex: {} }
+      : json;
+
+  if (!jsonFromPg && jsonFromFile && postgresEnabled()) {
+    await writeKvJson(kvKey, normalized);
   }
-  return json;
+
+  return normalized;
 }
 
 async function saveTenantsDb(db: TenantsDb): Promise<void> {
+  const kvKey = 'tenants';
+  if (postgresEnabled()) {
+    await writeKvJson(kvKey, db);
+    return;
+  }
   await mkdir(phoenixZeroTmpDir(), { recursive: true });
   await writeFile(tenantsDbPath(), JSON.stringify(db, null, 2) + '\n', 'utf8');
 }
 
 async function loadTenantSessionsDb(): Promise<TenantSessionsDb> {
-  const json = await readJsonMaybe<TenantSessionsDb>(tenantSessionsDbPath());
-  if (!json || json.version !== 1 || typeof json.sessions !== 'object') {
-    return { version: 1, sessions: {} };
+  const kvKey = 'tenant-sessions';
+  const jsonFromPg = postgresEnabled() ? await readKvJson<TenantSessionsDb>(kvKey) : null;
+  const jsonFromFile = jsonFromPg ? null : await readJsonMaybe<TenantSessionsDb>(tenantSessionsDbPath());
+  const json = jsonFromPg || jsonFromFile;
+
+  const normalized: TenantSessionsDb = !json || json.version !== 1 || typeof (json as any).sessions !== 'object'
+    ? { version: 1, sessions: {} }
+    : json;
+
+  if (!jsonFromPg && jsonFromFile && postgresEnabled()) {
+    await writeKvJson(kvKey, normalized);
   }
-  return json;
+
+  return normalized;
 }
 
 async function saveTenantSessionsDb(db: TenantSessionsDb): Promise<void> {
+  const kvKey = 'tenant-sessions';
+  if (postgresEnabled()) {
+    await writeKvJson(kvKey, db);
+    return;
+  }
   await mkdir(phoenixZeroTmpDir(), { recursive: true });
   await writeFile(tenantSessionsDbPath(), JSON.stringify(db, null, 2) + '\n', 'utf8');
 }

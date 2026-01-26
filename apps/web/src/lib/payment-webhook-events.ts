@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { postgresEnabled, readKvJson, writeKvJson } from './pg-kv';
 import { phoenixZeroTmpDir } from './tmp-dir';
 
 type WebhookEventsDb = {
@@ -26,14 +27,28 @@ async function readJsonMaybe<T>(path: string): Promise<T | null> {
 }
 
 async function loadDb(): Promise<WebhookEventsDb> {
-  const json = await readJsonMaybe<WebhookEventsDb>(dbPath());
-  if (!json || json.version !== 1 || typeof json.processed !== 'object' || !json.processed) {
-    return { version: 1, processed: {} };
+  const kvKey = 'payment-webhook-events';
+  const jsonFromPg = postgresEnabled() ? await readKvJson<WebhookEventsDb>(kvKey) : null;
+  const jsonFromFile = jsonFromPg ? null : await readJsonMaybe<WebhookEventsDb>(dbPath());
+  const json = jsonFromPg || jsonFromFile;
+
+  const normalized: WebhookEventsDb = !json || json.version !== 1 || typeof json.processed !== 'object' || !json.processed
+    ? { version: 1, processed: {} }
+    : json;
+
+  if (!jsonFromPg && jsonFromFile && postgresEnabled()) {
+    await writeKvJson(kvKey, normalized);
   }
-  return json;
+
+  return normalized;
 }
 
 async function saveDb(db: WebhookEventsDb): Promise<void> {
+  const kvKey = 'payment-webhook-events';
+  if (postgresEnabled()) {
+    await writeKvJson(kvKey, db);
+    return;
+  }
   await mkdir(phoenixZeroTmpDir(), { recursive: true });
   await writeFile(dbPath(), JSON.stringify(db, null, 2) + '\n', 'utf8');
 }

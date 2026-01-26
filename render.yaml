@@ -11,6 +11,10 @@ services:
         value: 20
       - key: NODE_ENV
         value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: PGSSLMODE
+        value: require
       - key: PHOENIX_ZERO_TMP_DIR
         value: /tmp/phoenix-zero/tmp
       - key: PHOENIX_ZERO_ADMIN_TOKEN

@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { postgresEnabled, readKvJson, writeKvJson } from '../pg-kv';
 import { phoenixZeroTmpDir } from '../tmp-dir';
 import { computeAgentLedger } from '../agent-ledger';
 import { getPaymentProofById } from '../payment-proofs';
@@ -38,20 +39,34 @@ async function readJsonMaybe<T>(path: string): Promise<T | null> {
 }
 
 async function loadDb(): Promise<SlashingDb> {
-  const json = await readJsonMaybe<any>(dbPath());
-  if (!json || json.version !== 1) {
-    return { version: 1, events: {}, byIdempotencyKey: {} };
+  const kvKey = 'slashing';
+  const jsonFromPg = postgresEnabled() ? await readKvJson<any>(kvKey) : null;
+  const jsonFromFile = jsonFromPg ? null : await readJsonMaybe<any>(dbPath());
+  const json = jsonFromPg || jsonFromFile;
+
+  const normalized: SlashingDb = !json || json.version !== 1
+    ? { version: 1, events: {}, byIdempotencyKey: {} }
+    : {
+        version: 1,
+        events: typeof json.events === 'object' && json.events ? json.events : {},
+        byIdempotencyKey:
+          (typeof json.byIdempotencyKey === 'object' && json.byIdempotencyKey ? json.byIdempotencyKey : null) ||
+          (typeof json.byKey === 'object' && json.byKey ? json.byKey : {})
+      };
+
+  if (!jsonFromPg && jsonFromFile && postgresEnabled()) {
+    await writeKvJson(kvKey, normalized);
   }
-  return {
-    version: 1,
-    events: typeof json.events === 'object' && json.events ? json.events : {},
-    byIdempotencyKey:
-      (typeof json.byIdempotencyKey === 'object' && json.byIdempotencyKey ? json.byIdempotencyKey : null) ||
-      (typeof json.byKey === 'object' && json.byKey ? json.byKey : {})
-  };
+
+  return normalized;
 }
 
 async function saveDb(db: SlashingDb): Promise<void> {
+  const kvKey = 'slashing';
+  if (postgresEnabled()) {
+    await writeKvJson(kvKey, db);
+    return;
+  }
   await mkdir(phoenixZeroTmpDir(), { recursive: true });
   await writeFile(dbPath(), JSON.stringify(db, null, 2) + '\n', 'utf8');
 }

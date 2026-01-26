@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { postgresEnabled, readKvJson, writeKvJson } from './pg-kv';
 import { phoenixZeroTmpDir } from './tmp-dir';
 import { getTenantById, listTenants } from './tenants';
 
@@ -39,14 +40,28 @@ async function readJsonMaybe<T>(path: string): Promise<T | null> {
 }
 
 async function loadDb(): Promise<BillingAccountsDb> {
-  const json = await readJsonMaybe<BillingAccountsDb>(dbPath());
-  if (!json || json.version !== 1 || typeof json.accounts !== 'object' || !json.accounts) {
-    return { version: 1, accounts: {} };
+  const kvKey = 'billing-accounts';
+  const jsonFromPg = postgresEnabled() ? await readKvJson<BillingAccountsDb>(kvKey) : null;
+  const jsonFromFile = jsonFromPg ? null : await readJsonMaybe<BillingAccountsDb>(dbPath());
+  const json = jsonFromPg || jsonFromFile;
+
+  const normalized: BillingAccountsDb = !json || json.version !== 1 || typeof (json as any).accounts !== 'object' || !(json as any).accounts
+    ? { version: 1, accounts: {} }
+    : { version: 1, accounts: (json as any).accounts };
+
+  if (!jsonFromPg && jsonFromFile && postgresEnabled()) {
+    await writeKvJson(kvKey, normalized);
   }
-  return { version: 1, accounts: json.accounts };
+
+  return normalized;
 }
 
 async function saveDb(db: BillingAccountsDb): Promise<void> {
+  const kvKey = 'billing-accounts';
+  if (postgresEnabled()) {
+    await writeKvJson(kvKey, db);
+    return;
+  }
   await mkdir(phoenixZeroTmpDir(), { recursive: true });
   await writeFile(dbPath(), JSON.stringify(db, null, 2) + '\n', 'utf8');
 }

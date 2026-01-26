@@ -26,6 +26,23 @@ function safeEqHex(aHex: string, bHex: string): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+function paidAtFromBody(body: any): string | undefined {
+  const t = String(
+    body?.paid_at ||
+      body?.paidAt ||
+      body?.payment_date ||
+      body?.paymentDate ||
+      body?.actually_paid_at ||
+      body?.created_at ||
+      body?.createdAt ||
+      ''
+  ).trim();
+  if (!t) return undefined;
+  const ms = Date.parse(t);
+  if (!Number.isFinite(ms)) return undefined;
+  return new Date(ms).toISOString();
+}
+
 export async function POST(req: Request) {
   const secret = String(process.env.NOWPAYMENTS_IPN_SECRET || '').trim();
   const raw = await req.text().catch(() => '');
@@ -112,7 +129,10 @@ export async function POST(req: Request) {
     paymentId,
     status,
     provider: 'crypto',
-    providerPaymentId
+    providerPaymentId,
+    paidAt: paidAtFromBody(body),
+    sourceEventId: eventId || undefined,
+    lastUpdatedBy: 'webhook:nowpayments'
   });
 
   if (!res.ok) {
@@ -121,6 +141,20 @@ export async function POST(req: Request) {
 
   if (eventId) {
     await markWebhookEventProcessed({ provider: 'nowpayments', eventId });
+  }
+
+  const shouldRevert = paymentStatusRaw === 'refunded';
+  if (shouldRevert && providerPaymentId) {
+    await import('../../../../lib/payment-proofs')
+      .then((m) => m.getPaymentProofByProviderPaymentId({ provider: 'crypto', providerPaymentId }))
+      .then(async (proof) => {
+        if (!proof) return;
+        await import('../../../../lib/settlement/store').then((s) =>
+          s.revertSettlement({ proofId: proof.id, sourceEventId: eventId || undefined, lastUpdatedBy: 'webhook:nowpayments' })
+        );
+      })
+      .catch(() => {
+      });
   }
 
   return Response.json({ ok: true }, { status: 200, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) });
