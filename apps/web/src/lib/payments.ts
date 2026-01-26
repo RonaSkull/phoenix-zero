@@ -652,6 +652,53 @@ export async function getPaymentIntentById(id: string): Promise<PaymentIntent | 
   return db.intents[key] || null;
 }
 
+export async function revalidatePaymentIntentFromProvider(params: {
+  paymentId: string;
+}): Promise<{ ok: true; intent: PaymentIntent } | { ok: false; reason: string }> {
+  try {
+    const paymentId = String(params.paymentId || '').trim();
+    if (!paymentId) return { ok: false, reason: 'Missing paymentId' };
+
+    const db = await loadDb();
+    const existing = db.intents[paymentId];
+    if (!existing) return { ok: false, reason: 'Payment not found' };
+    if (existing.status !== 'pending') return { ok: true, intent: existing };
+
+    const providerPaymentId = String(existing.providerPaymentId || '').trim();
+    if (!providerPaymentId) return { ok: true, intent: existing };
+
+    if (existing.provider === 'pix' && paymentsPixProvider() === 'asaas' && asaasApiKey()) {
+      const res = await asaasFetch(`/v3/payments/${encodeURIComponent(providerPaymentId)}`, { method: 'GET' });
+      if (!res.ok) return { ok: true, intent: existing };
+      const json = (await res.json().catch(() => null)) as any;
+      const asaasStatusRaw = String(json?.status || '').trim().toUpperCase();
+      const status: PaymentStatus =
+        asaasStatusRaw === 'RECEIVED' || asaasStatusRaw === 'CONFIRMED'
+          ? 'paid'
+          : asaasStatusRaw === 'OVERDUE' || asaasStatusRaw === 'REFUNDED' || asaasStatusRaw === 'CHARGEBACK_REQUESTED'
+            ? 'failed'
+            : 'pending';
+
+      if (status !== 'pending') {
+        const updated = await updatePaymentIntentStatus({
+          paymentId,
+          status,
+          provider: 'pix',
+          providerPaymentId,
+          lastUpdatedBy: 'status:asaas'
+        });
+        if (!updated.ok) return { ok: false, reason: updated.reason };
+        return { ok: true, intent: updated.intent };
+      }
+    }
+
+    return { ok: true, intent: existing };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Unknown error';
+    return { ok: false, reason: message };
+  }
+}
+
 export async function updatePaymentIntentStatus(params: {
   paymentId: string;
   status: PaymentStatus;

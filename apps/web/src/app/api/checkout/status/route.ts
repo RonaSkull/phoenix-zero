@@ -1,7 +1,24 @@
 import { requireTenant } from '../../../../lib/tenant-auth';
-import { getPaymentIntentById } from '../../../../lib/payments';
+import { getPaymentIntentById, revalidatePaymentIntentFromProvider } from '../../../../lib/payments';
 
 export const runtime = 'nodejs';
+
+const revalidateCooldownByPaymentId = new Map<string, number>();
+
+function getEnvInt(name: string, fallback: number): number {
+  const raw = String(process.env[name] || '').trim();
+  if (!raw) return fallback;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.floor(n);
+}
+
+function parseIsoMs(maybe: string | undefined): number | null {
+  if (!maybe) return null;
+  const t = Date.parse(maybe);
+  if (!Number.isFinite(t)) return null;
+  return t;
+}
 
 function jsonUtf8Headers(extra: Record<string, string> = {}): Record<string, string> {
   return {
@@ -31,15 +48,33 @@ export async function GET(req: Request) {
     return Response.json({ ok: false, reason: 'Forbidden' }, { status: 403, headers: jsonUtf8Headers() });
   }
 
+  let effective = intent;
+
+  if (effective.status === 'pending') {
+    const now = Date.now();
+    const last = revalidateCooldownByPaymentId.get(paymentId) ?? 0;
+    const cooldownMs = Math.max(250, getEnvInt('PHOENIX_ZERO_CHECKOUT_STATUS_REVALIDATE_COOLDOWN_MS', 10_000));
+
+    const updatedAtMs = parseIsoMs(effective.updatedAt) ?? parseIsoMs(effective.createdAt) ?? null;
+    const ageMs = updatedAtMs !== null ? Math.max(0, now - updatedAtMs) : 0;
+    const afterMs = Math.max(250, getEnvInt('PHOENIX_ZERO_CHECKOUT_STATUS_REVALIDATE_AFTER_MS', 15_000));
+
+    if (ageMs >= afterMs && now - last >= cooldownMs) {
+      revalidateCooldownByPaymentId.set(paymentId, now);
+      const r = await revalidatePaymentIntentFromProvider({ paymentId });
+      if (r.ok) effective = r.intent;
+    }
+  }
+
   return Response.json(
     {
       ok: true,
-      paymentId: intent.id,
-      provider: intent.provider,
-      status: intent.status,
-      amountCents: intent.amountCents,
-      currency: intent.currency,
-      providerPaymentId: intent.providerPaymentId
+      paymentId: effective.id,
+      provider: effective.provider,
+      status: effective.status,
+      amountCents: effective.amountCents,
+      currency: effective.currency,
+      providerPaymentId: effective.providerPaymentId
     },
     { status: 200, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
   );
