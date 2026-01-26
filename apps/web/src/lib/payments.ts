@@ -713,7 +713,12 @@ export async function updatePaymentIntentStatus(params: {
     if (!paymentId) return { ok: false, reason: 'Missing paymentId' };
 
     const statusRaw = String(params.status || '').trim().toLowerCase();
-    const status: PaymentStatus = statusRaw === 'paid' ? 'paid' : statusRaw === 'failed' ? 'failed' : 'pending';
+    const status: PaymentStatus =
+      statusRaw === 'paid' || statusRaw === 'paid_confirmed'
+        ? 'paid'
+        : statusRaw === 'failed'
+          ? 'failed'
+          : 'pending';
 
     const db = await loadDb();
     const existing = db.intents[paymentId];
