@@ -1,4 +1,39 @@
 import { createHash, randomBytes } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+function stripQuotes(v: string): string {
+  const s = String(v || '').trim();
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    return s.slice(1, -1);
+  }
+  return s;
+}
+
+function loadEnvFromFile(filePath: string): void {
+  if (!existsSync(filePath)) return;
+  const raw = readFileSync(filePath, 'utf8');
+  const lines = raw.split(/\r?\n/);
+  for (const lineRaw of lines) {
+    const line = String(lineRaw || '').trim();
+    if (!line || line.startsWith('#')) continue;
+    const idx = line.indexOf('=');
+    if (idx <= 0) continue;
+    const k = line.slice(0, idx).trim();
+    if (!k) continue;
+    if (process.env[k] != null && String(process.env[k]).trim() !== '') continue;
+    const v = stripQuotes(line.slice(idx + 1));
+    process.env[k] = v;
+  }
+}
+
+function loadEnv(): void {
+  const cwd = process.cwd();
+  loadEnvFromFile(resolve(cwd, '.env.local'));
+  loadEnvFromFile(resolve(cwd, '.env'));
+  loadEnvFromFile(resolve(cwd, 'apps', 'web', '.env.local'));
+  loadEnvFromFile(resolve(cwd, 'apps', 'web', '.env'));
+}
 
 function env(name: string): string {
   return String(process.env[name] || '').trim();
@@ -108,6 +143,7 @@ async function httpJsonRetry(params: {
 }
 
 async function main() {
+  loadEnv();
   const baseUrl = (env('PHOENIX_ZERO_BASE_URL') || env('CLIENT_BASE_URL') || 'http://localhost:3000').replace(/\/+$/g, '');
   const adminToken = env('PHOENIX_ZERO_ADMIN_TOKEN');
   const asaasWebhookSecret = env('ASAAS_WEBHOOK_SECRET');
@@ -116,9 +152,17 @@ async function main() {
   console.log(JSON.stringify({ baseUrl }, null, 2));
 
   {
-    const unauth = await httpJson({ method: 'GET', url: `${baseUrl}/api/checkout/status?paymentId=pay_nonexistent` });
-    if (unauth.status !== 401) {
-      console.error('Expected 401 for unauthenticated checkout/status but got:', unauth.status, unauth.text);
+    try {
+      const unauth = await httpJson({ method: 'GET', url: `${baseUrl}/api/checkout/status?paymentId=pay_nonexistent` });
+      if (unauth.status !== 401) {
+        console.error('Expected 401 for unauthenticated checkout/status but got:', unauth.status, unauth.text);
+        process.exitCode = 1;
+        return;
+      }
+    } catch (e: any) {
+      const msg = String(e?.message || e || '');
+      console.error('Failed to reach baseUrl:', JSON.stringify({ baseUrl, message: msg }));
+      console.error('Hint: start the web server (localhost) or set PHOENIX_ZERO_BASE_URL to your Render URL (https://...).');
       process.exitCode = 1;
       return;
     }
@@ -126,6 +170,10 @@ async function main() {
 
   if (!adminToken) {
     console.error('Missing PHOENIX_ZERO_ADMIN_TOKEN (needed to create tenant for the simulation).');
+    console.error('Hint: in PowerShell set env vars like:');
+    console.error("  $env:PHOENIX_ZERO_ADMIN_TOKEN='...'");
+    console.error("  $env:PHOENIX_ZERO_BASE_URL='http://localhost:3000'  # or your Render URL");
+    console.error('Or create a .env.local file in the repo root with those values (gitignored).');
     process.exitCode = 1;
     return;
   }
