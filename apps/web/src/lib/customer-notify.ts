@@ -1,3 +1,5 @@
+import twilio from 'twilio';
+
 import { getPublicBaseUrl } from './social-preview';
 
 import { getPaymentProofById, recordPaymentProofNotification, tryReservePaymentProofNotification } from './payment-proofs';
@@ -44,30 +46,62 @@ async function sendTelegramMessage(params: { chatId: string; text: string }): Pr
   return { ok: true, messageId };
 }
 
-async function sendWhatsappZApiText(params: { phone: string; text: string }): Promise<{ ok: true; messageId?: string } | { ok: false; error: string }> {
-  const instanceId = env('ZAPI_INSTANCE_ID');
-  const instanceToken = env('ZAPI_INSTANCE_TOKEN');
-  if (!instanceId || !instanceToken) return { ok: false, error: 'Missing ZAPI_INSTANCE_ID or ZAPI_INSTANCE_TOKEN' };
+function normalizeE164(input: string): string | null {
+  const raw = String(input || '').trim();
+  if (!raw) return null;
 
-  const clientToken = env('ZAPI_CLIENT_TOKEN');
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return null;
 
-  const url = `https://api.z-api.io/instances/${encodeURIComponent(instanceId)}/token/${encodeURIComponent(instanceToken)}/send-text`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      ...(clientToken ? { 'Client-Token': clientToken } : {})
-    },
-    body: JSON.stringify({ phone: params.phone, message: params.text })
-  });
+  const normalized = raw.startsWith('+') ? `+${digits}` : `+${digits}`;
+  if (!/^\+\d{8,15}$/.test(normalized)) return null;
+  return normalized;
+}
 
-  const json = (await res.json().catch(() => null)) as any;
-  if (!res.ok) {
-    return { ok: false, error: `HTTP ${res.status}` };
+function normalizeWhatsAppAddress(input: string): string | null {
+  const e164 = normalizeE164(input);
+  if (!e164) return null;
+  return `whatsapp:${e164}`;
+}
+
+function normalizeTwilioFromAddress(input: string): string | null {
+  const raw = String(input || '').trim();
+  if (!raw) return null;
+  if (raw.startsWith('whatsapp:')) {
+    const rest = raw.slice('whatsapp:'.length);
+    const e164 = normalizeE164(rest);
+    return e164 ? `whatsapp:${e164}` : null;
+  }
+  const e164 = normalizeE164(raw);
+  return e164 ? `whatsapp:${e164}` : null;
+}
+
+async function sendTwilioWhatsAppMessage(params: {
+  toPhone: string;
+  text: string;
+}): Promise<{ ok: true; messageId?: string } | { ok: false; error: string }> {
+  const accountSid = env('TWILIO_ACCOUNT_SID');
+  const authToken = env('TWILIO_AUTH_TOKEN');
+  const fromEnv = env('TWILIO_WHATSAPP_FROM');
+  if (!accountSid || !authToken || !fromEnv) {
+    return { ok: false, error: 'Missing TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, or TWILIO_WHATSAPP_FROM' };
   }
 
-  const messageId = json?.messageId != null ? String(json.messageId) : json?.id != null ? String(json.id) : undefined;
-  return { ok: true, messageId };
+  const from = normalizeTwilioFromAddress(fromEnv);
+  if (!from) return { ok: false, error: 'Invalid TWILIO_WHATSAPP_FROM (expected E.164 number)' };
+
+  const to = normalizeWhatsAppAddress(params.toPhone);
+  if (!to) return { ok: false, error: 'Invalid whatsappNumber (expected E.164 digits)' };
+
+  try {
+    const client = twilio(accountSid, authToken);
+    const msg = await client.messages.create({ from, to, body: params.text });
+    const messageId = (msg as any)?.sid != null ? String((msg as any).sid) : undefined;
+    return { ok: true, messageId };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return { ok: false, error: message || 'Twilio send failed' };
+  }
 }
 
 export async function notifyCustomerForPaidProof(params: { proofId: string }): Promise<void> {
@@ -102,13 +136,17 @@ export async function notifyCustomerForPaidProof(params: { proofId: string }): P
         providerMessageId: r.ok ? r.messageId : undefined,
         error: r.ok ? undefined : r.error
       });
+
+      if (!r.ok) {
+        console.warn('[CUSTOMER_NOTIFY] telegram send failed', { proofId, error: r.error });
+      }
     }
   }
 
   if (contact.whatsappNumber && !(notified.whatsapp && notified.whatsapp.ok === true)) {
     const reserved = await tryReservePaymentProofNotification({ id: proofId, channel: 'whatsapp', minRetryAfterSeconds: 30 });
     if (reserved.ok) {
-      const r = await sendWhatsappZApiText({ phone: contact.whatsappNumber, text });
+      const r = await sendTwilioWhatsAppMessage({ toPhone: contact.whatsappNumber, text });
       await recordPaymentProofNotification({
         id: proofId,
         channel: 'whatsapp',
@@ -116,6 +154,10 @@ export async function notifyCustomerForPaidProof(params: { proofId: string }): P
         providerMessageId: r.ok ? r.messageId : undefined,
         error: r.ok ? undefined : r.error
       });
+
+      if (!r.ok) {
+        console.warn('[CUSTOMER_NOTIFY] whatsapp send failed', { proofId, error: r.error });
+      }
     }
   }
 }

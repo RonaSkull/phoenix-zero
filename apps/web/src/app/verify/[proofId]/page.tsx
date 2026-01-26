@@ -12,6 +12,20 @@ function trunc(s: string, n: number): string {
   return `${x.slice(0, n)}…`;
 }
 
+function formatAmountMinorForDisplay(amountMinor: number, currency: string): string {
+  const minor = typeof amountMinor === 'number' && Number.isFinite(amountMinor) ? Math.max(0, Math.trunc(amountMinor)) : 0;
+  const code = String(currency || '').trim() || 'USD';
+  try {
+    const nf = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: code });
+    const digits = Math.max(0, Math.min(8, Math.trunc(nf.resolvedOptions().maximumFractionDigits ?? 2)));
+    const major = minor / Math.pow(10, digits);
+    const formatted = nf.format(major);
+    return `${formatted} (${code})`;
+  } catch {
+    return `${minor} (${code})`;
+  }
+}
+
 export default async function VerifyProofPage(props: { params: { proofId: string } }) {
   const proofId = String(props?.params?.proofId || '').trim();
   if (!proofId) notFound();
@@ -35,7 +49,7 @@ export default async function VerifyProofPage(props: { params: { proofId: string
           <div><strong>proofId:</strong> {proof.proofId}</div>
           <div><strong>verifiedAt:</strong> {proof.verifiedAt}</div>
           <div>
-            <strong>payment:</strong> {proof.payment.provider} — {proof.payment.amountCents} cents ({proof.payment.currency})
+            <strong>payment:</strong> {proof.payment.provider} — {formatAmountMinorForDisplay(proof.payment.amountCents, proof.payment.currency)}
           </div>
           <div><strong>taskType:</strong> {proof.task.taskType}</div>
           {proof.task.taskId ? <div><strong>taskId:</strong> {proof.task.taskId}</div> : null}

@@ -10,6 +10,20 @@ function trunc(s: string, n: number): string {
   return `${x.slice(0, n)}…`;
 }
 
+function formatAmountMinorForDisplay(amountMinor: number, currency: string): string {
+  const minor = typeof amountMinor === 'number' && Number.isFinite(amountMinor) ? Math.max(0, Math.trunc(amountMinor)) : 0;
+  const code = String(currency || '').trim() || 'USD';
+  try {
+    const nf = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: code });
+    const digits = Math.max(0, Math.min(8, Math.trunc(nf.resolvedOptions().maximumFractionDigits ?? 2)));
+    const major = minor / Math.pow(10, digits);
+    const formatted = nf.format(major);
+    return `${formatted} (${code})`;
+  } catch {
+    return `${minor} (${code})`;
+  }
+}
+
 export default async function ProvasPage() {
   const raw = await listPaymentProofs({ status: 'paid_confirmed', limit: 20 });
   const proofs = raw.map((p) => toPublicGuaranteeProof(p)).filter(Boolean);
@@ -49,7 +63,7 @@ export default async function ProvasPage() {
                     {p!.task.taskId ? <span style={{ opacity: 0.7 }}> — {trunc(p!.task.taskId, 16)}</span> : null}
                   </div>
                   <div style={{ opacity: 0.85 }}>
-                    {p!.payment.amountCents} cents ({p!.payment.currency})
+                    {formatAmountMinorForDisplay(p!.payment.amountCents, p!.payment.currency)}
                   </div>
                 </div>
                 <div style={{ marginTop: 6, fontSize: 12, opacity: 0.8 }}>
