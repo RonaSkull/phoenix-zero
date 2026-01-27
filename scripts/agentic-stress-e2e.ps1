@@ -10,8 +10,9 @@ param(
 $ErrorActionPreference = 'Stop'
 
 function Test-ServerUp([string]$Url) {
+  $healthUrl = ($Url.TrimEnd('/') + '/api/health')
   try {
-    $resp = Invoke-WebRequest -Uri $Url -Method GET -TimeoutSec 3 -UseBasicParsing
+    $resp = Invoke-WebRequest -Uri $healthUrl -Method GET -TimeoutSec 3 -UseBasicParsing
     return $resp.StatusCode -ge 200 -and $resp.StatusCode -lt 500
   } catch {
     return $false

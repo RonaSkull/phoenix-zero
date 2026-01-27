@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { postgresEnabled, readKvJson, writeKvJson } from './pg-kv';
 import { phoenixZeroTmpDir } from './tmp-dir';
 
 export type MoneyCents = { currency: string; cents: number };
@@ -220,7 +221,10 @@ async function readJsonMaybe<T>(path: string): Promise<T | null> {
 }
 
 async function loadProfilesDb(): Promise<ProfilesDb> {
-  const json = await readJsonMaybe<any>(profilesDbPath());
+  const kvKey = 'pricing-profiles';
+  const jsonFromPg = postgresEnabled() ? await readKvJson<any>(kvKey) : null;
+  const jsonFromFile = jsonFromPg ? null : await readJsonMaybe<any>(profilesDbPath());
+  const json = jsonFromPg || jsonFromFile;
   if (!json || (json.version !== 1 && json.version !== 2)) {
     return {
       version: 2,
@@ -260,10 +264,19 @@ async function loadProfilesDb(): Promise<ProfilesDb> {
     };
   }
 
+  if (!jsonFromPg && jsonFromFile && postgresEnabled()) {
+    await writeKvJson(kvKey, migrated);
+  }
+
   return migrated;
 }
 
 async function saveProfilesDb(db: ProfilesDbV2): Promise<void> {
+  const kvKey = 'pricing-profiles';
+  if (postgresEnabled()) {
+    await writeKvJson(kvKey, db);
+    return;
+  }
   await mkdir(phoenixZeroTmpDir(), { recursive: true });
   await writeFile(profilesDbPath(), JSON.stringify(db, null, 2) + '\n', 'utf8');
 }

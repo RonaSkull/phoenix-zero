@@ -394,6 +394,42 @@ function normalizeProvider(v: unknown): PaymentProvider {
   return 'pix';
 }
 
+function normalizeProductId(product: unknown): string {
+  const raw = String(product || '').trim().toLowerCase();
+  if (!raw) return 'video_protection';
+
+  const p = raw.endsWith('_protection') ? raw.slice(0, -'_protection'.length) : raw;
+  if (p === 'video') return 'video_protection';
+  if (p === 'image') return 'image_protection';
+  if (p === 'audio') return 'audio_protection';
+  if (p === 'live') return 'live_protection';
+  if (p === 'document' || p === 'report') return 'document_protection';
+  return raw;
+}
+
+function looksLikeProductId(raw: string): boolean {
+  const p = String(raw || '').trim().toLowerCase();
+  if (!p) return false;
+  if (p === 'video' || p === 'video_protection') return true;
+  if (p === 'image' || p === 'image_protection') return true;
+  if (p === 'audio' || p === 'audio_protection') return true;
+  if (p === 'live' || p === 'live_protection') return true;
+  if (p === 'document' || p === 'document_protection') return true;
+  if (p === 'report') return true;
+  return false;
+}
+
+function operationToDefaultProductId(operation: string): string | null {
+  const op = String(operation || '').trim().toLowerCase();
+  if (!op) return null;
+  if (op === 'protect_video') return 'video_protection';
+  if (op === 'protect_image') return 'image_protection';
+  if (op === 'protect_audio') return 'audio_protection';
+  if (op === 'protect_live') return 'live_protection';
+  if (op === 'protect_report') return 'document_protection';
+  return null;
+}
+
 function productToDefaultOperation(product: string): string {
   const p = String(product || '').trim().toLowerCase();
   if (p === 'video' || p === 'video_protection') return 'protect_video';
@@ -424,7 +460,10 @@ async function computeTotalCents(params: {
   pricingProfileId: string;
   pricingVersionId?: string;
   lineItems: CheckoutLineItem[];
-}): Promise<{ ok: true; amountCents: number; lineTotalsCents: number[] } | { ok: false; reason: string }> {
+}): Promise<
+  | { ok: true; amountCents: number; lineTotalsCents: number[]; normalizedLineItems: CheckoutLineItem[] }
+  | { ok: false; reason: string }
+> {
   const tenant = await getTenantById(params.tenantId);
   if (!tenant) return { ok: false, reason: 'Tenant not found' };
 
@@ -439,25 +478,47 @@ async function computeTotalCents(params: {
   const taxProfile = await getTaxProfile(tenant.taxProfile);
 
   const lineTotalsCents: number[] = [];
+  const normalizedLineItems: CheckoutLineItem[] = [];
   let total = 0;
 
   for (const li of params.lineItems) {
-    const product = String(li?.product || 'video');
-    const opInput = String(li?.operation || '').trim();
-    const opFromProduct = productToDefaultOperation(product);
+    const opInput = String(li?.operation || '').trim().toLowerCase();
+    const opAsProduct = opInput && !opInput.startsWith('protect_') && looksLikeProductId(opInput) ? opInput : '';
+    const productCandidate =
+      li?.product ||
+      operationToDefaultProductId(opInput) ||
+      opAsProduct ||
+      'video_protection';
+    const productId = normalizeProductId(productCandidate);
+    const opFromProduct = productToDefaultOperation(productId);
 
     let operation = opInput || opFromProduct;
-    if (opInput && typeof pricingProfile.basePriceCentsByOp[operation] !== 'number') {
-      operation = productToDefaultOperation(operation);
+    if (operation && typeof pricingProfile.basePriceCentsByOp[operation] !== 'number') {
+      const opFromOpAsProduct = productToDefaultOperation(operation);
+      operation = typeof pricingProfile.basePriceCentsByOp[opFromOpAsProduct] === 'number' ? opFromOpAsProduct : opFromProduct;
     }
 
     const unitsInput = Number(li?.units ?? NaN);
     const units = Number.isFinite(unitsInput) ? clampInt(unitsInput, 1, 1_000_000) : 1;
 
+    const durationSeconds = clampNonNegativeInt(li?.durationSeconds, 172800);
+    const sizeBytes = clampNonNegativeInt(li?.sizeBytes, 1_000_000_000);
+    const pages = clampNonNegativeInt(li?.pages, 10_000);
+
+    normalizedLineItems.push({
+      ...li,
+      product: productId,
+      operation,
+      units,
+      durationSeconds,
+      sizeBytes,
+      pages
+    });
+
     const scope: PricingContext = {
       tenantId: params.tenantId,
       operation,
-      product: (li?.product || undefined) as any,
+      product: productId as any,
       clientType: (li?.clientType || tenant.clientType || 'unknown').trim(),
       sector: (li?.sector || tenant.sector || 'unknown').trim(),
       country: (li?.country || tenant.country || 'unknown').trim(),
@@ -471,9 +532,9 @@ async function computeTotalCents(params: {
       riskProfile: (li?.riskProfile || 'unknown').trim(),
       plan: (li?.plan || 'unknown').trim(),
       units,
-      durationSeconds: clampNonNegativeInt(li?.durationSeconds, 172800),
-      sizeBytes: clampNonNegativeInt(li?.sizeBytes, 1_000_000_000),
-      pages: clampNonNegativeInt(li?.pages, 10_000)
+      durationSeconds,
+      sizeBytes,
+      pages
     };
 
     const basePriceCentsRaw = pricingProfile.basePriceCentsByOp[operation];
@@ -495,7 +556,7 @@ async function computeTotalCents(params: {
     total += lineTotal;
   }
 
-  return { ok: true, amountCents: Math.max(0, Math.trunc(total)), lineTotalsCents };
+  return { ok: true, amountCents: Math.max(0, Math.trunc(total)), lineTotalsCents, normalizedLineItems };
 }
 
 export async function createPaymentIntent(params: {
@@ -605,7 +666,7 @@ export async function createPaymentIntent(params: {
       providerPaymentId,
       checkoutUrl,
       instructions,
-      lineItems: items,
+      lineItems: computed.normalizedLineItems,
       proofMeta:
         params.proofMeta &&
         String(params.proofMeta.agentId || '').trim() &&
@@ -739,6 +800,8 @@ export async function updatePaymentIntentStatus(params: {
         httpStatus: 200,
         startedAtMs,
         valueEvent: 'payment_received',
+        product: String(existing.lineItems?.[0]?.product || '').trim() || undefined,
+        plan: String(existing.lineItems?.[0]?.plan || '').trim() || undefined,
         pilUnits: 1,
         finalPriceCents: existing.amountCents,
         currency: existing.currency,
