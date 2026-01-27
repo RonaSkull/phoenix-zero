@@ -22,8 +22,79 @@ Recomendação para `lineItems` (clareza):
 - `product`: o “tipo de entrega” (ex.: `video_protection`, `document_protection`)
 - `operation`: a operação canônica (ex.: `protect_video`)
 
-### `GET /api/checkout/status/...`
-Consulta status de pagamento (o formato exato pode variar; confirme no código e mantenha sincronizado com este doc).
+Resposta (HTTP 200):
+- `ok: true`
+- `paymentId`
+- `status`: `pending` | `paid` | `failed`
+- `provider`: `pix` | `crypto`
+- `amountCents`
+- `currency`
+- `checkoutUrl` (quando aplicável)
+- `instructions` (quando aplicável)
+- `pricing.pricingProfileId`
+- `pricing.pricingVersionId` (opcional)
+
+Erros comuns:
+- HTTP 400: `{ ok: false, reason: ... }` (JSON inválido / campos inválidos)
+- HTTP 401: `{ ok: false, reason: "Unauthorized" }` (sem `x-api-key`)
+- HTTP 403: `{ ok: false, reason: "tenantId mismatch" }` (se tentar setar `tenantId` diferente)
+
+Exemplo (curl):
+```bash
+curl -sS -X POST "https://SEU-DOMINIO/api/checkout/create" \
+  -H "content-type: application/json" \
+  -H "x-api-key: TENANT_API_KEY" \
+  -d '{
+    "currency": "BRL",
+    "providerHint": "pix",
+    "lineItems": [
+      { "operation": "video_protection", "units": 1 }
+    ],
+    "proofMeta": {
+      "agentId": "ag_...",
+      "taskType": "video_protection",
+      "taskInputHash": "...",
+      "taskOutputHash": "...",
+      "customerContact": {
+        "telegramChatId": "...",
+        "whatsappNumber": "+55..."
+      }
+    }
+  }'
+```
+
+### `GET /api/checkout/status?paymentId=...`
+Consulta o status do pagamento.
+
+Querystring:
+- `paymentId` (obrigatório)
+
+Resposta (HTTP 200):
+- `ok: true`
+- `paymentId`
+- `provider`: `pix` | `crypto`
+- `status`: `pending` | `paid` | `failed`
+- `amountCents`
+- `currency`
+- `providerPaymentId` (ID no provedor, quando existir)
+
+Observação operacional:
+- Quando o status ainda está `pending`, o backend pode tentar **revalidar** consultando o provedor após um tempo (para evitar polling infinito do cliente).
+- Controles:
+  - `PHOENIX_ZERO_CHECKOUT_STATUS_REVALIDATE_AFTER_MS` (default ~15s)
+  - `PHOENIX_ZERO_CHECKOUT_STATUS_REVALIDATE_COOLDOWN_MS` (default ~10s)
+
+Erros comuns:
+- HTTP 400: `{ ok: false, reason: "Missing paymentId" }`
+- HTTP 401: `{ ok: false, reason: "Unauthorized" }`
+- HTTP 403: `{ ok: false, reason: "Forbidden" }` (payment existe, mas é de outro tenant)
+- HTTP 404: `{ ok: false, reason: "Payment not found" }`
+
+Exemplo (curl):
+```bash
+curl -sS "https://SEU-DOMINIO/api/checkout/status?paymentId=pay_..." \
+  -H "x-api-key: TENANT_API_KEY"
+```
 
 ## 4) Execução condicionada
 
@@ -56,4 +127,4 @@ Agregado econômico do agente.
   - `lineItems.product` deve ser aceito como input adicional.
 
 ## 8) Exemplos (placeholder)
-Este documento deve ser atualizado com exemplos reais (curl) após confirmar os caminhos exatos de `status`.
+Os exemplos acima refletem os caminhos reais dos endpoints em `apps/web/src/app/api/checkout/*`.
