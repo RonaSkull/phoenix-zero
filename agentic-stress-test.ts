@@ -6,6 +6,8 @@ type Json = Record<string, any>;
 
 type HttpRes<T = any> = { status: number; json: T | null; text: string };
 
+let ONLY_LEVELS: string[] = [];
+
 class SkipError extends Error {
   constructor(message: string) {
     super(message);
@@ -601,6 +603,19 @@ async function agentReputation(params: {
 async function run(name: string, fn: () => Promise<void>) {
   const started = Date.now();
   process.stdout.write(`[${name}] `);
+
+  const levelMatch = String(name || '')
+    .trim()
+    .match(/^(L\d+)\b/i);
+  if (ONLY_LEVELS.length > 0 && levelMatch) {
+    const level = String(levelMatch[1] || '').trim().toUpperCase();
+    if (level && !ONLY_LEVELS.includes(level)) {
+      const ms = Date.now() - started;
+      console.log(`SKIPPED (${ms}ms) — filtered by AGENTIC_STRESS_ONLY`);
+      return;
+    }
+  }
+
   try {
     await fn();
     const ms = Date.now() - started;
@@ -619,6 +634,18 @@ async function run(name: string, fn: () => Promise<void>) {
 async function main() {
   const baseUrl = env('PHOENIX_ZERO_BASE_URL', 'http://localhost:3000').replace(/\/+$/g, '');
   const adminToken = env('PHOENIX_ZERO_ADMIN_TOKEN');
+
+  const onlyLevelsRaw = String(env('AGENTIC_STRESS_ONLY', '') || '')
+    .split(',')
+    .map((s) => s.trim().toUpperCase())
+    .filter(Boolean);
+  const shouldRun = (level: string): boolean => {
+    if (onlyLevelsRaw.length <= 0) return true;
+    const k = String(level || '').trim().toUpperCase();
+    return onlyLevelsRaw.includes(k);
+  };
+
+  ONLY_LEVELS = onlyLevelsRaw;
 
   const realMode = env('AGENTIC_STRESS_REAL') === '1' || env('AGENTIC_STRESS_REAL').toLowerCase() === 'true';
   const realProvider = (env('AGENTIC_STRESS_REAL_PROVIDER', 'pix') || 'pix').toLowerCase();
@@ -640,7 +667,8 @@ async function main() {
   };
 
   // Level 1 — Happy Path Básico
-  await run('L1: guardrail 402 -> unlock (pix webhook OR admin fallback)', async () => {
+  if (shouldRun('L1')) {
+    await run('L1: guardrail 402 -> unlock (pix webhook OR admin fallback)', async () => {
     if (realMode && realProvider !== 'pix') {
       skip(`real mode provider is '${realProvider}' (skipping pix)`);
     }
@@ -743,10 +771,12 @@ async function main() {
 
     const allowed = await liveStreamList({ baseUrl, apiKey: t.apiKey });
     assert(allowed.status === 200, `expected 200 after unlock, got ${allowed.status}: ${allowed.text}`);
-  });
+    });
+  }
 
   // Level 2 — Multi-provider crypto
-  await run('L2: crypto webhook (nowpayments)', async () => {
+  if (shouldRun('L2')) {
+    await run('L2: crypto webhook (nowpayments)', async () => {
     if (realMode && realProvider !== 'crypto') {
       skip(`real mode provider is '${realProvider}' (skipping crypto)`);
     }
@@ -806,10 +836,12 @@ async function main() {
 
     const st1 = await checkoutStatus({ baseUrl, apiKey: t.apiKey, paymentId: created.paymentId });
     assert(String(st1.status) === 'paid', `expected paid, got ${st1.status}`);
-  });
+    });
+  }
 
   // Level 3 — Replay + forja (pix)
-  await run('L3: pix webhook forgery + replay (idempotency)', async () => {
+  if (shouldRun('L3')) {
+    await run('L3: pix webhook forgery + replay (idempotency)', async () => {
     if (realMode) {
       skip('real mode does not inject webhooks (skip forgery/replay injection)');
     }
@@ -860,10 +892,12 @@ async function main() {
     });
     assert(ok2.status === 200, `expected 200 on replay webhook, got ${ok2.status}: ${ok2.text}`);
     assert((ok2.json as any)?.deduped === true, `expected deduped=true on replay, got: ${ok2.text}`);
-  });
+    });
+  }
 
   // Level 4 — Operational failures
-  await run('L4: pix webhook unknown providerPaymentId fails safely', async () => {
+  if (shouldRun('L4')) {
+    await run('L4: pix webhook unknown providerPaymentId fails safely', async () => {
     if (realMode) {
       skip('real mode does not inject webhooks (skip unknown providerPaymentId injection)');
     }
@@ -882,6 +916,7 @@ async function main() {
     assert(unknown.status === 200, `expected 200 for unknown mapping, got ${unknown.status}: ${unknown.text}`);
     assert((unknown.json as any)?.ignored === true, `expected ignored=true for unknown mapping, got: ${unknown.text}`);
   });
+  }
 
   // Level 5 — adversarial
   await run('L5: adversarial attempts (tenantId mismatch + unpaid access)', async () => {

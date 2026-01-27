@@ -59,7 +59,7 @@ Observação:
 
 No `POST /api/checkout/create`, inclua:
 
-- `proofMeta.customerContact.whatsappNumber` (formato E.164 só números. Ex: `5511999999999`)
+- `proofMeta.customerContact.whatsappNumber` (formato E.164. Ex: `+5511999999999`)
 - `proofMeta.customerContact.telegramChatId` (string/number do Telegram)
 
 ## Telegram
@@ -87,21 +87,21 @@ Se você preferir rodar via `npm run`, garanta que está no root do repo e use o
 - Abra o bot e envie `/start`
 - Ele responde com `telegramChatId`
 
-## WhatsApp (Z-API)
+## WhatsApp (Twilio)
 
 ### Variáveis
 
-- `ZAPI_INSTANCE_ID=...`
-- `ZAPI_INSTANCE_TOKEN=...`
-- `ZAPI_CLIENT_TOKEN=...` (opcional; se você ativar o "Account Security Token" na Z-API)
+- `TWILIO_ACCOUNT_SID=...`
+- `TWILIO_AUTH_TOKEN=...`
+- `TWILIO_WHATSAPP_FROM=whatsapp:+14155238886` (sandbox) ou o seu número WhatsApp habilitado no Twilio
 
 ### Envio
 
 O backend envia mensagem via:
 
-- `POST https://api.z-api.io/instances/<instance>/token/<token>/send-text`
+- Twilio Messages API (SDK)
 
-com JSON:
+Notas:
 
-- `phone`: número no formato `5511999999999`
-- `message`: texto
+- O `proofMeta.customerContact.whatsappNumber` deve estar em formato E.164 (ex.: `+5511999999999`).
+- Em conta Trial/Sandbox, o Twilio só envia para números permitidos/"joined" no sandbox.

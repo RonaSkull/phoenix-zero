@@ -147,9 +147,10 @@ async function main() {
   const baseUrl = (env('PHOENIX_ZERO_BASE_URL') || env('CLIENT_BASE_URL') || 'http://localhost:3000').replace(/\/+$/g, '');
   const adminToken = env('PHOENIX_ZERO_ADMIN_TOKEN');
   const asaasWebhookSecret = env('ASAAS_WEBHOOK_SECRET');
+  const hasTelegramToken = Boolean(env('TELEGRAM_BOT_TOKEN'));
 
   console.log('External agent simulation');
-  console.log(JSON.stringify({ baseUrl }, null, 2));
+  console.log(JSON.stringify({ baseUrl, hasTelegramToken }, null, 2));
 
   {
     try {
@@ -366,6 +367,40 @@ async function main() {
     apiKey
   });
   console.log('Agent settlements (before advance):', JSON.stringify({ status: settlements0.status, body: settlements0.json }, null, 2));
+
+  {
+    const entries: any[] = Array.isArray(settlements0.json?.settlements)
+      ? settlements0.json.settlements
+      : Array.isArray(settlements0.json?.entries)
+        ? settlements0.json.entries
+        : Array.isArray(settlements0.json)
+          ? settlements0.json
+          : [];
+    const proofId = entries[0]?.proofId != null ? String(entries[0].proofId) : '';
+    if (proofId) {
+      const proofRes = await httpJsonRetry({ method: 'GET', url: `${baseUrl}/api/payment-proofs/${encodeURIComponent(proofId)}`, apiKey });
+      if (proofRes.ok && proofRes.json?.ok && proofRes.json?.proof) {
+        const proof = proofRes.json.proof;
+        console.log(
+          'Payment proof notifications:',
+          JSON.stringify(
+            {
+              proofId,
+              status: proof.status,
+              customerContact: proof.customerContact,
+              customerNotifications: proof.customerNotifications
+            },
+            null,
+            2
+          )
+        );
+      } else {
+        console.log('Payment proof fetch failed:', JSON.stringify({ proofId, status: proofRes.status, text: proofRes.text }, null, 2));
+      }
+    } else {
+      console.log('Payment proofId not found in settlements response (cannot inspect notification receipts).');
+    }
+  }
 
   const advance = await httpJsonRetry({
     method: 'POST',

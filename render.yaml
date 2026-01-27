@@ -5,12 +5,14 @@ services:
     plan: free
     buildCommand: npm ci --include=dev && npm --prefix ./apps/web ci --include=dev && npx tsc -p ./libs/phoenix-zero/tsconfig.build.json && npm --prefix ./apps/web run build
     startCommand: npm --prefix ./apps/web run start -- -p $PORT
-    healthCheckPath: /
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_VERSION
         value: 20
       - key: NODE_ENV
         value: production
+      - key: PHOENIX_ZERO_PUBLIC_BASE_URL
+        value: https://phoenix-zero-web.onrender.com
       - key: DATABASE_URL
         sync: false
       - key: PGSSLMODE
@@ -27,6 +29,12 @@ services:
         sync: false
       - key: ASAAS_WEBHOOK_SECRET
         generateValue: true
+      - key: PAYMENTS_CRYPTO_PROVIDER
+        value: nowpayments
+      - key: NOWPAYMENTS_API_KEY
+        sync: false
+      - key: NOWPAYMENTS_IPN_SECRET
+        sync: false
       - key: TWILIO_ACCOUNT_SID
         sync: false
       - key: TWILIO_AUTH_TOKEN

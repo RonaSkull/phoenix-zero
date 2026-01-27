@@ -61,7 +61,7 @@ Isso significa:
 - **Aprovação do cadastro/limites** no Asaas (quando aplicável)
 - **Domínio + hospedagem** para registrar webhooks reais em produção
 - **Stripe**: integrar pagamento real e validar assinatura do webhook (`stripe-signature`)
-- **Persistência (Render)**: configurar disco persistente e setar `PHOENIX_ZERO_TMP_DIR` para evitar perda de estado em restart/múltiplas instâncias
+- **Persistência (produção)**: configurar `DATABASE_URL` (ex.: Neon Postgres) para persistência em DB (`phoenix_zero_kv`) com fallback JSON via `PHOENIX_ZERO_TMP_DIR`
 
 ---
 

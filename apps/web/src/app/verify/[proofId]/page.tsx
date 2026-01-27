@@ -46,16 +46,16 @@ export default async function VerifyProofPage(props: { params: { proofId: string
 
       <section style={{ marginTop: 16, border: '1px solid #e5e7eb', borderRadius: 12, padding: 16 }}>
         <div style={{ display: 'grid', gap: 8 }}>
-          <div><strong>proofId:</strong> {proof.proofId}</div>
+          <div style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}><strong>proofId:</strong> {proof.proofId}</div>
           <div><strong>verifiedAt:</strong> {proof.verifiedAt}</div>
           <div>
             <strong>payment:</strong> {proof.payment.provider} — {formatAmountMinorForDisplay(proof.payment.amountCents, proof.payment.currency)}
           </div>
           <div><strong>taskType:</strong> {proof.task.taskType}</div>
           {proof.task.taskId ? <div><strong>taskId:</strong> {proof.task.taskId}</div> : null}
-          <div><strong>taskInputHash:</strong> {proof.task.taskInputHash}</div>
-          <div><strong>taskOutputHash:</strong> {proof.task.taskOutputHash}</div>
-          <div>
+          <div style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}><strong>taskInputHash:</strong> {proof.task.taskInputHash}</div>
+          <div style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}><strong>taskOutputHash:</strong> {proof.task.taskOutputHash}</div>
+          <div style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
             <strong>digest:</strong> {proof.digestB64Url}
             <span style={{ opacity: 0.7 }}> ({trunc(proof.digestB64Url, 22)})</span>
           </div>
@@ -63,7 +63,7 @@ export default async function VerifyProofPage(props: { params: { proofId: string
             <div><strong>signatureVerified:</strong> {String(proof.signature.verified)}</div>
           ) : null}
           {proof.signature?.payloadHashB64Url ? (
-            <div><strong>signaturePayloadHash:</strong> {proof.signature.payloadHashB64Url}</div>
+            <div style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}><strong>signaturePayloadHash:</strong> {proof.signature.payloadHashB64Url}</div>
           ) : null}
         </div>
       </section>

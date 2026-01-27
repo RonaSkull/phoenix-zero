@@ -161,9 +161,9 @@ Nota de segurança:
 
 - Habilitar modo real do Asaas (quando `ASAAS_API_KEY` estiver disponível) e rodar o stress test em `AGENTIC_STRESS_REAL=1`.
 - Persistência/produção:
-  - configurar disco persistente no Render e setar `PHOENIX_ZERO_TMP_DIR` para evitar perda de estado (intents/PPO/settlements) em restart/múltiplas instâncias.
+  - configurar `DATABASE_URL` (ex.: Neon Postgres) para persistência em DB (`phoenix_zero_kv`), com fallback JSON via `PHOENIX_ZERO_TMP_DIR`.
   - adicionar observabilidade (logs/alerts) para falhas de webhook, dedupe e assinatura inválida.
-- Notificação WhatsApp (Z-API): configurar credenciais e validar envio 1x após `paid_confirmed`.
+- Notificação WhatsApp (Twilio): configurar credenciais e validar envio 1x após `paid_confirmed`.
 
 ## QA / Anti-bypass
 

@@ -67,7 +67,7 @@ export default async function ProvasPage() {
                   </div>
                 </div>
                 <div style={{ marginTop: 6, fontSize: 12, opacity: 0.8 }}>
-                  digest: {trunc(p!.digestB64Url, 28)}
+                  <span style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>digest: {trunc(p!.digestB64Url, 28)}</span>
                 </div>
               </a>
             ))}
