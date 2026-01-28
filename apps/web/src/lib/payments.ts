@@ -189,7 +189,11 @@ function paymentsCryptoProvider(): string {
 
 function asaasBaseUrl(): string {
   const env = String(process.env.ASAAS_API_BASE || '').trim();
-  if (env) return env;
+  if (env) {
+    const lower = env.toLowerCase();
+    const looksLikeApiHost = lower.includes('api.asaas.com') || lower.includes('api-sandbox.asaas.com');
+    if (looksLikeApiHost) return env.replace(/\/+$/g, '');
+  }
   const mode = String(process.env.ASAAS_ENV || '').trim().toLowerCase();
   if (mode === 'sandbox') return 'https://api-sandbox.asaas.com';
   return 'https://api.asaas.com';
@@ -212,13 +216,15 @@ async function asaasFetch(path: string, init: RequestInit): Promise<Response> {
   const url = `${asaasBaseUrl()}${path}`;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json; charset=utf-8',
+    Accept: 'application/json',
+    'User-Agent': 'phoenix-zero/1.0 (+https://phoenix-zero-web.onrender.com)',
     access_token: key
   };
   const extra = (init.headers || {}) as any;
   for (const [k, v] of Object.entries(extra)) {
     if (typeof v === 'string') headers[k] = v;
   }
-  return fetch(url, { ...init, headers });
+  return fetch(url, { ...init, headers, redirect: 'manual' });
 }
 
 async function ensureAsaasCustomerId(params: {
@@ -242,7 +248,26 @@ async function ensureAsaasCustomerId(params: {
 
   const txt = await res.text().catch(() => '');
   if (!res.ok) {
-    return { ok: false, reason: `Asaas customer create failed (${res.status}): ${txt || res.statusText}` };
+    const loc = String(res.headers.get('location') || '').trim();
+    const locInfo = loc ? ` location=${loc}` : '';
+    return { ok: false, reason: `Asaas customer create failed (${res.status}): ${txt || res.statusText}${locInfo}` };
+  }
+
+  const ct = String(res.headers.get('content-type') || '').toLowerCase();
+  const looksLikeHtml =
+    ct.includes('text/html') ||
+    /^\s*<!doctype\s+html\b/i.test(txt) ||
+    /<title>\s*login\s*<\/title>/i.test(txt) ||
+    /<meta\s+name=\"robots\"\s+content=\"noindex,\s*nofollow\"/i.test(txt);
+
+  if (looksLikeHtml) {
+    const snippet = String(txt || '').slice(0, 500);
+    const base = asaasBaseUrl();
+    const hasKey = Boolean(asaasApiKey());
+    return {
+      ok: false,
+      reason: `Asaas customer create failed (unexpected HTML response; check ASAAS_API_BASE/ASAAS_ENV and ASAAS_API_KEY). resolvedBase=${base} hasKey=${hasKey} Response snippet: ${snippet || '<empty>'}`
+    };
   }
 
   let json: any = null;
@@ -300,7 +325,27 @@ async function createAsaasPixCharge(params: {
 
   const txt = await res.text().catch(() => '');
   if (!res.ok) {
-    return { ok: false, reason: `Asaas payment create failed (${res.status}): ${txt || res.statusText}` };
+    const loc = String(res.headers.get('location') || '').trim();
+    const locInfo = loc ? ` location=${loc}` : '';
+    return { ok: false, reason: `Asaas payment create failed (${res.status}): ${txt || res.statusText}${locInfo}` };
+  }
+
+  {
+    const ct = String(res.headers.get('content-type') || '').toLowerCase();
+    const looksLikeHtml =
+      ct.includes('text/html') ||
+      /^\s*<!doctype\s+html\b/i.test(txt) ||
+      /<title>\s*login\s*<\/title>/i.test(txt) ||
+      /<meta\s+name=\"robots\"\s+content=\"noindex,\s*nofollow\"/i.test(txt);
+    if (looksLikeHtml) {
+      const snippet = String(txt || '').slice(0, 500);
+      const base = asaasBaseUrl();
+      const hasKey = Boolean(asaasApiKey());
+      return {
+        ok: false,
+        reason: `Asaas payment create failed (unexpected HTML response; check ASAAS_API_BASE/ASAAS_ENV and ASAAS_API_KEY). resolvedBase=${base} hasKey=${hasKey} Response snippet: ${snippet || '<empty>'}`
+      };
+    }
   }
 
   let json: any = null;
