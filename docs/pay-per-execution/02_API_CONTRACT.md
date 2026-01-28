@@ -63,6 +63,13 @@ curl -sS -X POST "https://SEU-DOMINIO/api/checkout/create" \
   }'
 ```
 
+Observação importante (anti-bypass):
+- O preço é calculado a partir de `lineItems` (principalmente `operation` e `product`).
+- O **PPO Gate** bloqueia/libera execução comparando `taskId` e `taskType` do request com o PPO.
+- Portanto, para não criar “pago barato / executo caro”, a regra prática é:
+  - Decida o `taskType` **antes do checkout**.
+  - Use `proofMeta.taskType` alinhado ao que você está cobrando (recomendado: igual ao `lineItems.operation`).
+
 ### `GET /api/checkout/status?paymentId=...`
 Consulta o status do pagamento.
 
@@ -103,6 +110,21 @@ Retorna se existe permissão econômica (PPO/Gate) para executar.
 
 ### `POST /api/agents/[agentId]/execute`
 Executa apenas se o Gate permitir.
+
+## 4.1) Pricing (opcional, para agentes)
+
+### `POST /api/pricing/quote`
+ Retorna um preço estimado em centavos para uma **operação** (ex.: `protect_video`) no contexto do tenant.
+
+ Header:
+ - `x-api-key: <TENANT_API_KEY>`
+
+ Body (mínimo):
+ - `operation` (obrigatório)
+
+ Observação:
+ - Este endpoint é útil para agentes “descobrirem” custo antes do checkout.
+ - O preço final ainda é calculado no checkout e pode depender de contexto adicional (`sector`, `country`, etc.).
 
 ## 5) Provas
 

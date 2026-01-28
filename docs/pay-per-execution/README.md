@@ -20,6 +20,7 @@ Este diretório contém a documentação **organizada e separada** do produto **
 - `06_OPERATIONS_RUNBOOK.md`
 - `07_PROMPT_FOR_CODING_AI.md`
 - `08_UCP.md`
+- `09_SECRET_ROTATION.md`
 
 ## Referências existentes no repo (não duplicadas aqui)
 - Persistência: `docs/PERSISTENCIA.md`

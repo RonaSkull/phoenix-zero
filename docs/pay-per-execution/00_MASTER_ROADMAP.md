@@ -78,6 +78,16 @@ Guia: `02_API_CONTRACT.md` e `03_PRICING.md`
 - [ ] Crypto (NowPayments) em produção
 - [ ] Documentar cartão de crédito (habilitar no Asaas)
 
+### D2. Pós‑testes: rotação de segredos + redeploy
+- [ ] Rotacionar `PHOENIX_ZERO_ADMIN_TOKEN`
+- [ ] Rotacionar `ASAAS_WEBHOOK_SECRET`
+- [ ] Rotacionar `NOWPAYMENTS_IPN_SECRET`
+- [ ] (Opcional) Rotacionar `TELEGRAM_BOT_TOKEN` / `TWILIO_AUTH_TOKEN`
+- [ ] Redeploy/restart no Render
+- [ ] Revalidar com `scripts/external-agent-client.ts`
+
+Guia: `09_SECRET_ROTATION.md`
+
 Guia: `01_DEPLOY_RENDER.md` + `06_OPERATIONS_RUNBOOK.md`
 
 ### E. Site (landing mínima)

@@ -35,6 +35,10 @@ Checklist:
 - Atualize env no Render
 - Redeploy/restart
 
+## 6.1) Pós-rotação: revalidação curta
+- Rode `scripts/external-agent-client.ts` contra o Render.
+- Se o Asaas sandbox estiver instável (HTTP 503), rode temporariamente com `SIM_SKIP_PIX=1` para validar o fluxo crypto e repita PIX depois.
+
 ## 7) Export/contabilidade (MVP)
 - Fonte de verdade:
   - PPO

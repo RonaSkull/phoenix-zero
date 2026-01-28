@@ -161,9 +161,10 @@ async function main() {
   const asaasWebhookSecret = env('ASAAS_WEBHOOK_SECRET');
   const nowPaymentsIpnSecret = env('NOWPAYMENTS_IPN_SECRET');
   const hasTelegramToken = Boolean(env('TELEGRAM_BOT_TOKEN'));
+  const skipPix = ['1', 'true', 'yes', 'y'].includes(env('SIM_SKIP_PIX').toLowerCase());
 
   console.log('External agent simulation');
-  console.log(JSON.stringify({ baseUrl, hasTelegramToken, hasNowPaymentsSecret: Boolean(nowPaymentsIpnSecret) }, null, 2));
+  console.log(JSON.stringify({ baseUrl, hasTelegramToken, hasNowPaymentsSecret: Boolean(nowPaymentsIpnSecret), skipPix }, null, 2));
 
   {
     try {
@@ -234,240 +235,241 @@ async function main() {
 
   const agentId = `ag_${b64Url(randomBytes(12))}`;
   const taskId = `task_${b64Url(randomBytes(12))}`;
-  const taskType = 'video_protection';
+  const taskType = 'protect_video';
   const taskInput = { kind: 'video', sha256: sha256Hex('fake-video-bytes') };
   const taskOutput = { kind: 'proof', sha256: sha256Hex('fake-proof-output') };
 
-  const checkoutRes = await httpJsonRetry({
-    method: 'POST',
-    url: `${baseUrl}/api/checkout/create`,
-    apiKey,
-    body: {
-      currency: 'BRL',
-      providerHint: 'pix',
-      lineItems: [{ operation: 'video_protection', units: 1 }],
-      proofMeta: {
-        agentId,
-        taskId,
-        taskType,
-        taskInputHash: sha256Hex(JSON.stringify(taskInput)),
-        taskOutputHash: sha256Hex(JSON.stringify(taskOutput)),
-        customerContact: {
-          telegramChatId: env('SIM_TELEGRAM_CHAT_ID') || undefined,
-          whatsappNumber: env('SIM_WHATSAPP_NUMBER') || undefined
+  if (!skipPix) {
+    const checkoutRes = await httpJsonRetry({
+      method: 'POST',
+      url: `${baseUrl}/api/checkout/create`,
+      apiKey,
+      body: {
+        currency: 'BRL',
+        providerHint: 'pix',
+        lineItems: [{ operation: 'protect_video', units: 1 }],
+        proofMeta: {
+          agentId,
+          taskId,
+          taskType,
+          taskInputHash: sha256Hex(JSON.stringify(taskInput)),
+          taskOutputHash: sha256Hex(JSON.stringify(taskOutput)),
+          customerContact: {
+            telegramChatId: env('SIM_TELEGRAM_CHAT_ID') || undefined,
+            whatsappNumber: env('SIM_WHATSAPP_NUMBER') || undefined
+          }
+        }
+      }
+    });
+
+    if (!checkoutRes.ok || !checkoutRes.json?.ok) {
+      console.error('Checkout create failed:', checkoutRes.status, checkoutRes.text);
+      process.exitCode = 1;
+    } else {
+      const paymentId = String(checkoutRes.json.paymentId || '').trim();
+      const checkoutUrl = String(checkoutRes.json.checkoutUrl || '').trim();
+      let providerPaymentId = String(checkoutRes.json.providerPaymentId || '').trim() || '';
+
+      console.log('Checkout created:', JSON.stringify({ paymentId, checkoutUrl }, null, 2));
+
+      if (!providerPaymentId) {
+        const status0 = await httpJsonRetry({ method: 'GET', url: `${baseUrl}/api/checkout/status?paymentId=${encodeURIComponent(paymentId)}`, apiKey });
+        providerPaymentId = String(status0.json?.providerPaymentId || '').trim() || '';
+      }
+
+      if (!providerPaymentId) {
+        console.error('Missing providerPaymentId (cannot simulate provider webhook reliably).');
+        process.exitCode = 1;
+      } else {
+        const execBefore = await httpJsonRetry({
+          method: 'POST',
+          url: `${baseUrl}/api/agents/${encodeURIComponent(agentId)}/execute`,
+          apiKey,
+          body: { taskId, taskType, requireSignature: false }
+        });
+
+        console.log('Execute before payment (expected 403):', JSON.stringify({ status: execBefore.status, body: execBefore.json }, null, 2));
+
+        if (execBefore.status !== 403) {
+          console.error('Expected 403 before payment.');
+          process.exitCode = 1;
+        } else {
+          const simEventId = `evt_sim_${Date.now()}_${b64Url(randomBytes(6))}`;
+          const webhookSimRes = await httpJsonRetry({
+            method: 'POST',
+            url: `${baseUrl}/api/webhooks/pix`,
+            headers: asaasWebhookSecret ? { 'asaas-access-token': asaasWebhookSecret } : undefined,
+            body: {
+              id: simEventId,
+              event: { id: simEventId },
+              provider: 'pix',
+              providerPaymentId,
+              status: 'paid',
+              payment: {
+                id: providerPaymentId,
+                status: 'CONFIRMED',
+                confirmedDate: new Date().toISOString()
+              }
+            }
+          });
+
+          console.log('Webhook simulate pix:', JSON.stringify({ status: webhookSimRes.status, body: webhookSimRes.json }, null, 2));
+
+          const webhookSimRes2 = await httpJsonRetry({
+            method: 'POST',
+            url: `${baseUrl}/api/webhooks/pix`,
+            headers: asaasWebhookSecret ? { 'asaas-access-token': asaasWebhookSecret } : undefined,
+            body: {
+              id: simEventId,
+              event: { id: simEventId },
+              provider: 'pix',
+              providerPaymentId,
+              status: 'paid',
+              payment: {
+                id: providerPaymentId,
+                status: 'CONFIRMED',
+                confirmedDate: new Date().toISOString()
+              }
+            }
+          });
+
+          console.log('Webhook idempotency (same event twice):', JSON.stringify({ status: webhookSimRes2.status, body: webhookSimRes2.json }, null, 2));
+          if (!(webhookSimRes2.json && webhookSimRes2.json.deduped === true)) {
+            console.error('Expected deduped:true on duplicate webhook event.');
+            process.exitCode = 1;
+          } else {
+            const statusRes = await httpJsonRetry({ method: 'GET', url: `${baseUrl}/api/checkout/status?paymentId=${encodeURIComponent(paymentId)}`, apiKey });
+            console.log('Payment status:', JSON.stringify({ status: statusRes.status, body: statusRes.json }, null, 2));
+
+            const statusResOtherTenant = await httpJsonRetry({
+              method: 'GET',
+              url: `${baseUrl}/api/checkout/status?paymentId=${encodeURIComponent(paymentId)}`,
+              apiKey: apiKey2
+            });
+            console.log('Tenant isolation (other tenant checkout/status):', JSON.stringify({ status: statusResOtherTenant.status, body: statusResOtherTenant.json }, null, 2));
+            if (statusResOtherTenant.status !== 403) {
+              console.error('Expected 403 when other tenant queries checkout/status.');
+              process.exitCode = 1;
+            }
+
+            const execAfter = await httpJsonRetry({
+              method: 'POST',
+              url: `${baseUrl}/api/agents/${encodeURIComponent(agentId)}/execute`,
+              apiKey,
+              body: { taskId, taskType, requireSignature: false }
+            });
+
+            console.log('Execute after payment (expected 200):', JSON.stringify({ status: execAfter.status, body: execAfter.json }, null, 2));
+
+            if (execAfter.status !== 200) {
+              console.error('Expected 200 after payment.');
+              process.exitCode = 1;
+            }
+
+            const settlements0 = await httpJsonRetry({
+              method: 'GET',
+              url: `${baseUrl}/api/agents/${encodeURIComponent(agentId)}/settlements?limit=50`,
+              apiKey
+            });
+            console.log('Agent settlements (before advance):', JSON.stringify({ status: settlements0.status, body: settlements0.json }, null, 2));
+
+            {
+              const entries0: any[] = Array.isArray(settlements0.json?.settlements)
+                ? settlements0.json.settlements
+                : Array.isArray(settlements0.json?.entries)
+                  ? settlements0.json.entries
+                  : Array.isArray(settlements0.json)
+                    ? settlements0.json
+                    : [];
+              const proofId = entries0[0]?.proofId != null ? String(entries0[0].proofId) : '';
+              if (proofId) {
+                const proofRes = await httpJsonRetry({ method: 'GET', url: `${baseUrl}/api/payment-proofs/${encodeURIComponent(proofId)}`, apiKey });
+                if (proofRes.ok && proofRes.json?.ok && proofRes.json?.proof) {
+                  const proof = proofRes.json.proof;
+                  console.log(
+                    'Payment proof notifications:',
+                    JSON.stringify(
+                      {
+                        proofId,
+                        status: proof.status,
+                        customerContact: proof.customerContact,
+                        customerNotifications: proof.customerNotifications
+                      },
+                      null,
+                      2
+                    )
+                  );
+                } else {
+                  console.log('Payment proof fetch failed:', JSON.stringify({ proofId, status: proofRes.status, text: proofRes.text }, null, 2));
+                }
+              } else {
+                console.log('Payment proofId not found in settlements response (cannot inspect notification receipts).');
+              }
+            }
+
+            const advance = await httpJsonRetry({
+              method: 'POST',
+              url: `${baseUrl}/api/admin/settlement/advance`,
+              adminToken,
+              body: { nowMs: Date.now() + 8 * 24 * 60 * 60 * 1000, limit: 5000 }
+            });
+            console.log('Admin settlement advance:', JSON.stringify({ status: advance.status, body: advance.json }, null, 2));
+
+            const settlements1 = await httpJsonRetry({
+              method: 'GET',
+              url: `${baseUrl}/api/agents/${encodeURIComponent(agentId)}/settlements?limit=50`,
+              apiKey
+            });
+            console.log('Agent settlements (after advance):', JSON.stringify({ status: settlements1.status, body: settlements1.json }, null, 2));
+
+            const refundEventId = `evt_refund_${Date.now()}_${b64Url(randomBytes(6))}`;
+            const refundRes = await httpJsonRetry({
+              method: 'POST',
+              url: `${baseUrl}/api/webhooks/pix`,
+              headers: asaasWebhookSecret ? { 'asaas-access-token': asaasWebhookSecret } : undefined,
+              body: {
+                id: refundEventId,
+                event: { id: refundEventId },
+                provider: 'pix',
+                providerPaymentId,
+                status: 'failed',
+                payment: {
+                  id: providerPaymentId,
+                  status: 'REFUNDED',
+                  confirmedDate: new Date().toISOString()
+                }
+              }
+            });
+            console.log('Webhook simulate refund:', JSON.stringify({ status: refundRes.status, body: refundRes.json }, null, 2));
+
+            const settlements2 = await httpJsonRetry({
+              method: 'GET',
+              url: `${baseUrl}/api/agents/${encodeURIComponent(agentId)}/settlements?limit=50`,
+              apiKey
+            });
+            console.log('Agent settlements (after refund):', JSON.stringify({ status: settlements2.status, body: settlements2.json }, null, 2));
+
+            const entries2: any[] = Array.isArray(settlements2.json?.settlements)
+              ? settlements2.json.settlements
+              : Array.isArray(settlements2.json?.entries)
+                ? settlements2.json.entries
+                : Array.isArray(settlements2.json)
+                  ? settlements2.json
+                  : [];
+            const byPayment = entries2.filter((e) => String(e?.paymentId || '') === paymentId);
+            const hasReverted = byPayment.some((e) => String(e?.status || '') === 'reverted');
+            if (!hasReverted) {
+              console.error('Expected settlement status "reverted" after refund, but did not observe it.');
+              console.error('Entries inspected:', JSON.stringify({ entries: entries2, byPayment, paymentId }, null, 2));
+              process.exitCode = 1;
+            }
+          }
         }
       }
     }
-  });
 
-  if (!checkoutRes.ok || !checkoutRes.json?.ok) {
-    console.error('Checkout create failed:', checkoutRes.status, checkoutRes.text);
-    process.exitCode = 1;
-    return;
+    console.log('Simulation finished.');
   }
-
-  const paymentId = String(checkoutRes.json.paymentId || '').trim();
-  const checkoutUrl = String(checkoutRes.json.checkoutUrl || '').trim();
-  let providerPaymentId = String(checkoutRes.json.providerPaymentId || '').trim() || '';
-
-  console.log('Checkout created:', JSON.stringify({ paymentId, checkoutUrl }, null, 2));
-
-  if (!providerPaymentId) {
-    const status0 = await httpJsonRetry({ method: 'GET', url: `${baseUrl}/api/checkout/status?paymentId=${encodeURIComponent(paymentId)}`, apiKey });
-    providerPaymentId = String(status0.json?.providerPaymentId || '').trim() || '';
-  }
-
-  if (!providerPaymentId) {
-    console.error('Missing providerPaymentId (cannot simulate provider webhook reliably).');
-    process.exitCode = 1;
-    return;
-  }
-
-  const execBefore = await httpJsonRetry({
-    method: 'POST',
-    url: `${baseUrl}/api/agents/${encodeURIComponent(agentId)}/execute`,
-    apiKey,
-    body: { taskId, taskType, requireSignature: false }
-  });
-
-  console.log('Execute before payment (expected 403):', JSON.stringify({ status: execBefore.status, body: execBefore.json }, null, 2));
-
-  if (execBefore.status !== 403) {
-    console.error('Expected 403 before payment.');
-    process.exitCode = 1;
-    return;
-  }
-
-  const simEventId = `evt_sim_${Date.now()}_${b64Url(randomBytes(6))}`;
-  const webhookSimRes = await httpJsonRetry({
-    method: 'POST',
-    url: `${baseUrl}/api/webhooks/pix`,
-    headers: asaasWebhookSecret ? { 'asaas-access-token': asaasWebhookSecret } : undefined,
-    body: {
-      id: simEventId,
-      event: { id: simEventId },
-      provider: 'pix',
-      providerPaymentId,
-      status: 'paid',
-      payment: {
-        id: providerPaymentId,
-        status: 'CONFIRMED',
-        confirmedDate: new Date().toISOString()
-      }
-    }
-  });
-
-  console.log('Webhook simulate pix:', JSON.stringify({ status: webhookSimRes.status, body: webhookSimRes.json }, null, 2));
-
-  const webhookSimRes2 = await httpJsonRetry({
-    method: 'POST',
-    url: `${baseUrl}/api/webhooks/pix`,
-    headers: asaasWebhookSecret ? { 'asaas-access-token': asaasWebhookSecret } : undefined,
-    body: {
-      id: simEventId,
-      event: { id: simEventId },
-      provider: 'pix',
-      providerPaymentId,
-      status: 'paid',
-      payment: {
-        id: providerPaymentId,
-        status: 'CONFIRMED',
-        confirmedDate: new Date().toISOString()
-      }
-    }
-  });
-
-  console.log('Webhook idempotency (same event twice):', JSON.stringify({ status: webhookSimRes2.status, body: webhookSimRes2.json }, null, 2));
-  if (!(webhookSimRes2.json && webhookSimRes2.json.deduped === true)) {
-    console.error('Expected deduped:true on duplicate webhook event.');
-    process.exitCode = 1;
-    return;
-  }
-
-  const statusRes = await httpJsonRetry({ method: 'GET', url: `${baseUrl}/api/checkout/status?paymentId=${encodeURIComponent(paymentId)}`, apiKey });
-  console.log('Payment status:', JSON.stringify({ status: statusRes.status, body: statusRes.json }, null, 2));
-
-  const statusResOtherTenant = await httpJsonRetry({
-    method: 'GET',
-    url: `${baseUrl}/api/checkout/status?paymentId=${encodeURIComponent(paymentId)}`,
-    apiKey: apiKey2
-  });
-  console.log('Tenant isolation (other tenant checkout/status):', JSON.stringify({ status: statusResOtherTenant.status, body: statusResOtherTenant.json }, null, 2));
-  if (statusResOtherTenant.status !== 403) {
-    console.error('Expected 403 when other tenant queries checkout/status.');
-    process.exitCode = 1;
-    return;
-  }
-
-  const execAfter = await httpJsonRetry({
-    method: 'POST',
-    url: `${baseUrl}/api/agents/${encodeURIComponent(agentId)}/execute`,
-    apiKey,
-    body: { taskId, taskType, requireSignature: false }
-  });
-
-  console.log('Execute after payment (expected 200):', JSON.stringify({ status: execAfter.status, body: execAfter.json }, null, 2));
-
-  if (execAfter.status !== 200) {
-    console.error('Expected 200 after payment.');
-    process.exitCode = 1;
-    return;
-  }
-
-  const settlements0 = await httpJsonRetry({
-    method: 'GET',
-    url: `${baseUrl}/api/agents/${encodeURIComponent(agentId)}/settlements?limit=50`,
-    apiKey
-  });
-  console.log('Agent settlements (before advance):', JSON.stringify({ status: settlements0.status, body: settlements0.json }, null, 2));
-
-  {
-    const entries: any[] = Array.isArray(settlements0.json?.settlements)
-      ? settlements0.json.settlements
-      : Array.isArray(settlements0.json?.entries)
-        ? settlements0.json.entries
-        : Array.isArray(settlements0.json)
-          ? settlements0.json
-          : [];
-    const proofId = entries[0]?.proofId != null ? String(entries[0].proofId) : '';
-    if (proofId) {
-      const proofRes = await httpJsonRetry({ method: 'GET', url: `${baseUrl}/api/payment-proofs/${encodeURIComponent(proofId)}`, apiKey });
-      if (proofRes.ok && proofRes.json?.ok && proofRes.json?.proof) {
-        const proof = proofRes.json.proof;
-        console.log(
-          'Payment proof notifications:',
-          JSON.stringify(
-            {
-              proofId,
-              status: proof.status,
-              customerContact: proof.customerContact,
-              customerNotifications: proof.customerNotifications
-            },
-            null,
-            2
-          )
-        );
-      } else {
-        console.log('Payment proof fetch failed:', JSON.stringify({ proofId, status: proofRes.status, text: proofRes.text }, null, 2));
-      }
-    } else {
-      console.log('Payment proofId not found in settlements response (cannot inspect notification receipts).');
-    }
-  }
-
-  const advance = await httpJsonRetry({
-    method: 'POST',
-    url: `${baseUrl}/api/admin/settlement/advance`,
-    adminToken,
-    body: { nowMs: Date.now() + 8 * 24 * 60 * 60 * 1000, limit: 5000 }
-  });
-  console.log('Admin settlement advance:', JSON.stringify({ status: advance.status, body: advance.json }, null, 2));
-
-  const settlements1 = await httpJsonRetry({
-    method: 'GET',
-    url: `${baseUrl}/api/agents/${encodeURIComponent(agentId)}/settlements?limit=50`,
-    apiKey
-  });
-  console.log('Agent settlements (after advance):', JSON.stringify({ status: settlements1.status, body: settlements1.json }, null, 2));
-
-  const refundEventId = `evt_refund_${Date.now()}_${b64Url(randomBytes(6))}`;
-  const refundRes = await httpJsonRetry({
-    method: 'POST',
-    url: `${baseUrl}/api/webhooks/pix`,
-    headers: asaasWebhookSecret ? { 'asaas-access-token': asaasWebhookSecret } : undefined,
-    body: {
-      id: refundEventId,
-      event: { id: refundEventId },
-      provider: 'pix',
-      providerPaymentId,
-      status: 'failed',
-      payment: {
-        id: providerPaymentId,
-        status: 'REFUNDED',
-        confirmedDate: new Date().toISOString()
-      }
-    }
-  });
-  console.log('Webhook simulate refund:', JSON.stringify({ status: refundRes.status, body: refundRes.json }, null, 2));
-
-  const settlements2 = await httpJsonRetry({
-    method: 'GET',
-    url: `${baseUrl}/api/agents/${encodeURIComponent(agentId)}/settlements?limit=50`,
-    apiKey
-  });
-  console.log('Agent settlements (after refund):', JSON.stringify({ status: settlements2.status, body: settlements2.json }, null, 2));
-
-  const entries: any[] = Array.isArray(settlements2.json?.settlements) ? settlements2.json.settlements : Array.isArray(settlements2.json?.entries) ? settlements2.json.entries : Array.isArray(settlements2.json) ? settlements2.json : [];
-  const byPayment = entries.filter((e) => String(e?.paymentId || '') === paymentId);
-  const hasReverted = byPayment.some((e) => String(e?.status || '') === 'reverted');
-  if (!hasReverted) {
-    console.error('Expected settlement status "reverted" after refund, but did not observe it.');
-    console.error('Entries inspected:', JSON.stringify({ entries, byPayment, paymentId }, null, 2));
-    process.exitCode = 1;
-    return;
-  }
-
-  console.log('Simulation finished.');
 
   {
     console.log('---');
@@ -480,7 +482,7 @@ async function main() {
 
     const agentIdC = `ag_${b64Url(randomBytes(12))}`;
     const taskIdC = `task_${b64Url(randomBytes(12))}`;
-    const taskTypeC = 'video_protection';
+    const taskTypeC = 'protect_video';
     const taskInputC = { kind: 'video', sha256: sha256Hex('fake-video-bytes-crypto') };
     const taskOutputC = { kind: 'proof', sha256: sha256Hex('fake-proof-output-crypto') };
 
@@ -491,11 +493,11 @@ async function main() {
       body: {
         currency: 'USD',
         providerHint: 'crypto',
-        lineItems: [{ operation: 'video_protection', units: 1 }],
+        lineItems: [{ operation: 'protect_video', units: 1 }],
         proofMeta: {
           agentId: agentIdC,
           taskId: taskIdC,
-          taskType: taskTypeC,
+          taskType: 'protect_video',
           taskInputHash: sha256Hex(JSON.stringify(taskInputC)),
           taskOutputHash: sha256Hex(JSON.stringify(taskOutputC)),
           customerContact: {
