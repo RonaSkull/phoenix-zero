@@ -661,7 +661,7 @@ async function main() {
 
   const proofMeta = {
     agentId: 'agent://agentic-stress-test-v1',
-    taskType: 'payment_smoke',
+    taskType: 'protect_video',
     taskInputHash: 'sha256:stress_input_v1',
     taskOutputHash: 'sha256:stress_output_v1'
   };
