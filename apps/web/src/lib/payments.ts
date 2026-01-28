@@ -239,13 +239,27 @@ async function ensureAsaasCustomerId(params: {
       ...(cpfCnpj ? { cpfCnpj } : {})
     })
   });
+
+  const txt = await res.text().catch(() => '');
   if (!res.ok) {
-    const txt = await res.text().catch(() => '');
     return { ok: false, reason: `Asaas customer create failed (${res.status}): ${txt || res.statusText}` };
   }
-  const json = (await res.json().catch(() => null)) as any;
+
+  let json: any = null;
+  try {
+    json = txt ? JSON.parse(txt) : null;
+  } catch {
+    json = null;
+  }
+
   const customerId = String(json?.id || '').trim();
-  if (!customerId) return { ok: false, reason: 'Asaas customer create failed (missing id)' };
+  if (!customerId) {
+    const snippet = String(txt || '').slice(0, 500);
+    return {
+      ok: false,
+      reason: `Asaas customer create failed (missing id). Response snippet: ${snippet || '<empty>'}`
+    };
+  }
 
   db.asaasCustomerByTenantId[params.tenantId] = customerId;
   await saveDb(db);
@@ -284,13 +298,26 @@ async function createAsaasPixCharge(params: {
     })
   });
 
+  const txt = await res.text().catch(() => '');
   if (!res.ok) {
-    const txt = await res.text().catch(() => '');
     return { ok: false, reason: `Asaas payment create failed (${res.status}): ${txt || res.statusText}` };
   }
-  const json = (await res.json().catch(() => null)) as any;
+
+  let json: any = null;
+  try {
+    json = txt ? JSON.parse(txt) : null;
+  } catch {
+    json = null;
+  }
+
   const providerPaymentId = String(json?.id || '').trim();
-  if (!providerPaymentId) return { ok: false, reason: 'Asaas payment create failed (missing id)' };
+  if (!providerPaymentId) {
+    const snippet = String(txt || '').slice(0, 500);
+    return {
+      ok: false,
+      reason: `Asaas payment create failed (missing id). Response snippet: ${snippet || '<empty>'}`
+    };
+  }
 
   const invoiceUrl = String(json?.invoiceUrl || '').trim() || undefined;
 
