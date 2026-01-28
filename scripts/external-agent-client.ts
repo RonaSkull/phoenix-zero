@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, createHmac, randomBytes } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -61,6 +61,18 @@ async function readJson(res: Response): Promise<{ json: Json | null; text: strin
 
 function sha256Hex(s: string): string {
   return createHash('sha256').update(String(s || ''), 'utf8').digest('hex');
+}
+
+function hmacSha512Hex(secret: string, raw: string): string {
+  return createHmac('sha512', String(secret || '').trim()).update(String(raw || ''), 'utf8').digest('hex');
+}
+
+function canonicalJson(obj: any): string {
+  if (!obj || typeof obj !== 'object') return '';
+  const keys = Object.keys(obj).sort();
+  const out: Record<string, any> = {};
+  for (const k of keys) out[k] = (obj as any)[k];
+  return JSON.stringify(out);
 }
 
 function b64Url(bytes: Uint8Array): string {
@@ -147,10 +159,11 @@ async function main() {
   const baseUrl = (env('PHOENIX_ZERO_BASE_URL') || env('CLIENT_BASE_URL') || 'http://localhost:3000').replace(/\/+$/g, '');
   const adminToken = env('PHOENIX_ZERO_ADMIN_TOKEN');
   const asaasWebhookSecret = env('ASAAS_WEBHOOK_SECRET');
+  const nowPaymentsIpnSecret = env('NOWPAYMENTS_IPN_SECRET');
   const hasTelegramToken = Boolean(env('TELEGRAM_BOT_TOKEN'));
 
   console.log('External agent simulation');
-  console.log(JSON.stringify({ baseUrl, hasTelegramToken }, null, 2));
+  console.log(JSON.stringify({ baseUrl, hasTelegramToken, hasNowPaymentsSecret: Boolean(nowPaymentsIpnSecret) }, null, 2));
 
   {
     try {
@@ -455,6 +468,193 @@ async function main() {
   }
 
   console.log('Simulation finished.');
+
+  {
+    console.log('---');
+    console.log('Crypto (NowPayments) simulation');
+    if (!nowPaymentsIpnSecret && baseUrl.includes('onrender.com')) {
+      console.error('Missing NOWPAYMENTS_IPN_SECRET for crypto simulation.');
+      process.exitCode = 1;
+      return;
+    }
+
+    const agentIdC = `ag_${b64Url(randomBytes(12))}`;
+    const taskIdC = `task_${b64Url(randomBytes(12))}`;
+    const taskTypeC = 'video_protection';
+    const taskInputC = { kind: 'video', sha256: sha256Hex('fake-video-bytes-crypto') };
+    const taskOutputC = { kind: 'proof', sha256: sha256Hex('fake-proof-output-crypto') };
+
+    const checkoutCrypto = await httpJsonRetry({
+      method: 'POST',
+      url: `${baseUrl}/api/checkout/create`,
+      apiKey,
+      body: {
+        currency: 'USD',
+        providerHint: 'crypto',
+        lineItems: [{ operation: 'video_protection', units: 1 }],
+        proofMeta: {
+          agentId: agentIdC,
+          taskId: taskIdC,
+          taskType: taskTypeC,
+          taskInputHash: sha256Hex(JSON.stringify(taskInputC)),
+          taskOutputHash: sha256Hex(JSON.stringify(taskOutputC)),
+          customerContact: {
+            telegramChatId: env('SIM_TELEGRAM_CHAT_ID') || undefined,
+            whatsappNumber: env('SIM_WHATSAPP_NUMBER') || undefined
+          }
+        }
+      }
+    });
+
+    if (!checkoutCrypto.ok || !checkoutCrypto.json?.ok) {
+      console.error('Checkout create (crypto) failed:', checkoutCrypto.status, checkoutCrypto.text);
+      process.exitCode = 1;
+      return;
+    }
+
+    const paymentIdC = String(checkoutCrypto.json.paymentId || '').trim();
+    const checkoutUrlC = String(checkoutCrypto.json.checkoutUrl || '').trim();
+    let providerPaymentIdC = String(checkoutCrypto.json.providerPaymentId || '').trim() || '';
+    console.log('Checkout created (crypto):', JSON.stringify({ paymentId: paymentIdC, checkoutUrl: checkoutUrlC }, null, 2));
+
+    if (!providerPaymentIdC) {
+      const status0 = await httpJsonRetry({
+        method: 'GET',
+        url: `${baseUrl}/api/checkout/status?paymentId=${encodeURIComponent(paymentIdC)}`,
+        apiKey
+      });
+      providerPaymentIdC = String(status0.json?.providerPaymentId || '').trim() || '';
+    }
+
+    if (!providerPaymentIdC) {
+      console.error('Missing providerPaymentId (crypto) (cannot simulate NowPayments webhook reliably).');
+      process.exitCode = 1;
+      return;
+    }
+
+    const execBeforeC = await httpJsonRetry({
+      method: 'POST',
+      url: `${baseUrl}/api/agents/${encodeURIComponent(agentIdC)}/execute`,
+      apiKey,
+      body: { taskId: taskIdC, taskType: taskTypeC, requireSignature: false }
+    });
+
+    console.log('Execute before payment (crypto) (expected 403):', JSON.stringify({ status: execBeforeC.status, body: execBeforeC.json }, null, 2));
+    if (execBeforeC.status !== 403) {
+      console.error('Expected 403 before payment (crypto).');
+      process.exitCode = 1;
+      return;
+    }
+
+    const npEventId = `np_evt_${Date.now()}_${b64Url(randomBytes(6))}`;
+    const npBody: any = {
+      ipn_id: npEventId,
+      invoice_id: providerPaymentIdC,
+      payment_status: 'finished',
+      created_at: new Date().toISOString()
+    };
+    const npCanonical = canonicalJson(npBody);
+    const npSig = nowPaymentsIpnSecret ? hmacSha512Hex(nowPaymentsIpnSecret, npCanonical) : '';
+
+    const npWebhook1 = await httpJsonRetry({
+      method: 'POST',
+      url: `${baseUrl}/api/webhooks/nowpayments`,
+      headers: npSig ? { 'x-nowpayments-sig': npSig } : undefined,
+      body: npBody
+    });
+    console.log('Webhook simulate nowpayments:', JSON.stringify({ status: npWebhook1.status, body: npWebhook1.json }, null, 2));
+    if (npWebhook1.status !== 200) {
+      console.error('Expected 200 for nowpayments webhook simulation.');
+      process.exitCode = 1;
+      return;
+    }
+
+    const npWebhook2 = await httpJsonRetry({
+      method: 'POST',
+      url: `${baseUrl}/api/webhooks/nowpayments`,
+      headers: npSig ? { 'x-nowpayments-sig': npSig } : undefined,
+      body: npBody
+    });
+    console.log('Webhook idempotency (nowpayments):', JSON.stringify({ status: npWebhook2.status, body: npWebhook2.json }, null, 2));
+    if (!(npWebhook2.json && npWebhook2.json.deduped === true)) {
+      console.error('Expected deduped:true on duplicate nowpayments webhook event.');
+      process.exitCode = 1;
+      return;
+    }
+
+    const statusC = await httpJsonRetry({
+      method: 'GET',
+      url: `${baseUrl}/api/checkout/status?paymentId=${encodeURIComponent(paymentIdC)}`,
+      apiKey
+    });
+    console.log('Payment status (crypto):', JSON.stringify({ status: statusC.status, body: statusC.json }, null, 2));
+
+    const execAfterC = await httpJsonRetry({
+      method: 'POST',
+      url: `${baseUrl}/api/agents/${encodeURIComponent(agentIdC)}/execute`,
+      apiKey,
+      body: { taskId: taskIdC, taskType: taskTypeC, requireSignature: false }
+    });
+
+    console.log('Execute after payment (crypto) (expected 200):', JSON.stringify({ status: execAfterC.status, body: execAfterC.json }, null, 2));
+    if (execAfterC.status !== 200) {
+      console.error('Expected 200 after payment (crypto).');
+      process.exitCode = 1;
+      return;
+    }
+
+    const settlementsC0 = await httpJsonRetry({
+      method: 'GET',
+      url: `${baseUrl}/api/agents/${encodeURIComponent(agentIdC)}/settlements?limit=50`,
+      apiKey
+    });
+    console.log('Agent settlements (crypto) (before refund):', JSON.stringify({ status: settlementsC0.status, body: settlementsC0.json }, null, 2));
+
+    const refundEventIdC = `np_refund_${Date.now()}_${b64Url(randomBytes(6))}`;
+    const npRefundBody: any = {
+      ipn_id: refundEventIdC,
+      invoice_id: providerPaymentIdC,
+      payment_status: 'refunded',
+      created_at: new Date().toISOString()
+    };
+    const npRefundSig = nowPaymentsIpnSecret ? hmacSha512Hex(nowPaymentsIpnSecret, canonicalJson(npRefundBody)) : '';
+
+    const npRefundRes = await httpJsonRetry({
+      method: 'POST',
+      url: `${baseUrl}/api/webhooks/nowpayments`,
+      headers: npRefundSig ? { 'x-nowpayments-sig': npRefundSig } : undefined,
+      body: npRefundBody
+    });
+    console.log('Webhook simulate nowpayments refund:', JSON.stringify({ status: npRefundRes.status, body: npRefundRes.json }, null, 2));
+    if (npRefundRes.status !== 200) {
+      console.error('Expected 200 for nowpayments refund simulation.');
+      process.exitCode = 1;
+      return;
+    }
+
+    const settlementsC1 = await httpJsonRetry({
+      method: 'GET',
+      url: `${baseUrl}/api/agents/${encodeURIComponent(agentIdC)}/settlements?limit=50`,
+      apiKey
+    });
+    console.log('Agent settlements (crypto) (after refund):', JSON.stringify({ status: settlementsC1.status, body: settlementsC1.json }, null, 2));
+
+    const entriesC: any[] = Array.isArray(settlementsC1.json?.settlements)
+      ? settlementsC1.json.settlements
+      : Array.isArray(settlementsC1.json?.entries)
+        ? settlementsC1.json.entries
+        : Array.isArray(settlementsC1.json)
+          ? settlementsC1.json
+          : [];
+    const byPaymentC = entriesC.filter((e) => String(e?.paymentId || '') === paymentIdC);
+    const hasRevertedC = byPaymentC.some((e) => String(e?.status || '') === 'reverted');
+    if (!hasRevertedC) {
+      console.error('Expected settlement status "reverted" after nowpayments refund, but did not observe it.');
+      console.error('Entries inspected:', JSON.stringify({ entriesC, byPaymentC, paymentIdC }, null, 2));
+      process.exitCode = 1;
+      return;
+    }
+  }
 }
 
 main().catch((e) => {

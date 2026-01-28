@@ -5,6 +5,23 @@ import { findPaymentIntentByProviderPaymentId, updatePaymentIntentStatus, type N
 
 export const runtime = 'nodejs';
 
+function truncId(s: string, keep: number = 10): string {
+  const v = String(s || '').trim();
+  if (!v) return '';
+  if (v.length <= keep) return v;
+  return v.slice(0, keep);
+}
+
+function getClientIp(req: Request): string {
+  const xff = String(req.headers.get('x-forwarded-for') || '').trim();
+  if (xff) return xff.split(',')[0]?.trim() || 'unknown';
+  const xrip = String(req.headers.get('x-real-ip') || '').trim();
+  if (xrip) return xrip;
+  const cf = String(req.headers.get('cf-connecting-ip') || '').trim();
+  if (cf) return cf;
+  return 'unknown';
+}
+
 function jsonUtf8Headers(extra: Record<string, string> = {}): Record<string, string> {
   return {
     'Content-Type': 'application/json; charset=utf-8',
@@ -68,6 +85,7 @@ export async function POST(req: Request) {
     const expectedRaw = createHmac('sha512', secret).update(raw, 'utf8').digest('hex');
     const ok = (expectedCanonical && safeEqHex(got, expectedCanonical)) || safeEqHex(got, expectedRaw);
     if (!ok) {
+      console.warn('[WEBHOOK_NOWPAYMENTS] unauthorized', { ip: getClientIp(req) });
       return Response.json({ ok: false, reason: 'Unauthorized' }, { status: 401, headers: jsonUtf8Headers() });
     }
   } else if (process.env.NODE_ENV === 'production') {
@@ -114,9 +132,17 @@ export async function POST(req: Request) {
   if (eventId) {
     const seen = await isWebhookEventProcessed({ provider: 'nowpayments', eventId });
     if (seen) {
+      console.log('[WEBHOOK_NOWPAYMENTS] deduped', { eventId: truncId(eventId), providerPaymentId: truncId(providerPaymentId) });
       return Response.json({ ok: true, deduped: true }, { status: 200, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) });
     }
   }
+
+  console.log('[WEBHOOK_NOWPAYMENTS] received', {
+    eventId: truncId(eventId),
+    providerPaymentId: truncId(providerPaymentId),
+    status,
+    mapped: Boolean(paymentId)
+  });
 
   if (!paymentId) {
     return Response.json(

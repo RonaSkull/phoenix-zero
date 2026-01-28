@@ -1,5 +1,6 @@
 import { listPaymentProofs } from '../../lib/payment-proofs';
 import { toPublicGuaranteeProof } from '../../lib/guarantee-proofs';
+import Link from 'next/link';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -35,7 +36,10 @@ export default async function ProvasPage() {
           <div style={{ fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.7 }}>Phoenix Zero</div>
           <h1 style={{ margin: '6px 0 0 0', fontSize: 22 }}>Provas públicas</h1>
         </div>
-        <a href="/" style={{ fontSize: 14 }}>Home</a>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <Link href="/ppe" style={{ fontSize: 14 }}>Voltar</Link>
+          <a href="/" style={{ fontSize: 14 }}>Home</a>
+        </div>
       </div>
 
       <div style={{ marginTop: 12, opacity: 0.8, fontSize: 14 }}>

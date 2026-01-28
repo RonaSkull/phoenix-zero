@@ -1,5 +1,6 @@
 import { requireTenant } from '../../../../../lib/tenant-auth';
 import { executeWithPPOGate, PpoGateBlockedError } from '../../../../../lib/ppo-gate';
+import { rateLimitTenantApi } from '../../../../../lib/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -26,6 +27,22 @@ export async function POST(req: Request, ctx: { params: { agentId: string } }) {
   if (!auth.ok) {
     console.warn('[AGENTS_EXECUTE] unauthorized', { status: auth.status, reason: auth.reason });
     return Response.json({ ok: false, reason: auth.reason }, { status: auth.status, headers: jsonUtf8Headers() });
+  }
+
+  const rl = rateLimitTenantApi({
+    req,
+    tenantId: auth.ctx.tenantId,
+    apiKeyHash: auth.ctx.apiKeyHash,
+    envRpmName: 'PHOENIX_ZERO_PPE_EXECUTE_RPM',
+    defaultRpm: 300,
+    ipEnvRpmName: 'PHOENIX_ZERO_PPE_EXECUTE_IP_RPM',
+    ipDefaultRpm: 0
+  });
+  if (!rl.ok) {
+    return Response.json(
+      { ok: false, reason: 'Rate limit exceeded' },
+      { status: 429, headers: jsonUtf8Headers({ 'Retry-After': String(rl.retryAfterSeconds), 'Cache-Control': 'no-store' }) }
+    );
   }
 
   const agentId = String(ctx?.params?.agentId || '').trim();
@@ -61,12 +78,21 @@ export async function POST(req: Request, ctx: { params: { agentId: string } }) {
       action: async () => ({ executed: true })
     });
 
+    console.log('[AGENTS_EXECUTE] allowed', { tenantId: auth.ctx.tenantId, agentId, taskId, taskType });
+
     return Response.json(
       { ok: true, executed: true, agentId, taskId, taskType, result: out },
       { status: 200, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
     );
   } catch (e) {
     if (e instanceof PpoGateBlockedError) {
+      console.log('[AGENTS_EXECUTE] blocked', {
+        tenantId: auth.ctx.tenantId,
+        agentId,
+        taskId,
+        taskType,
+        reason: e.gate.reason
+      });
       return Response.json(
         { ok: false, reason: 'PPO_GATE_BLOCKED', gate: e.gate },
         { status: 403, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }

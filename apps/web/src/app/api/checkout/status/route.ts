@@ -1,5 +1,6 @@
 import { requireTenant } from '../../../../lib/tenant-auth';
 import { getPaymentIntentById, revalidatePaymentIntentFromProvider } from '../../../../lib/payments';
+import { rateLimitTenantApi } from '../../../../lib/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -31,6 +32,22 @@ export async function GET(req: Request) {
   const auth = await requireTenant(req);
   if (!auth.ok) {
     return Response.json({ ok: false, reason: auth.reason }, { status: auth.status, headers: jsonUtf8Headers() });
+  }
+
+  const rl = rateLimitTenantApi({
+    req,
+    tenantId: auth.ctx.tenantId,
+    apiKeyHash: auth.ctx.apiKeyHash,
+    envRpmName: 'PHOENIX_ZERO_PPE_CHECKOUT_STATUS_RPM',
+    defaultRpm: 240,
+    ipEnvRpmName: 'PHOENIX_ZERO_PPE_CHECKOUT_STATUS_IP_RPM',
+    ipDefaultRpm: 0
+  });
+  if (!rl.ok) {
+    return Response.json(
+      { ok: false, reason: 'Rate limit exceeded' },
+      { status: 429, headers: jsonUtf8Headers({ 'Retry-After': String(rl.retryAfterSeconds), 'Cache-Control': 'no-store' }) }
+    );
   }
 
   const u = new URL(req.url);

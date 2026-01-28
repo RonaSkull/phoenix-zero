@@ -699,6 +699,16 @@ export async function createPaymentIntent(params: {
     db.intents[intent.id] = intent;
     await saveDb(db);
 
+    console.log('[CHECKOUT_CREATE] created', {
+      paymentId: intent.id,
+      tenantId: intent.tenantId,
+      provider: intent.provider,
+      status: intent.status,
+      amountCents: intent.amountCents,
+      currency: intent.currency,
+      providerPaymentId: String(intent.providerPaymentId || '').slice(0, 12)
+    });
+
     return { ok: true, intent };
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Unknown error';
@@ -785,6 +795,19 @@ export async function updatePaymentIntentStatus(params: {
     const existing = db.intents[paymentId];
     if (!existing) return { ok: false, reason: 'Payment not found' };
 
+    if (existing.status !== status || (params.provider && existing.provider !== params.provider)) {
+      console.log('[PAYMENT_STATUS] update', {
+        paymentId: existing.id,
+        tenantId: existing.tenantId,
+        from: existing.status,
+        to: status,
+        provider: params.provider || existing.provider,
+        providerPaymentId: String(params.providerPaymentId || existing.providerPaymentId || '').slice(0, 12) || undefined,
+        updatedBy: String(params.lastUpdatedBy || '').trim() || undefined,
+        sourceEventId: String(params.sourceEventId || '').slice(0, 12) || undefined
+      });
+    }
+
     const wasPaid = existing.status === 'paid';
     if (!wasPaid && status === 'paid') {
       const activated = await activateBillingAccount(existing.tenantId);
@@ -829,6 +852,8 @@ export async function updatePaymentIntentStatus(params: {
         .then(async (m) => {
           const proof = await m.ensurePaymentProofForIntent(next);
           if (!proof) return;
+
+          console.log('[PPO] created', { paymentId: next.id, proofId: proof.id, tenantId: next.tenantId, provider: next.provider });
 
           await import('./settlement/store')
             .then((s) =>

@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 
 import { getPaymentProofById } from '../../../lib/payment-proofs';
 import { toPublicGuaranteeProof } from '../../../lib/guarantee-proofs';
@@ -41,7 +42,10 @@ export default async function VerifyProofPage(props: { params: { proofId: string
           <div style={{ fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.7 }}>Phoenix Zero</div>
           <h1 style={{ margin: '6px 0 0 0', fontSize: 22 }}>Proof Verified</h1>
         </div>
-        <a href="/provas" style={{ fontSize: 14 }}>Ver últimas provas</a>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <Link href="/provas" style={{ fontSize: 14 }}>Voltar</Link>
+          <a href="/" style={{ fontSize: 14 }}>Home</a>
+        </div>
       </div>
 
       <section style={{ marginTop: 16, border: '1px solid #e5e7eb', borderRadius: 12, padding: 16 }}>
