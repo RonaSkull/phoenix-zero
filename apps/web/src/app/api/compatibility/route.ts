@@ -237,7 +237,7 @@ export async function POST(req: Request) {
 
     if (!operation) {
       return Response.json(
-        { ok: false, compatible: false, reasonCode: 'MISSING_FIELDS', message: 'Missing operation' },
+        { ok: false, compatible: false, reasonCode: 'MISSING_FIELDS', message: 'Missing operation', missingFields: ['operation'] },
         { status: 400, headers: { 'Cache-Control': 'no-store' } }
       );
     }

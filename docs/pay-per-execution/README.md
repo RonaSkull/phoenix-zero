@@ -16,6 +16,7 @@ Este diretório contém a documentação **organizada e separada** do produto **
 - `11_AGENT_TEST_JOURNEY.md`
 - `12_AGENT_EXAMPLES.md`
 - `13_POST_GO_LIVE_SIGNING.md`
+- `14_AGENT_READINESS_REPORT.md`
 - `01_DEPLOY_RENDER.md`
 - `02_API_CONTRACT.md`
 - `03_PRICING.md`
