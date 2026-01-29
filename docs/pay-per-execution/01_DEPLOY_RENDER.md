@@ -21,6 +21,11 @@ Referência: `docs/PERSISTENCIA.md`
 - `PHOENIX_ZERO_PUBLIC_BASE_URL=https://phoenix-zero-web.onrender.com`
 - `PHOENIX_ZERO_ADMIN_TOKEN` (gerado)
 
+### Catálogo público (para agentes)
+- `PHOENIX_ZERO_PUBLIC_API_KEY` (sync)
+  - Deve apontar para um tenant sistêmico read-only (criado via `/api/admin/tenants`).
+  - Sem isso, `GET /api/pricing` sem `x-api-key` retorna erro.
+
 ### PIX (Asaas)
 - `PAYMENTS_PIX_PROVIDER=asaas`
 - `ASAAS_ENV=sandbox` (ou production)
@@ -47,6 +52,9 @@ O Render deve checar:
 ## 5) Validação pós‑deploy (produção)
 - Acesse:
   - `/api/health`
+  - `/.well-known/ai-service.json`
+  - `/api/docs/ai-service-discovery`
+  - `/api/pricing` (sem headers; depende do `PHOENIX_ZERO_PUBLIC_API_KEY`)
   - `/provas`
   - `/verify/<proofId>`
 

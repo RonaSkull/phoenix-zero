@@ -24,6 +24,9 @@ It provides:
 - `compatibility` endpoint
 - Capability guarantees
 
+It also provides a `docs` URL that can be fetched over HTTP:
+- `GET /api/docs/ai-service-discovery` (Content-Type: `text/markdown`)
+
 ---
 
 ## 2) Pricing catalog (LLM-friendly)

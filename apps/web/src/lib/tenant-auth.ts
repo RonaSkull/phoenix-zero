@@ -70,10 +70,7 @@ export async function requireTenantOrPublic(req: Request): Promise<
 
 export function requireAdminToken(req: Request): { ok: true } | { ok: false; status: number; reason: string } {
   const token = (process.env.PHOENIX_ZERO_ADMIN_TOKEN || '').trim();
-  if (!token) {
-    if (process.env.NODE_ENV === 'production') return { ok: false, status: 500, reason: 'Missing PHOENIX_ZERO_ADMIN_TOKEN' };
-    return { ok: true };
-  }
+  if (!token) return { ok: false, status: 500, reason: 'Missing PHOENIX_ZERO_ADMIN_TOKEN' };
   const got = (req.headers.get('x-admin-token') || '').trim();
   if (!got || got !== token) return { ok: false, status: 401, reason: 'Unauthorized' };
   return { ok: true };

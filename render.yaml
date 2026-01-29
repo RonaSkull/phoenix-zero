@@ -21,6 +21,8 @@ services:
         value: /tmp/phoenix-zero/tmp
       - key: PHOENIX_ZERO_ADMIN_TOKEN
         generateValue: true
+      - key: PHOENIX_ZERO_PUBLIC_API_KEY
+        sync: false
       - key: PAYMENTS_PIX_PROVIDER
         value: asaas
       - key: ASAAS_ENV

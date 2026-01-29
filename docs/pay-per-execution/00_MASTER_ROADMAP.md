@@ -43,6 +43,7 @@ Você pode dizer **"está live"** quando todos estiverem verdadeiros:
 - [ ] Configurar `DATABASE_URL` (Neon) + `PGSSLMODE=require`
 - [ ] Setar `PHOENIX_ZERO_PUBLIC_BASE_URL`
 - [ ] Setar `PHOENIX_ZERO_ADMIN_TOKEN` (gerado no Render)
+- [ ] Criar tenant público sistêmico (read-only) e setar `PHOENIX_ZERO_PUBLIC_API_KEY` (para `GET /api/pricing` sem auth)
 - [ ] PIX:
   - [ ] `PAYMENTS_PIX_PROVIDER=asaas`
   - [ ] `ASAAS_API_KEY`
@@ -117,3 +118,7 @@ Siga:
 1) `01_DEPLOY_RENDER.md`
 2) `06_OPERATIONS_RUNBOOK.md` (testes)
 3) `04_SITE_COPY.md` (go‑live copy)
+
+Documentos públicos para agentes (HTTP):
+- Discovery: `/.well-known/ai-service.json`
+- Docs: `/api/docs/ai-service-discovery`

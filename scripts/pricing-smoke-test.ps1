@@ -35,7 +35,7 @@ $adminHeaders = @{}
 if (-not [string]::IsNullOrWhiteSpace($AdminToken)) {
   $adminHeaders = @{ 'x-admin-token' = $AdminToken }
 } else {
-  Write-Host "Aviso: PHOENIX_ZERO_ADMIN_TOKEN não está setado. Em DEV isso pode funcionar; em PROD vai dar 401/500." 
+  Write-Host "Aviso: PHOENIX_ZERO_ADMIN_TOKEN não está setado. Endpoints admin vão falhar (401/500)." 
 }
 
 function PostJson([string]$path, [object]$obj, [hashtable]$headers) {
