@@ -192,7 +192,7 @@ function asaasBaseUrl(): string {
   if (env) {
     const lower = env.toLowerCase();
     const looksLikeApiHost = lower.includes('api.asaas.com') || lower.includes('api-sandbox.asaas.com');
-    if (looksLikeApiHost) return env.replace(/\/+$/g, '');
+    if (looksLikeApiHost) return env.replace(/\/+$/g, '').replace(/\/v3$/i, '');
   }
   const mode = String(process.env.ASAAS_ENV || '').trim().toLowerCase();
   if (mode === 'sandbox') return 'https://api-sandbox.asaas.com';
@@ -231,6 +231,16 @@ async function ensureAsaasCustomerId(params: {
   tenantId: string;
   tenantName: string;
 }): Promise<{ ok: true; customerId: string } | { ok: false; reason: string }> {
+  const key = asaasApiKey();
+  const mode = String(process.env.ASAAS_ENV || '').trim().toLowerCase();
+  if (!key) return { ok: false, reason: 'Asaas customer create failed: missing ASAAS_API_KEY' };
+  if (mode === 'sandbox' && key.startsWith('$aact_prod_')) {
+    return { ok: false, reason: 'Asaas customer create failed: ASAAS_ENV=sandbox but ASAAS_API_KEY looks like production ($aact_prod_)' };
+  }
+  if (mode !== 'sandbox' && key.startsWith('$aact_hmlg_')) {
+    return { ok: false, reason: 'Asaas customer create failed: ASAAS_ENV=production but ASAAS_API_KEY looks like sandbox ($aact_hmlg_)' };
+  }
+
   const db = await loadDb();
   const cached = db.asaasCustomerByTenantId[params.tenantId];
   if (cached) return { ok: true, customerId: cached };
@@ -304,10 +314,19 @@ async function createAsaasPixCharge(params: {
   description: string;
   externalReference: string;
 }): Promise<{ ok: true; providerPaymentId: string; checkoutUrl?: string; instructions?: string } | { ok: false; reason: string }> {
+  const key = asaasApiKey();
+  const mode = String(process.env.ASAAS_ENV || '').trim().toLowerCase();
+  if (!key) return { ok: false, reason: 'Asaas payment create failed: missing ASAAS_API_KEY' };
+  if (mode === 'sandbox' && key.startsWith('$aact_prod_')) {
+    return { ok: false, reason: 'Asaas payment create failed: ASAAS_ENV=sandbox but ASAAS_API_KEY looks like production ($aact_prod_)' };
+  }
+  if (mode !== 'sandbox' && key.startsWith('$aact_hmlg_')) {
+    return { ok: false, reason: 'Asaas payment create failed: ASAAS_ENV=production but ASAAS_API_KEY looks like sandbox ($aact_hmlg_)' };
+  }
+
   const customer = await ensureAsaasCustomerId({ tenantId: params.tenantId, tenantName: params.tenantName });
   if (!customer.ok) return customer;
 
-  const mode = String(process.env.ASAAS_ENV || '').trim().toLowerCase();
   const amountCents = mode === 'sandbox' ? Math.max(500, Math.trunc(params.amountCents)) : Math.trunc(params.amountCents);
 
   const dueDate = new Date(Date.now() + 48 * 3600 * 1000).toISOString().slice(0, 10);

@@ -1,10 +1,11 @@
-import { listPaymentProofsByAgent, type PaymentProof } from './payment-proofs';
+import { listPaymentProofsByAgent, tryConsumePaymentProofUnits, type PaymentProof } from './payment-proofs';
 
 type GateReason =
   | 'NO_PPO'
   | 'NO_MATCHING_PPO'
   | 'MISSING_SIGNATURE'
-  | 'INVALID_SIGNATURE';
+  | 'INVALID_SIGNATURE'
+  | 'INSUFFICIENT_UNITS';
 
 export type PpoGateDecision = {
   ok: true;
@@ -149,6 +150,17 @@ export async function executeWithPPOGate<T>(params: {
 
   if (!gate.allowed) {
     throw new PpoGateBlockedError(gate);
+  }
+
+  if (gate.proofId) {
+    const consumed = await tryConsumePaymentProofUnits({ id: gate.proofId, units: 1 });
+    if (!consumed.ok) {
+      throw new PpoGateBlockedError({
+        ...gate,
+        allowed: false,
+        reason: consumed.reason === 'insufficient_units' ? 'INSUFFICIENT_UNITS' : 'NO_MATCHING_PPO'
+      });
+    }
   }
 
   return params.action();

@@ -220,3 +220,72 @@ export async function GET(req: Request) {
     return Response.json({ ok: false, reason: message }, { status: 500, headers: { 'Cache-Control': 'no-store' } });
   }
 }
+
+export async function POST(req: Request) {
+  try {
+    const body = (await req.json().catch(() => null)) as
+      | null
+      | {
+          operation?: string;
+          intent?: string;
+          agentType?: string;
+          supportsPpo?: boolean;
+        };
+
+    const operation = String(body?.operation || '').trim().toLowerCase();
+    const intent = String(body?.intent || '').trim().toLowerCase();
+
+    if (!operation) {
+      return Response.json(
+        { ok: false, compatible: false, reasonCode: 'MISSING_FIELDS', message: 'Missing operation' },
+        { status: 400, headers: { 'Cache-Control': 'no-store' } }
+      );
+    }
+
+    const supportedOperations = new Set(['protect_video', 'protect_image', 'protect_audio', 'protect_live', 'protect_report']);
+    if (!supportedOperations.has(operation)) {
+      return Response.json(
+        {
+          ok: true,
+          compatible: false,
+          reasonCode: 'UNSUPPORTED_OPERATION',
+          message: `Operation '${operation}' is not supported.`,
+          suggestions: [{ operation: 'protect_video' }],
+          requiredCapabilities: ['ppo-gated-execution', 'replay-safe']
+        },
+        { status: 200, headers: { 'Cache-Control': 'no-store' } }
+      );
+    }
+
+    if (intent && intent.includes('live') && operation !== 'protect_live') {
+      return Response.json(
+        {
+          ok: true,
+          compatible: false,
+          reasonCode: 'UNSUPPORTED_INTENT',
+          message: `Intent '${intent}' is not supported for '${operation}'.`,
+          suggestions: [{ operation: 'protect_live', intent }],
+          requiredCapabilities: ['ppo-gated-execution', 'replay-safe']
+        },
+        { status: 200, headers: { 'Cache-Control': 'no-store' } }
+      );
+    }
+
+    return Response.json(
+      {
+        ok: true,
+        compatible: true,
+        operation,
+        intent: intent || undefined,
+        agentPolicy: {
+          requiresProofOfPayment: true,
+          executionWithoutPPO: 'deny'
+        }
+      },
+      { status: 200, headers: { 'Cache-Control': 'no-store' } }
+    );
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Unknown error';
+    return Response.json({ ok: false, compatible: false, reasonCode: 'INTERNAL', message }, { status: 500, headers: { 'Cache-Control': 'no-store' } });
+  }
+}

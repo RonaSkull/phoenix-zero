@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { phoenixZeroStableStringify, sha256B64Url, verifyPhoenixZeroPayloadSignature } from '@phoenix-zero/core';
 
-import { postgresEnabled, readKvJson, writeKvJson } from './pg-kv';
+import { postgresEnabled, readKvJson, updateKvJsonLocked, writeKvJson } from './pg-kv';
 import { phoenixZeroTmpDir } from './tmp-dir';
 
 import type { AntifraudDecision } from './antifraud/types';
@@ -31,6 +31,7 @@ type PaymentIntent = {
   providerPaymentId?: string;
   amountCents: number;
   currency: string;
+  lineItems?: Array<{ units?: number }>;
   proofMeta?: {
     agentId: string;
     taskId?: string;
@@ -94,6 +95,9 @@ export type PaymentProof = {
   customerNotifications?: Partial<Record<PaymentProofNotificationChannel, PaymentProofNotificationReceipt>>;
 
   status: PaymentProofStatus;
+
+  totalUnits?: number;
+  usedUnits?: number;
 };
 
 type PaymentProofsDb = {
@@ -340,6 +344,15 @@ export async function ensurePaymentProofForIntent(intent: PaymentIntent): Promis
 
   if (!agentId || !taskType || !taskInputHash || !taskOutputHash) return null;
 
+  const totalUnits = (() => {
+    const items = Array.isArray((intent as any)?.lineItems) ? ((intent as any).lineItems as any[]) : [];
+    const sum = items.reduce((acc, li) => {
+      const u = Math.max(0, Math.trunc(Number((li as any)?.units ?? 0)));
+      return acc + u;
+    }, 0);
+    return sum > 0 ? sum : 1;
+  })();
+
   let agentEd25519SignatureVerified: boolean | undefined = undefined;
   let agentEd25519SignaturePayloadHashB64Url: string | undefined = undefined;
   if (agentEd25519PublicKeyB64Url || agentEd25519SignatureB64Url) {
@@ -385,7 +398,9 @@ export async function ensurePaymentProofForIntent(intent: PaymentIntent): Promis
     agentEd25519SignatureVerified,
     agentEd25519SignaturePayloadHashB64Url,
     customerContact,
-    status: statusToProofStatus(intent.status)
+    status: statusToProofStatus(intent.status),
+    totalUnits,
+    usedUnits: 0
   };
 
   const db = await loadDb();
@@ -408,6 +423,65 @@ export async function ensurePaymentProofForIntent(intent: PaymentIntent): Promis
     });
   }
   return proof;
+}
+
+export async function tryConsumePaymentProofUnits(params: {
+  id: string;
+  units: number;
+}): Promise<{ ok: true; proof: PaymentProof } | { ok: false; reason: 'not_found' | 'insufficient_units' | 'invalid' }> {
+  const id = String(params.id || '').trim();
+  const units = Math.max(1, Math.trunc(Number(params.units ?? 1)));
+  if (!id || !Number.isFinite(units) || units <= 0) return { ok: false, reason: 'invalid' };
+
+  if (postgresEnabled()) {
+    try {
+      const nextDb = await updateKvJsonLocked<PaymentProofsDb>('payment-proofs', (current) => {
+        const db: PaymentProofsDb =
+          !current || (current as any).version !== 1
+            ? { version: 1, proofs: {}, byProviderPaymentId: {} }
+            : {
+                version: 1,
+                proofs: typeof (current as any).proofs === 'object' && (current as any).proofs ? (current as any).proofs : {},
+                byProviderPaymentId:
+                  typeof (current as any).byProviderPaymentId === 'object' && (current as any).byProviderPaymentId ? (current as any).byProviderPaymentId : {}
+              };
+
+        const existing = db.proofs[id];
+        if (!existing) throw new Error('PPO_NOT_FOUND');
+
+        const totalUnits = Math.max(1, Math.trunc(Number((existing as any).totalUnits ?? 1)));
+        const usedUnits = Math.max(0, Math.trunc(Number((existing as any).usedUnits ?? 0)));
+        const remaining = totalUnits - usedUnits;
+        if (remaining < units) throw new Error('PPO_INSUFFICIENT_UNITS');
+
+        db.proofs[id] = { ...existing, usedUnits: usedUnits + units, totalUnits };
+        return db;
+      });
+
+      const proof = (nextDb as any)?.proofs?.[id] as PaymentProof | undefined;
+      if (!proof) return { ok: false, reason: 'not_found' };
+      return { ok: true, proof };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg === 'PPO_NOT_FOUND') return { ok: false, reason: 'not_found' };
+      if (msg === 'PPO_INSUFFICIENT_UNITS') return { ok: false, reason: 'insufficient_units' };
+      throw e;
+    }
+  }
+
+  const db = await loadDb();
+  const existing = db.proofs[id];
+  if (!existing) return { ok: false, reason: 'not_found' };
+
+  const totalUnits = Math.max(1, Math.trunc(Number((existing as any).totalUnits ?? 1)));
+  const usedUnits = Math.max(0, Math.trunc(Number((existing as any).usedUnits ?? 0)));
+  const remaining = totalUnits - usedUnits;
+  if (remaining < units) return { ok: false, reason: 'insufficient_units' };
+
+  const next: PaymentProof = { ...existing, totalUnits, usedUnits: usedUnits + units };
+  db.proofs[id] = next;
+  await saveDb(db);
+  return { ok: true, proof: next };
 }
 
 export async function updatePaymentProofStatus(params: { id: string; status: PaymentStatus }): Promise<void> {

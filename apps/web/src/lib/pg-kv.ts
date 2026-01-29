@@ -73,3 +73,34 @@ export async function writeKvJson<T>(key: string, value: T): Promise<void> {
     [key, JSON.stringify(value)]
   );
 }
+
+export async function updateKvJsonLocked<T>(key: string, fn: (current: T | null) => T): Promise<T> {
+  if (!postgresEnabled()) {
+    const current = (await readKvJson<T>(key)) as T | null;
+    const next = fn(current);
+    await writeKvJson(key, next);
+    return next;
+  }
+
+  await ensureSchema();
+  const p = getPool();
+  const client = await p.connect();
+  try {
+    await client.query('BEGIN');
+    const res = await client.query('SELECT value FROM phoenix_zero_kv WHERE key = $1 FOR UPDATE', [key]);
+    const current = (res.rows[0]?.value ?? null) as T | null;
+    const next = fn(current);
+    await client.query(
+      'INSERT INTO phoenix_zero_kv(key, value, updated_at) VALUES ($1, $2::jsonb, now())\n' +
+        'ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()',
+      [key, JSON.stringify(next)]
+    );
+    await client.query('COMMIT');
+    return next;
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}
