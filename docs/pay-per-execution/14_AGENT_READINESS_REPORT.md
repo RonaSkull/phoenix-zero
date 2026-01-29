@@ -16,6 +16,78 @@ Não é “se a API funciona”. É se agentes heterogêneos conseguem:
 - **Receber erros machine-readable** e se corrigir
 - **Executar com segurança econômica** (PPO gate + idempotência)
 
+## 1.1) Matriz de agentes (10–15 tipos) que devem ser testados
+
+Esta matriz não é “genérica”: cada tipo representa um comportamento funcionalmente distinto que expõe falhas diferentes no contrato.
+
+### Grupo 1 — Agentes puramente autônomos
+
+- **Agent-Buyer**
+  - Compra serviços com budget fixo.
+- **Agent-Optimizer**
+  - Testa múltiplas opções de pricing/operations e escolhe o menor custo compatível.
+- **Agent-Negotiator**
+  - Tenta alterar parâmetros, pedir descontos, ou “custom pricing”.
+- **Agent-Batch Operator**
+  - Encadeia múltiplas operações e tenta otimizar por throughput.
+
+### Grupo 2 — Agentes tool-driven (LangGraph / CrewAI style)
+
+- **Planner Agent**
+  - Planeja antes de executar; tende a usar capabilities/compatibility como gating.
+- **Executor Agent**
+  - Só executa comandos; testa se a API é “tool-friendly” e previsível.
+- **Validator Agent**
+  - Verifica consistência de schemas e erros; insiste em machine-readability.
+- **Recovery Agent**
+  - Atua apenas quando algo falha (401/403/429/5xx), foca em retry/fallback.
+
+### Grupo 3 — Agentes híbridos humano-assistidos
+
+- **Copilot Agent**
+  - Sugere ação ao humano; precisa de explicações curtas e acionáveis.
+- **Approval-Gate Agent**
+  - Precisa de confirmação humana antes de checkout/execução.
+- **Budget-Guardian Agent**
+  - Bloqueia se exceder limites; depende de pricing claro e determinístico.
+
+### Grupo 4 — Agentes “hostis” / anti-fragilidade
+
+- **Blind Agent**
+  - Não lê docs direito; tenta adivinhar e “chuta” requests.
+- **Schema-Guessing Agent**
+  - Deduz campos errados; testa se o erro é explícito sobre o que faltou.
+- **Over-Creative Agent**
+  - Inventa parâmetros; testa se a API rejeita lixo de forma consistente.
+- **Out-of-Scope Agent**
+  - Tenta usar a API para algo que você não suporta; testa se o “não” é claro.
+
+## 1.2) Padrão ouro: jornada de teste por agente (test script)
+
+Você não testa “pagamento OK”. Você testa a **jornada completa** de cada agente.
+
+Estrutura (igual para todos):
+
+1. **Discovery**
+  - O agente consegue entender o que a API faz sem falar com ninguém?
+2. **Capability match**
+  - O agente entende se o caso dele é suportado (ou não)?
+3. **Attempted quote**
+  - O agente envia os campos corretos?
+  - Se faltar algo, o erro é claro e acionável?
+4. **Execution**
+  - Sucesso / rejeição / fallback (PPO gate, 401/403/429)?
+5. **Outcome interpretation**
+  - O agente entende o resultado e o próximo passo (retry, corrigir input, pedir chave, etc.)?
+
+Falha grave se:
+
+- Erro não diz o que falta
+- Mensagem é humana demais e não-machine-readable
+- Campo obrigatório não é explícito (`missingFields` ausente)
+- API aceita lixo silenciosamente
+- API retorna `500` em input inválido comum
+
 ## 2) Fase A — Descoberta (Perception)
 
 O agente deve conseguir iniciar sozinho com:
