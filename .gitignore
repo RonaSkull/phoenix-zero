@@ -24,6 +24,8 @@ keys/phoenix-zero-issuer-ed25519.json
 keys/phoenix-zero-registry-authority-ed25519.json
 keys/phoenix-zero-sphincs.json
 
+docs/pay-per-execution/agent-matrix-reports/agent_signup_cache.json
+
 cmd_history.txt
 terminal_history.txt
 editor_cache_hits.txt

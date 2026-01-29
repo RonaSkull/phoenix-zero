@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 type Json = any;
@@ -42,6 +42,24 @@ type ScenarioResult = {
   };
 };
 
+type SignupResult =
+  | {
+      ok: true;
+      tenantId: string;
+      apiKey: string;
+      raw: any;
+    }
+  | { ok: false; status: number; rawText: string; rawJson: any };
+
+type SignupCache = Record<
+  string,
+  {
+    tenantId: string;
+    apiKey: string;
+    createdAt: number;
+  }
+>;
+
 function env(name: string): string {
   return String(process.env[name] || '').trim();
 }
@@ -66,6 +84,33 @@ function safeFileName(s: string): string {
     .replace(/-+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 80);
+}
+
+function signupCachePath(): string {
+  return resolve(process.cwd(), 'docs', 'pay-per-execution', 'agent-matrix-reports', 'agent_signup_cache.json');
+}
+
+function loadSignupCache(): SignupCache {
+  const p = signupCachePath();
+  if (!existsSync(p)) return {};
+  try {
+    const raw = readFileSync(p, 'utf8');
+    const j = raw ? JSON.parse(raw) : null;
+    if (!j || typeof j !== 'object') return {};
+    return j as SignupCache;
+  } catch {
+    return {};
+  }
+}
+
+function saveSignupCache(cache: SignupCache) {
+  const p = signupCachePath();
+  mkdirSync(resolve(process.cwd(), 'docs', 'pay-per-execution', 'agent-matrix-reports'), { recursive: true });
+  writeFileSync(p, JSON.stringify(cache, null, 2) + '\n', 'utf8');
+}
+
+function cacheKeyForBaseUrl(baseUrl: string): string {
+  return safeFileName(stripTrailingSlashes(baseUrl));
 }
 
 async function readJsonSafe(res: Response): Promise<{ json: Json | null; text: string }> {
@@ -111,6 +156,60 @@ async function httpJson(params: {
 
   const j = await readJsonSafe(res);
   return { ok: res.ok, status: res.status, url: params.url, json: j.json, text: j.text };
+}
+
+async function publicAgentSignup(baseUrl: string): Promise<SignupResult> {
+  const nonce = Math.random().toString(36).slice(2, 10);
+  const body = {
+    name: `Agent Signup ${nonce}`,
+    email: `agent-${nonce}@example.com`,
+    agentType: 'buyer',
+    intendedUse: 'autonomous agent test',
+    acceptsTermsVersion: '2026-01-v1',
+    acceptsFixedPricing: true,
+    billingMode: 'prepaid',
+    currency: 'USD'
+  };
+
+  const res = await httpJson({ method: 'POST', url: `${baseUrl}/api/public/agent-signup`, body });
+  if (!res.ok || !res.json || typeof res.json !== 'object') {
+    return { ok: false, status: res.status, rawText: res.text, rawJson: res.json };
+  }
+
+  const tenantId = String((res.json as any)?.tenant?.tenantId || '').trim();
+  const apiKey = String((res.json as any)?.tenant?.apiKey || '').trim();
+  if (!tenantId || !apiKey) {
+    return { ok: false, status: res.status, rawText: res.text, rawJson: res.json };
+  }
+
+  return { ok: true, tenantId, apiKey, raw: res.json };
+}
+
+async function negotiationAck(baseUrl: string): Promise<HttpRes> {
+  return httpJson({
+    method: 'POST',
+    url: `${baseUrl}/api/negotiation/ack`,
+    headers: {
+      'x-agent-class': 'enterprise-buyer',
+      'x-agent-intent': 'negotiate'
+    },
+    body: {
+      agentType: 'enterprise_procurement',
+      intent: 'confirm_terms',
+      plan: 'public_fixed_v1',
+      expectedVolume: 'low_initial',
+      currency: 'USD'
+    }
+  });
+}
+
+let negotiationAckMemo: { baseUrl: string; res: HttpRes } | null = null;
+
+async function negotiationAckOnce(baseUrl: string): Promise<HttpRes> {
+  if (negotiationAckMemo && negotiationAckMemo.baseUrl === baseUrl) return negotiationAckMemo.res;
+  const res = await negotiationAck(baseUrl);
+  negotiationAckMemo = { baseUrl, res };
+  return res;
 }
 
 function isMachineReadableError(res: HttpRes): boolean {
@@ -434,6 +533,20 @@ async function runScenario(baseUrl: string, s: AgentScenario, tenantApiKey?: str
   const attemptNotes: string[] = [];
   const attemptEvidence: any[] = [];
   let attemptOk = true;
+
+  if (s.id === 'agent_buyer' || s.id === 'approval_gate_agent' || s.id === 'budget_guardian_agent') {
+    const ack = await negotiationAckOnce(baseUrl);
+    attemptEvidence.push({ test: 'negotiation_ack', ...summarize(ack) });
+    if (!ack.ok) {
+      if (ack.status === 429) {
+        attemptNotes.push('negotiation_ack rate_limited (429)');
+      } else {
+        attemptOk = false;
+        attemptNotes.push(`negotiation_ack failed (${ack.status})`);
+      }
+    }
+  }
+
   for (const nt of s.negativeTests) {
     const r = await compatNegative(baseUrl, nt);
     attemptEvidence.push({ test: nt, ...r.evidence, notes: r.notes, ok: r.ok });
@@ -490,11 +603,38 @@ function printSummary(results: ScenarioResult[]) {
 
 async function main() {
   const baseUrl = stripTrailingSlashes(argValue('--baseUrl') || env('PHOENIX_ZERO_BASE_URL') || 'https://phoenix-zero-web.onrender.com');
-  const tenantApiKey = argValue('--tenantApiKey') || env('PHOENIX_ZERO_TENANT_API_KEY') || env('TENANT_API_KEY') || '';
+  const tenantApiKeyArg = argValue('--tenantApiKey') || env('PHOENIX_ZERO_TENANT_API_KEY') || env('TENANT_API_KEY') || '';
   const outDirFlag = argValue('--outDir') || '';
 
+  let tenantApiKey = String(tenantApiKeyArg || '').trim();
+  let signupInfo: any = null;
+  if (!tenantApiKey) {
+    const cache = loadSignupCache();
+    const ck = cacheKeyForBaseUrl(baseUrl);
+    const cached = cache[ck];
+    if (cached?.apiKey) {
+      tenantApiKey = cached.apiKey;
+      signupInfo = { ok: true, tenantId: cached.tenantId, source: 'cache' };
+    } else {
+      const signup = await publicAgentSignup(baseUrl);
+      if (signup.ok) {
+        tenantApiKey = signup.apiKey;
+        cache[ck] = { tenantId: signup.tenantId, apiKey: signup.apiKey, createdAt: Date.now() };
+        saveSignupCache(cache);
+        signupInfo = { ok: true, tenantId: signup.tenantId, source: 'signup' };
+      } else {
+        if (signup.status === 429 && cached?.apiKey) {
+          tenantApiKey = cached.apiKey;
+          signupInfo = { ok: true, tenantId: cached.tenantId, source: 'cache_after_429', signupStatus: 429 };
+        } else {
+          signupInfo = { ok: false, status: signup.status };
+        }
+      }
+    }
+  }
+
   console.log('Agent matrix runner');
-  console.log(JSON.stringify({ baseUrl, hasTenantApiKey: Boolean(tenantApiKey) }, null, 2));
+  console.log(JSON.stringify({ baseUrl, hasTenantApiKey: Boolean(tenantApiKey), signup: signupInfo }, null, 2));
 
   const results: ScenarioResult[] = [];
   for (const s of scenarios()) {
@@ -509,7 +649,7 @@ async function main() {
     : resolve(process.cwd(), 'docs', 'pay-per-execution', 'agent-matrix-reports');
   mkdirSync(outDir, { recursive: true });
   const outPath = resolve(outDir, `agent_matrix_${safeFileName(baseUrl)}_${Date.now()}.json`);
-  writeFileSync(outPath, JSON.stringify({ baseUrl, hasTenantApiKey: Boolean(tenantApiKey), results }, null, 2) + '\n', 'utf8');
+  writeFileSync(outPath, JSON.stringify({ baseUrl, hasTenantApiKey: Boolean(tenantApiKey), signup: signupInfo, results }, null, 2) + '\n', 'utf8');
   console.log('Report saved:', outPath);
 }
 
