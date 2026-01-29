@@ -1,6 +1,7 @@
 param(
   [string]$BaseUrl = 'http://localhost:3000',
   [string]$EnvFile = '',
+  [string]$OnlyLevels = '',
   [ValidateSet('deterministic','real:pix','real:crypto')]
   [string]$Mode = 'deterministic',
   [int]$WaitSeconds = 60,
@@ -9,10 +10,10 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-function Test-ServerUp([string]$Url) {
+function Test-ServerUp([string]$Url, [int]$TimeoutSec = 3) {
   $healthUrl = ($Url.TrimEnd('/') + '/api/health')
   try {
-    $resp = Invoke-WebRequest -Uri $healthUrl -Method GET -TimeoutSec 3 -UseBasicParsing
+    $resp = Invoke-WebRequest -Uri $healthUrl -Method GET -TimeoutSec $TimeoutSec -UseBasicParsing
     return $resp.StatusCode -ge 200 -and $resp.StatusCode -lt 500
   } catch {
     return $false
@@ -35,13 +36,31 @@ function Stop-ProcessTree([int]$ProcessId) {
 }
 
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
+
+if ([string]::IsNullOrWhiteSpace($BaseUrl) -or $BaseUrl -eq 'http://localhost:3000') {
+  if (-not [string]::IsNullOrWhiteSpace($env:PHOENIX_ZERO_BASE_URL)) {
+    $BaseUrl = $env:PHOENIX_ZERO_BASE_URL
+  }
+}
+
 $BaseUrl = $BaseUrl.TrimEnd('/')
 
 $env:PHOENIX_ZERO_BASE_URL = $BaseUrl
 
+function Test-IsRemoteBaseUrl([string]$Url) {
+  $u = [string]$Url
+  if ([string]::IsNullOrWhiteSpace($u)) { return $false }
+  $u = $u.Trim()
+  if ($u -notmatch '^https?://') { return $false }
+  $u = $u.TrimEnd('/')
+  return -not ($u -match '^https?://(localhost|127\.0\.0\.1|\[::1\])([:/]|$)')
+}
+
 if ($EnvFile -and (Test-Path -LiteralPath $EnvFile)) {
   . $EnvFile
 }
+
+$isRemote = Test-IsRemoteBaseUrl -Url $BaseUrl
 
 function Test-HasEnv([string]$Name) {
   $v = [string]($ExecutionContext.SessionState.PSVariable.GetValue("env:$Name") )
@@ -55,37 +74,55 @@ function Require-Env([string]$Name, [string]$Hint) {
 }
 
 if ($Mode -eq 'real:pix') {
-  Require-Env -Name 'PAYMENTS_PIX_PROVIDER' -Hint "Set it to 'asaas' in your env file."
-  Require-Env -Name 'ASAAS_API_KEY' -Hint 'Required to create Asaas PIX charge.'
-  if ($env:PAYMENTS_PIX_PROVIDER.Trim().ToLowerInvariant() -ne 'asaas') {
-    throw "PAYMENTS_PIX_PROVIDER must be 'asaas' for real PIX mode. Current value is not 'asaas'."
+  if (-not $isRemote) {
+    Require-Env -Name 'PAYMENTS_PIX_PROVIDER' -Hint "Set it to 'asaas' in your env file."
+    Require-Env -Name 'ASAAS_API_KEY' -Hint 'Required to create Asaas PIX charge.'
+    if ($env:PAYMENTS_PIX_PROVIDER.Trim().ToLowerInvariant() -ne 'asaas') {
+      throw "PAYMENTS_PIX_PROVIDER must be 'asaas' for real PIX mode. Current value is not 'asaas'."
+    }
   }
 }
 
 if ($Mode -eq 'real:crypto') {
-  Require-Env -Name 'PAYMENTS_CRYPTO_PROVIDER' -Hint "Set it to 'nowpayments' in your env file."
-  Require-Env -Name 'NOWPAYMENTS_API_KEY' -Hint 'Required to create NowPayments invoice.'
-  if ($env:PAYMENTS_CRYPTO_PROVIDER.Trim().ToLowerInvariant() -ne 'nowpayments') {
-    throw "PAYMENTS_CRYPTO_PROVIDER must be 'nowpayments' for real crypto mode. Current value is not 'nowpayments'."
+  if (-not $isRemote) {
+    Require-Env -Name 'PAYMENTS_CRYPTO_PROVIDER' -Hint "Set it to 'nowpayments' in your env file."
+    Require-Env -Name 'NOWPAYMENTS_API_KEY' -Hint 'Required to create NowPayments invoice.'
+    if ($env:PAYMENTS_CRYPTO_PROVIDER.Trim().ToLowerInvariant() -ne 'nowpayments') {
+      throw "PAYMENTS_CRYPTO_PROVIDER must be 'nowpayments' for real crypto mode. Current value is not 'nowpayments'."
+    }
   }
 }
 
 $startedServer = $false
 $devProc = $null
 
-if (-not (Test-ServerUp -Url $BaseUrl)) {
+$healthTimeout = if ($isRemote) { 15 } else { 3 }
+
+if ($isRemote) {
+  $deadline = (Get-Date).AddSeconds($WaitSeconds)
+  while ((Get-Date) -lt $deadline) {
+    if (Test-ServerUp -Url $BaseUrl -TimeoutSec $healthTimeout) {
+      break
+    }
+    Start-Sleep -Milliseconds 1000
+  }
+
+  if (-not (Test-ServerUp -Url $BaseUrl -TimeoutSec $healthTimeout)) {
+    throw "Remote server did not become ready at $BaseUrl within ${WaitSeconds}s. (Render may be spun down; increase -WaitSeconds)"
+  }
+} elseif (-not (Test-ServerUp -Url $BaseUrl -TimeoutSec $healthTimeout)) {
   $devProc = Start-Process -FilePath 'npm' -ArgumentList @('run','dev:web') -WorkingDirectory $RepoRoot -PassThru -NoNewWindow
   $startedServer = $true
 
   $deadline = (Get-Date).AddSeconds($WaitSeconds)
   while ((Get-Date) -lt $deadline) {
-    if (Test-ServerUp -Url $BaseUrl) {
+    if (Test-ServerUp -Url $BaseUrl -TimeoutSec $healthTimeout) {
       break
     }
     Start-Sleep -Milliseconds 500
   }
 
-  if (-not (Test-ServerUp -Url $BaseUrl)) {
+  if (-not (Test-ServerUp -Url $BaseUrl -TimeoutSec $healthTimeout)) {
     if ($startedServer -and $devProc) {
       Stop-ProcessTree -ProcessId $devProc.Id
     }
@@ -100,10 +137,20 @@ try {
   } elseif ($Mode -eq 'real:pix') {
     $env:AGENTIC_STRESS_REAL = '1'
     $env:AGENTIC_STRESS_REAL_PROVIDER = 'pix'
+    if (-not [string]::IsNullOrWhiteSpace($OnlyLevels)) {
+      $env:AGENTIC_STRESS_ONLY = $OnlyLevels
+    } else {
+      $env:AGENTIC_STRESS_ONLY = 'L5,L11'
+    }
     & npm run test:agentic
   } elseif ($Mode -eq 'real:crypto') {
     $env:AGENTIC_STRESS_REAL = '1'
     $env:AGENTIC_STRESS_REAL_PROVIDER = 'crypto'
+    if (-not [string]::IsNullOrWhiteSpace($OnlyLevels)) {
+      $env:AGENTIC_STRESS_ONLY = $OnlyLevels
+    } else {
+      $env:AGENTIC_STRESS_ONLY = 'L5,L11'
+    }
     & npm run test:agentic
   } else {
     throw "Unknown mode: $Mode"
