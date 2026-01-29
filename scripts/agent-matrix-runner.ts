@@ -60,6 +60,10 @@ type SignupCache = Record<
   }
 >;
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function env(name: string): string {
   return String(process.env[name] || '').trim();
 }
@@ -138,24 +142,44 @@ async function httpJson(params: {
     headers[kk] = vv;
   }
 
-  const timeoutMs = Math.max(1000, Number(env('PHOENIX_ZERO_HTTP_TIMEOUT_MS') || '45000'));
-  const ac = new AbortController();
-  const t = setTimeout(() => ac.abort(), timeoutMs);
+  const timeoutMs = Math.max(1000, Number(env('PHOENIX_ZERO_HTTP_TIMEOUT_MS') || '120000'));
+  const maxAttempts = Math.max(1, Math.floor(Number(env('PHOENIX_ZERO_HTTP_RETRIES') || '3')));
 
-  let res: Response;
-  try {
-    res = await fetch(params.url, {
-      method: params.method,
-      headers,
-      body: params.method === 'POST' ? JSON.stringify(params.body ?? {}) : undefined,
-      signal: ac.signal
-    });
-  } finally {
-    clearTimeout(t);
+  let lastErr: unknown = null;
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const ac = new AbortController();
+    const t = setTimeout(() => ac.abort(), timeoutMs);
+
+    let res: Response;
+    try {
+      res = await fetch(params.url, {
+        method: params.method,
+        headers,
+        body: params.method === 'POST' ? JSON.stringify(params.body ?? {}) : undefined,
+        signal: ac.signal
+      });
+    } catch (e) {
+      lastErr = e;
+      clearTimeout(t);
+      if (attempt + 1 < maxAttempts) {
+        await sleep(750 * (attempt + 1));
+        continue;
+      }
+      throw e;
+    } finally {
+      clearTimeout(t);
+    }
+
+    const j = await readJsonSafe(res);
+    const out = { ok: res.ok, status: res.status, url: params.url, json: j.json, text: j.text };
+    if ((out.status === 429 || out.status === 502 || out.status === 503 || out.status === 504) && attempt + 1 < maxAttempts) {
+      await sleep(750 * (attempt + 1));
+      continue;
+    }
+    return out;
   }
 
-  const j = await readJsonSafe(res);
-  return { ok: res.ok, status: res.status, url: params.url, json: j.json, text: j.text };
+  throw lastErr instanceof Error ? lastErr : new Error('httpJson failed');
 }
 
 async function publicAgentSignup(baseUrl: string): Promise<SignupResult> {

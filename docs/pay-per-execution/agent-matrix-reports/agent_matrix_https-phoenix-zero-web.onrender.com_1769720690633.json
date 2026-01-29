@@ -1,0 +1,1666 @@
+{
+  "baseUrl": "https://phoenix-zero-web.onrender.com",
+  "hasTenantApiKey": true,
+  "signup": {
+    "ok": true,
+    "tenantId": "t_le3Ta0HPMiTOfUKm",
+    "source": "signup"
+  },
+  "results": [
+    {
+      "scenario": {
+        "id": "agent_buyer",
+        "group": "autonomous",
+        "title": "Agent-Buyer",
+        "description": "Compra com budget fixo; precisa de preço claro e onboarding explícito.",
+        "desiredOperation": "protect_video",
+        "negativeTests": [
+          "compat_missing_fields",
+          "compat_unsupported_operation"
+        ]
+      },
+      "phases": [
+        {
+          "phase": "discovery",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "wellKnown": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/.well-known/ai-service.json"
+            },
+            "capabilities": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/capabilities"
+            },
+            "pricing": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/pricing"
+            },
+            "docs": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/docs/ai-service-discovery"
+            }
+          }
+        },
+        {
+          "phase": "capability_match",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "status": 200,
+            "ok": true,
+            "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+            "compatible": true,
+            "operation": "protect_video"
+          }
+        },
+        {
+          "phase": "attempted_quote",
+          "ok": true,
+          "notes": [],
+          "evidence": [
+            {
+              "test": "negotiation_ack",
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/negotiation/ack"
+            },
+            {
+              "test": "compat_missing_fields",
+              "status": 400,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+              "reasonCode": "MISSING_FIELDS",
+              "message": "Missing operation",
+              "missingFields": [
+                "operation"
+              ],
+              "compatible": false,
+              "notes": []
+            },
+            {
+              "test": "compat_unsupported_operation",
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+              "reasonCode": "UNSUPPORTED_OPERATION",
+              "message": "Operation 'this_operation_does_not_exist' is not supported.",
+              "suggestions": [
+                {
+                  "operation": "protect_video"
+                }
+              ],
+              "compatible": false,
+              "notes": []
+            }
+          ]
+        },
+        {
+          "phase": "execution",
+          "ok": true,
+          "notes": [
+            "Expected: checkout/create requires x-api-key (tenant authentication)."
+          ],
+          "evidence": {
+            "checkoutUnauth": {
+              "status": 401,
+              "ok": false,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create",
+              "reason": "Missing API key"
+            },
+            "checkoutAuth": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create"
+            }
+          }
+        },
+        {
+          "phase": "outcome_interpretation",
+          "ok": true,
+          "notes": [
+            "Expected: checkout requires x-api-key; agent must obtain tenant key before buying."
+          ],
+          "evidence": null
+        }
+      ],
+      "summary": {
+        "ok": true,
+        "blockers": []
+      }
+    },
+    {
+      "scenario": {
+        "id": "agent_optimizer",
+        "group": "autonomous",
+        "title": "Agent-Optimizer",
+        "description": "Compara operações e escolhe a mais barata compatível.",
+        "desiredOperation": "protect_video",
+        "negativeTests": [
+          "compat_weird_operation_whitespace",
+          "compat_unsupported_operation"
+        ]
+      },
+      "phases": [
+        {
+          "phase": "discovery",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "wellKnown": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/.well-known/ai-service.json"
+            },
+            "capabilities": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/capabilities"
+            },
+            "pricing": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/pricing"
+            },
+            "docs": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/docs/ai-service-discovery"
+            }
+          }
+        },
+        {
+          "phase": "capability_match",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "status": 200,
+            "ok": true,
+            "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+            "compatible": true,
+            "operation": "protect_video"
+          }
+        },
+        {
+          "phase": "attempted_quote",
+          "ok": true,
+          "notes": [],
+          "evidence": [
+            {
+              "test": "compat_weird_operation_whitespace",
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+              "compatible": true,
+              "operation": "protect_video",
+              "notes": []
+            },
+            {
+              "test": "compat_unsupported_operation",
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+              "reasonCode": "UNSUPPORTED_OPERATION",
+              "message": "Operation 'this_operation_does_not_exist' is not supported.",
+              "suggestions": [
+                {
+                  "operation": "protect_video"
+                }
+              ],
+              "compatible": false,
+              "notes": []
+            }
+          ]
+        },
+        {
+          "phase": "execution",
+          "ok": true,
+          "notes": [
+            "Expected: checkout/create requires x-api-key (tenant authentication)."
+          ],
+          "evidence": {
+            "checkoutUnauth": {
+              "status": 401,
+              "ok": false,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create",
+              "reason": "Missing API key"
+            },
+            "checkoutAuth": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create"
+            }
+          }
+        },
+        {
+          "phase": "outcome_interpretation",
+          "ok": true,
+          "notes": [
+            "Expected: checkout requires x-api-key; agent must obtain tenant key before buying."
+          ],
+          "evidence": null
+        }
+      ],
+      "summary": {
+        "ok": true,
+        "blockers": []
+      }
+    },
+    {
+      "scenario": {
+        "id": "agent_negotiator",
+        "group": "autonomous",
+        "title": "Agent-Negotiator",
+        "description": "Tenta negociar / pedir custom pricing.",
+        "desiredOperation": "protect_video",
+        "negativeTests": [
+          "compat_overcreative_payload"
+        ]
+      },
+      "phases": [
+        {
+          "phase": "discovery",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "wellKnown": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/.well-known/ai-service.json"
+            },
+            "capabilities": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/capabilities"
+            },
+            "pricing": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/pricing"
+            },
+            "docs": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/docs/ai-service-discovery"
+            }
+          }
+        },
+        {
+          "phase": "capability_match",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "status": 200,
+            "ok": true,
+            "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+            "compatible": true,
+            "operation": "protect_video"
+          }
+        },
+        {
+          "phase": "attempted_quote",
+          "ok": true,
+          "notes": [],
+          "evidence": [
+            {
+              "test": "compat_overcreative_payload",
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+              "compatible": true,
+              "operation": "protect_video",
+              "notes": []
+            }
+          ]
+        },
+        {
+          "phase": "execution",
+          "ok": true,
+          "notes": [
+            "Expected: checkout/create requires x-api-key (tenant authentication)."
+          ],
+          "evidence": {
+            "checkoutUnauth": {
+              "status": 401,
+              "ok": false,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create",
+              "reason": "Missing API key"
+            },
+            "checkoutAuth": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create"
+            }
+          }
+        },
+        {
+          "phase": "outcome_interpretation",
+          "ok": true,
+          "notes": [
+            "Expected: checkout requires x-api-key; agent must obtain tenant key before buying."
+          ],
+          "evidence": null
+        }
+      ],
+      "summary": {
+        "ok": true,
+        "blockers": []
+      }
+    },
+    {
+      "scenario": {
+        "id": "agent_batch_operator",
+        "group": "autonomous",
+        "title": "Agent-Batch Operator",
+        "description": "Encadeia operações e busca throughput/limites.",
+        "desiredOperation": "protect_video",
+        "negativeTests": [
+          "compat_unsupported_operation"
+        ]
+      },
+      "phases": [
+        {
+          "phase": "discovery",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "wellKnown": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/.well-known/ai-service.json"
+            },
+            "capabilities": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/capabilities"
+            },
+            "pricing": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/pricing"
+            },
+            "docs": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/docs/ai-service-discovery"
+            }
+          }
+        },
+        {
+          "phase": "capability_match",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "status": 200,
+            "ok": true,
+            "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+            "compatible": true,
+            "operation": "protect_video"
+          }
+        },
+        {
+          "phase": "attempted_quote",
+          "ok": true,
+          "notes": [],
+          "evidence": [
+            {
+              "test": "compat_unsupported_operation",
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+              "reasonCode": "UNSUPPORTED_OPERATION",
+              "message": "Operation 'this_operation_does_not_exist' is not supported.",
+              "suggestions": [
+                {
+                  "operation": "protect_video"
+                }
+              ],
+              "compatible": false,
+              "notes": []
+            }
+          ]
+        },
+        {
+          "phase": "execution",
+          "ok": true,
+          "notes": [
+            "Expected: checkout/create requires x-api-key (tenant authentication)."
+          ],
+          "evidence": {
+            "checkoutUnauth": {
+              "status": 401,
+              "ok": false,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create",
+              "reason": "Missing API key"
+            },
+            "checkoutAuth": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create"
+            }
+          }
+        },
+        {
+          "phase": "outcome_interpretation",
+          "ok": true,
+          "notes": [
+            "Expected: checkout requires x-api-key; agent must obtain tenant key before buying."
+          ],
+          "evidence": null
+        }
+      ],
+      "summary": {
+        "ok": true,
+        "blockers": []
+      }
+    },
+    {
+      "scenario": {
+        "id": "planner_agent",
+        "group": "tool_driven",
+        "title": "Planner Agent",
+        "description": "Planeja antes; usa discovery/capabilities/compatibility como gating.",
+        "desiredOperation": "protect_video",
+        "negativeTests": [
+          "compat_missing_fields"
+        ]
+      },
+      "phases": [
+        {
+          "phase": "discovery",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "wellKnown": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/.well-known/ai-service.json"
+            },
+            "capabilities": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/capabilities"
+            },
+            "pricing": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/pricing"
+            },
+            "docs": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/docs/ai-service-discovery"
+            }
+          }
+        },
+        {
+          "phase": "capability_match",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "status": 200,
+            "ok": true,
+            "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+            "compatible": true,
+            "operation": "protect_video"
+          }
+        },
+        {
+          "phase": "attempted_quote",
+          "ok": true,
+          "notes": [],
+          "evidence": [
+            {
+              "test": "compat_missing_fields",
+              "status": 400,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+              "reasonCode": "MISSING_FIELDS",
+              "message": "Missing operation",
+              "missingFields": [
+                "operation"
+              ],
+              "compatible": false,
+              "notes": []
+            }
+          ]
+        },
+        {
+          "phase": "execution",
+          "ok": true,
+          "notes": [
+            "Expected: checkout/create requires x-api-key (tenant authentication)."
+          ],
+          "evidence": {
+            "checkoutUnauth": {
+              "status": 401,
+              "ok": false,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create",
+              "reason": "Missing API key"
+            },
+            "checkoutAuth": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create"
+            }
+          }
+        },
+        {
+          "phase": "outcome_interpretation",
+          "ok": true,
+          "notes": [
+            "Expected: checkout requires x-api-key; agent must obtain tenant key before buying."
+          ],
+          "evidence": null
+        }
+      ],
+      "summary": {
+        "ok": true,
+        "blockers": []
+      }
+    },
+    {
+      "scenario": {
+        "id": "executor_agent",
+        "group": "tool_driven",
+        "title": "Executor Agent",
+        "description": "Só executa o que mandam; falha se o próximo passo não for explícito.",
+        "desiredOperation": "protect_video",
+        "negativeTests": [
+          "compat_weird_operation_whitespace"
+        ]
+      },
+      "phases": [
+        {
+          "phase": "discovery",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "wellKnown": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/.well-known/ai-service.json"
+            },
+            "capabilities": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/capabilities"
+            },
+            "pricing": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/pricing"
+            },
+            "docs": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/docs/ai-service-discovery"
+            }
+          }
+        },
+        {
+          "phase": "capability_match",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "status": 200,
+            "ok": true,
+            "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+            "compatible": true,
+            "operation": "protect_video"
+          }
+        },
+        {
+          "phase": "attempted_quote",
+          "ok": true,
+          "notes": [],
+          "evidence": [
+            {
+              "test": "compat_weird_operation_whitespace",
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+              "compatible": true,
+              "operation": "protect_video",
+              "notes": []
+            }
+          ]
+        },
+        {
+          "phase": "execution",
+          "ok": true,
+          "notes": [
+            "Expected: checkout/create requires x-api-key (tenant authentication)."
+          ],
+          "evidence": {
+            "checkoutUnauth": {
+              "status": 401,
+              "ok": false,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create",
+              "reason": "Missing API key"
+            },
+            "checkoutAuth": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create"
+            }
+          }
+        },
+        {
+          "phase": "outcome_interpretation",
+          "ok": true,
+          "notes": [
+            "Expected: checkout requires x-api-key; agent must obtain tenant key before buying."
+          ],
+          "evidence": null
+        }
+      ],
+      "summary": {
+        "ok": true,
+        "blockers": []
+      }
+    },
+    {
+      "scenario": {
+        "id": "validator_agent",
+        "group": "tool_driven",
+        "title": "Validator Agent",
+        "description": "Exige erros machine-readable consistentes e missingFields quando aplicável.",
+        "desiredOperation": "protect_video",
+        "negativeTests": [
+          "compat_missing_fields",
+          "compat_overcreative_payload"
+        ]
+      },
+      "phases": [
+        {
+          "phase": "discovery",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "wellKnown": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/.well-known/ai-service.json"
+            },
+            "capabilities": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/capabilities"
+            },
+            "pricing": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/pricing"
+            },
+            "docs": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/docs/ai-service-discovery"
+            }
+          }
+        },
+        {
+          "phase": "capability_match",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "status": 200,
+            "ok": true,
+            "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+            "compatible": true,
+            "operation": "protect_video"
+          }
+        },
+        {
+          "phase": "attempted_quote",
+          "ok": true,
+          "notes": [],
+          "evidence": [
+            {
+              "test": "compat_missing_fields",
+              "status": 400,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+              "reasonCode": "MISSING_FIELDS",
+              "message": "Missing operation",
+              "missingFields": [
+                "operation"
+              ],
+              "compatible": false,
+              "notes": []
+            },
+            {
+              "test": "compat_overcreative_payload",
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+              "compatible": true,
+              "operation": "protect_video",
+              "notes": []
+            }
+          ]
+        },
+        {
+          "phase": "execution",
+          "ok": true,
+          "notes": [
+            "Expected: checkout/create requires x-api-key (tenant authentication)."
+          ],
+          "evidence": {
+            "checkoutUnauth": {
+              "status": 401,
+              "ok": false,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create",
+              "reason": "Missing API key"
+            },
+            "checkoutAuth": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create"
+            }
+          }
+        },
+        {
+          "phase": "outcome_interpretation",
+          "ok": true,
+          "notes": [
+            "Expected: checkout requires x-api-key; agent must obtain tenant key before buying."
+          ],
+          "evidence": null
+        }
+      ],
+      "summary": {
+        "ok": true,
+        "blockers": []
+      }
+    },
+    {
+      "scenario": {
+        "id": "recovery_agent",
+        "group": "tool_driven",
+        "title": "Recovery Agent",
+        "description": "Atua em falhas; avalia clareza de 401/403 e se retry faz sentido.",
+        "desiredOperation": "protect_video",
+        "negativeTests": [
+          "compat_unsupported_operation"
+        ]
+      },
+      "phases": [
+        {
+          "phase": "discovery",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "wellKnown": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/.well-known/ai-service.json"
+            },
+            "capabilities": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/capabilities"
+            },
+            "pricing": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/pricing"
+            },
+            "docs": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/docs/ai-service-discovery"
+            }
+          }
+        },
+        {
+          "phase": "capability_match",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "status": 200,
+            "ok": true,
+            "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+            "compatible": true,
+            "operation": "protect_video"
+          }
+        },
+        {
+          "phase": "attempted_quote",
+          "ok": true,
+          "notes": [],
+          "evidence": [
+            {
+              "test": "compat_unsupported_operation",
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+              "reasonCode": "UNSUPPORTED_OPERATION",
+              "message": "Operation 'this_operation_does_not_exist' is not supported.",
+              "suggestions": [
+                {
+                  "operation": "protect_video"
+                }
+              ],
+              "compatible": false,
+              "notes": []
+            }
+          ]
+        },
+        {
+          "phase": "execution",
+          "ok": true,
+          "notes": [
+            "Expected: checkout/create requires x-api-key (tenant authentication)."
+          ],
+          "evidence": {
+            "checkoutUnauth": {
+              "status": 401,
+              "ok": false,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create",
+              "reason": "Missing API key"
+            },
+            "checkoutAuth": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create"
+            }
+          }
+        },
+        {
+          "phase": "outcome_interpretation",
+          "ok": true,
+          "notes": [
+            "Expected: checkout requires x-api-key; agent must obtain tenant key before buying."
+          ],
+          "evidence": null
+        }
+      ],
+      "summary": {
+        "ok": true,
+        "blockers": []
+      }
+    },
+    {
+      "scenario": {
+        "id": "copilot_agent",
+        "group": "human_assisted",
+        "title": "Copilot Agent",
+        "description": "Transforma a resposta em texto para humano; precisa de mensagens acionáveis.",
+        "desiredOperation": "protect_video",
+        "negativeTests": [
+          "compat_missing_fields"
+        ]
+      },
+      "phases": [
+        {
+          "phase": "discovery",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "wellKnown": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/.well-known/ai-service.json"
+            },
+            "capabilities": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/capabilities"
+            },
+            "pricing": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/pricing"
+            },
+            "docs": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/docs/ai-service-discovery"
+            }
+          }
+        },
+        {
+          "phase": "capability_match",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "status": 200,
+            "ok": true,
+            "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+            "compatible": true,
+            "operation": "protect_video"
+          }
+        },
+        {
+          "phase": "attempted_quote",
+          "ok": true,
+          "notes": [],
+          "evidence": [
+            {
+              "test": "compat_missing_fields",
+              "status": 400,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+              "reasonCode": "MISSING_FIELDS",
+              "message": "Missing operation",
+              "missingFields": [
+                "operation"
+              ],
+              "compatible": false,
+              "notes": []
+            }
+          ]
+        },
+        {
+          "phase": "execution",
+          "ok": true,
+          "notes": [
+            "Expected: checkout/create requires x-api-key (tenant authentication)."
+          ],
+          "evidence": {
+            "checkoutUnauth": {
+              "status": 401,
+              "ok": false,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create",
+              "reason": "Missing API key"
+            },
+            "checkoutAuth": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create"
+            }
+          }
+        },
+        {
+          "phase": "outcome_interpretation",
+          "ok": true,
+          "notes": [
+            "Expected: checkout requires x-api-key; agent must obtain tenant key before buying."
+          ],
+          "evidence": null
+        }
+      ],
+      "summary": {
+        "ok": true,
+        "blockers": []
+      }
+    },
+    {
+      "scenario": {
+        "id": "approval_gate_agent",
+        "group": "human_assisted",
+        "title": "Approval-Gate Agent",
+        "description": "Precisa de aprovação humana antes de checkout.",
+        "desiredOperation": "protect_video",
+        "negativeTests": [
+          "compat_unsupported_operation"
+        ]
+      },
+      "phases": [
+        {
+          "phase": "discovery",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "wellKnown": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/.well-known/ai-service.json"
+            },
+            "capabilities": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/capabilities"
+            },
+            "pricing": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/pricing"
+            },
+            "docs": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/docs/ai-service-discovery"
+            }
+          }
+        },
+        {
+          "phase": "capability_match",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "status": 200,
+            "ok": true,
+            "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+            "compatible": true,
+            "operation": "protect_video"
+          }
+        },
+        {
+          "phase": "attempted_quote",
+          "ok": true,
+          "notes": [],
+          "evidence": [
+            {
+              "test": "negotiation_ack",
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/negotiation/ack"
+            },
+            {
+              "test": "compat_unsupported_operation",
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+              "reasonCode": "UNSUPPORTED_OPERATION",
+              "message": "Operation 'this_operation_does_not_exist' is not supported.",
+              "suggestions": [
+                {
+                  "operation": "protect_video"
+                }
+              ],
+              "compatible": false,
+              "notes": []
+            }
+          ]
+        },
+        {
+          "phase": "execution",
+          "ok": true,
+          "notes": [
+            "Expected: checkout/create requires x-api-key (tenant authentication)."
+          ],
+          "evidence": {
+            "checkoutUnauth": {
+              "status": 401,
+              "ok": false,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create",
+              "reason": "Missing API key"
+            },
+            "checkoutAuth": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create"
+            }
+          }
+        },
+        {
+          "phase": "outcome_interpretation",
+          "ok": true,
+          "notes": [
+            "Expected: checkout requires x-api-key; agent must obtain tenant key before buying."
+          ],
+          "evidence": null
+        }
+      ],
+      "summary": {
+        "ok": true,
+        "blockers": []
+      }
+    },
+    {
+      "scenario": {
+        "id": "budget_guardian_agent",
+        "group": "human_assisted",
+        "title": "Budget-Guardian Agent",
+        "description": "Bloqueia se custo excede limite; depende de pricing estável.",
+        "desiredOperation": "protect_video",
+        "negativeTests": [
+          "compat_unsupported_operation"
+        ]
+      },
+      "phases": [
+        {
+          "phase": "discovery",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "wellKnown": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/.well-known/ai-service.json"
+            },
+            "capabilities": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/capabilities"
+            },
+            "pricing": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/pricing"
+            },
+            "docs": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/docs/ai-service-discovery"
+            }
+          }
+        },
+        {
+          "phase": "capability_match",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "status": 200,
+            "ok": true,
+            "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+            "compatible": true,
+            "operation": "protect_video"
+          }
+        },
+        {
+          "phase": "attempted_quote",
+          "ok": true,
+          "notes": [],
+          "evidence": [
+            {
+              "test": "negotiation_ack",
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/negotiation/ack"
+            },
+            {
+              "test": "compat_unsupported_operation",
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+              "reasonCode": "UNSUPPORTED_OPERATION",
+              "message": "Operation 'this_operation_does_not_exist' is not supported.",
+              "suggestions": [
+                {
+                  "operation": "protect_video"
+                }
+              ],
+              "compatible": false,
+              "notes": []
+            }
+          ]
+        },
+        {
+          "phase": "execution",
+          "ok": true,
+          "notes": [
+            "Expected: checkout/create requires x-api-key (tenant authentication)."
+          ],
+          "evidence": {
+            "checkoutUnauth": {
+              "status": 401,
+              "ok": false,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create",
+              "reason": "Missing API key"
+            },
+            "checkoutAuth": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create"
+            }
+          }
+        },
+        {
+          "phase": "outcome_interpretation",
+          "ok": true,
+          "notes": [
+            "Expected: checkout requires x-api-key; agent must obtain tenant key before buying."
+          ],
+          "evidence": null
+        }
+      ],
+      "summary": {
+        "ok": true,
+        "blockers": []
+      }
+    },
+    {
+      "scenario": {
+        "id": "blind_agent",
+        "group": "hostile",
+        "title": "Blind Agent",
+        "description": "Chuta requests; testa robustez e erro acionável.",
+        "desiredOperation": "protect_video",
+        "negativeTests": [
+          "compat_missing_fields",
+          "compat_weird_operation_whitespace"
+        ]
+      },
+      "phases": [
+        {
+          "phase": "discovery",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "wellKnown": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/.well-known/ai-service.json"
+            },
+            "capabilities": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/capabilities"
+            },
+            "pricing": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/pricing"
+            },
+            "docs": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/docs/ai-service-discovery"
+            }
+          }
+        },
+        {
+          "phase": "capability_match",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "status": 200,
+            "ok": true,
+            "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+            "compatible": true,
+            "operation": "protect_video"
+          }
+        },
+        {
+          "phase": "attempted_quote",
+          "ok": true,
+          "notes": [],
+          "evidence": [
+            {
+              "test": "compat_missing_fields",
+              "status": 400,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+              "reasonCode": "MISSING_FIELDS",
+              "message": "Missing operation",
+              "missingFields": [
+                "operation"
+              ],
+              "compatible": false,
+              "notes": []
+            },
+            {
+              "test": "compat_weird_operation_whitespace",
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+              "compatible": true,
+              "operation": "protect_video",
+              "notes": []
+            }
+          ]
+        },
+        {
+          "phase": "execution",
+          "ok": true,
+          "notes": [
+            "Expected: checkout/create requires x-api-key (tenant authentication)."
+          ],
+          "evidence": {
+            "checkoutUnauth": {
+              "status": 401,
+              "ok": false,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create",
+              "reason": "Missing API key"
+            },
+            "checkoutAuth": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create"
+            }
+          }
+        },
+        {
+          "phase": "outcome_interpretation",
+          "ok": true,
+          "notes": [
+            "Expected: checkout requires x-api-key; agent must obtain tenant key before buying."
+          ],
+          "evidence": null
+        }
+      ],
+      "summary": {
+        "ok": true,
+        "blockers": []
+      }
+    },
+    {
+      "scenario": {
+        "id": "schema_guessing_agent",
+        "group": "hostile",
+        "title": "Schema-Guessing Agent",
+        "description": "Deduz schema errado; espera missingFields.",
+        "desiredOperation": "protect_video",
+        "negativeTests": [
+          "compat_missing_fields",
+          "compat_overcreative_payload"
+        ]
+      },
+      "phases": [
+        {
+          "phase": "discovery",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "wellKnown": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/.well-known/ai-service.json"
+            },
+            "capabilities": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/capabilities"
+            },
+            "pricing": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/pricing"
+            },
+            "docs": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/docs/ai-service-discovery"
+            }
+          }
+        },
+        {
+          "phase": "capability_match",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "status": 200,
+            "ok": true,
+            "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+            "compatible": true,
+            "operation": "protect_video"
+          }
+        },
+        {
+          "phase": "attempted_quote",
+          "ok": true,
+          "notes": [],
+          "evidence": [
+            {
+              "test": "compat_missing_fields",
+              "status": 400,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+              "reasonCode": "MISSING_FIELDS",
+              "message": "Missing operation",
+              "missingFields": [
+                "operation"
+              ],
+              "compatible": false,
+              "notes": []
+            },
+            {
+              "test": "compat_overcreative_payload",
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+              "compatible": true,
+              "operation": "protect_video",
+              "notes": []
+            }
+          ]
+        },
+        {
+          "phase": "execution",
+          "ok": true,
+          "notes": [
+            "Expected: checkout/create requires x-api-key (tenant authentication)."
+          ],
+          "evidence": {
+            "checkoutUnauth": {
+              "status": 401,
+              "ok": false,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create",
+              "reason": "Missing API key"
+            },
+            "checkoutAuth": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create"
+            }
+          }
+        },
+        {
+          "phase": "outcome_interpretation",
+          "ok": true,
+          "notes": [
+            "Expected: checkout requires x-api-key; agent must obtain tenant key before buying."
+          ],
+          "evidence": null
+        }
+      ],
+      "summary": {
+        "ok": true,
+        "blockers": []
+      }
+    },
+    {
+      "scenario": {
+        "id": "over_creative_agent",
+        "group": "hostile",
+        "title": "Over-Creative Agent",
+        "description": "Inventa parâmetros; API deve rejeitar lixo de forma consistente.",
+        "desiredOperation": "protect_video",
+        "negativeTests": [
+          "compat_overcreative_payload"
+        ]
+      },
+      "phases": [
+        {
+          "phase": "discovery",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "wellKnown": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/.well-known/ai-service.json"
+            },
+            "capabilities": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/capabilities"
+            },
+            "pricing": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/pricing"
+            },
+            "docs": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/docs/ai-service-discovery"
+            }
+          }
+        },
+        {
+          "phase": "capability_match",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "status": 200,
+            "ok": true,
+            "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+            "compatible": true,
+            "operation": "protect_video"
+          }
+        },
+        {
+          "phase": "attempted_quote",
+          "ok": true,
+          "notes": [],
+          "evidence": [
+            {
+              "test": "compat_overcreative_payload",
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+              "compatible": true,
+              "operation": "protect_video",
+              "notes": []
+            }
+          ]
+        },
+        {
+          "phase": "execution",
+          "ok": true,
+          "notes": [
+            "Expected: checkout/create requires x-api-key (tenant authentication)."
+          ],
+          "evidence": {
+            "checkoutUnauth": {
+              "status": 401,
+              "ok": false,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create",
+              "reason": "Missing API key"
+            },
+            "checkoutAuth": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create"
+            }
+          }
+        },
+        {
+          "phase": "outcome_interpretation",
+          "ok": true,
+          "notes": [
+            "Expected: checkout requires x-api-key; agent must obtain tenant key before buying."
+          ],
+          "evidence": null
+        }
+      ],
+      "summary": {
+        "ok": true,
+        "blockers": []
+      }
+    },
+    {
+      "scenario": {
+        "id": "out_of_scope_agent",
+        "group": "hostile",
+        "title": "Out-of-Scope Agent",
+        "description": "Tenta usar operação inexistente; precisa de feedback claro + suggestions.",
+        "desiredOperation": "do_something_impossible",
+        "negativeTests": [
+          "compat_unsupported_operation"
+        ]
+      },
+      "phases": [
+        {
+          "phase": "discovery",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "wellKnown": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/.well-known/ai-service.json"
+            },
+            "capabilities": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/capabilities"
+            },
+            "pricing": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/pricing"
+            },
+            "docs": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/docs/ai-service-discovery"
+            }
+          }
+        },
+        {
+          "phase": "capability_match",
+          "ok": true,
+          "notes": [],
+          "evidence": {
+            "status": 200,
+            "ok": true,
+            "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+            "reasonCode": "UNSUPPORTED_OPERATION",
+            "message": "Operation 'do_something_impossible' is not supported.",
+            "suggestions": [
+              {
+                "operation": "protect_video"
+              }
+            ],
+            "compatible": false
+          }
+        },
+        {
+          "phase": "attempted_quote",
+          "ok": true,
+          "notes": [],
+          "evidence": [
+            {
+              "test": "compat_unsupported_operation",
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/compatibility",
+              "reasonCode": "UNSUPPORTED_OPERATION",
+              "message": "Operation 'this_operation_does_not_exist' is not supported.",
+              "suggestions": [
+                {
+                  "operation": "protect_video"
+                }
+              ],
+              "compatible": false,
+              "notes": []
+            }
+          ]
+        },
+        {
+          "phase": "execution",
+          "ok": true,
+          "notes": [
+            "Expected: checkout/create requires x-api-key (tenant authentication)."
+          ],
+          "evidence": {
+            "checkoutUnauth": {
+              "status": 401,
+              "ok": false,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create",
+              "reason": "Missing API key"
+            },
+            "checkoutAuth": {
+              "status": 200,
+              "ok": true,
+              "url": "https://phoenix-zero-web.onrender.com/api/checkout/create"
+            }
+          }
+        },
+        {
+          "phase": "outcome_interpretation",
+          "ok": true,
+          "notes": [
+            "Expected: checkout requires x-api-key; agent must obtain tenant key before buying."
+          ],
+          "evidence": null
+        }
+      ],
+      "summary": {
+        "ok": true,
+        "blockers": []
+      }
+    }
+  ]
+}
