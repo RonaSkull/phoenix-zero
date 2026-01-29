@@ -48,11 +48,11 @@ curl -sS -X POST "https://SEU-DOMINIO/api/checkout/create" \
     "currency": "BRL",
     "providerHint": "pix",
     "lineItems": [
-      { "operation": "video_protection", "units": 1 }
+      { "operation": "protect_video", "product": "video_protection", "units": 1 }
     ],
     "proofMeta": {
       "agentId": "ag_...",
-      "taskType": "video_protection",
+      "taskType": "protect_video",
       "taskInputHash": "...",
       "taskOutputHash": "...",
       "customerContact": {

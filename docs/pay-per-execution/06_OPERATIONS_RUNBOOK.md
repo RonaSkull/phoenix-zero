@@ -21,7 +21,15 @@ Checklist:
 No Windows, rode via:
 
 ```powershell
-npx tsx ./scripts/external-agent-client.ts --baseUrl https://phoenix-zero-web.onrender.com
+$env:PHOENIX_ZERO_BASE_URL = "https://phoenix-zero-web.onrender.com"
+npx tsx .\scripts\external-agent-client.ts
+```
+
+Opcional (rodar apenas PIX):
+
+```powershell
+$env:SIM_SKIP_CRYPTO = "1"
+npx tsx .\scripts\external-agent-client.ts
 ```
 
 Variáveis recomendadas no terminal local:

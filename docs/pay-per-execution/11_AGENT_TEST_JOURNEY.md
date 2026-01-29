@@ -127,7 +127,15 @@ Esperado:
 Comando (Windows):
 
 ```powershell
-npx tsx ./scripts/external-agent-client.ts --baseUrl https://phoenix-zero-web.onrender.com
+$env:PHOENIX_ZERO_BASE_URL = "https://phoenix-zero-web.onrender.com"
+npx tsx .\scripts\external-agent-client.ts
+```
+
+Opcional:
+
+```powershell
+$env:SIM_SKIP_CRYPTO = "1"
+npx tsx .\scripts\external-agent-client.ts
 ```
 
 Variáveis no seu terminal local:
@@ -156,6 +164,10 @@ Resultados esperados (sinais fortes):
 - Notificações (se configuradas):
   - `customerNotifications.telegram ok: true`
   - `customerNotifications.whatsapp ok: true`
+
+Evidência (2026-01-29):
+
+- Fluxo PIX e Crypto passou no Render com PPO gate (403 antes / 200 depois), webhooks idempotentes (`deduped: true`), settlements e refund (reverted).
 
 ## 7) Segurança (admin)
 
