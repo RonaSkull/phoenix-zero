@@ -45,16 +45,16 @@ Você pode dizer **"está live"** quando todos estiverem verdadeiros:
 - [ ] Setar `PHOENIX_ZERO_ADMIN_TOKEN` (gerado no Render)
 - [ ] Criar tenant público sistêmico (read-only) e setar `PHOENIX_ZERO_PUBLIC_API_KEY` (para `GET /api/pricing` sem auth)
 - [ ] PIX:
-  - [ ] `PAYMENTS_PIX_PROVIDER=asaas`
-  - [ ] `ASAAS_API_KEY`
-  - [ ] `ASAAS_WEBHOOK_SECRET`
+  - [x] `PAYMENTS_PIX_PROVIDER=asaas`
+  - [x] `ASAAS_API_KEY`
+  - [x] `ASAAS_WEBHOOK_SECRET`
 - [ ] Crypto:
-  - [ ] `PAYMENTS_CRYPTO_PROVIDER=nowpayments`
-  - [ ] `NOWPAYMENTS_API_KEY`
-  - [ ] `NOWPAYMENTS_IPN_SECRET`
+  - [x] `PAYMENTS_CRYPTO_PROVIDER=nowpayments`
+  - [x] `NOWPAYMENTS_API_KEY`
+  - [x] `NOWPAYMENTS_IPN_SECRET`
 - [ ] Notificações:
-  - [ ] `TELEGRAM_BOT_TOKEN`
-  - [ ] `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM`
+  - [x] `TELEGRAM_BOT_TOKEN`
+  - [x] `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM`
 - [ ] Validar `/api/health` em produção
 
 Guia: `01_DEPLOY_RENDER.md`
@@ -75,8 +75,8 @@ Guia: `01_DEPLOY_RENDER.md` + `docs/PERSISTENCIA.md`
 Guia: `02_API_CONTRACT.md` e `03_PRICING.md`
 
 ### D. Pagamentos (meios)
-- [ ] PIX (Asaas) em produção
-- [ ] Crypto (NowPayments) em produção
+- [x] PIX (Asaas) em produção
+- [x] Crypto (NowPayments) em produção
 - [ ] Documentar cartão de crédito (habilitar no Asaas)
 
 ### D2. Pós‑testes: rotação de segredos + redeploy

@@ -128,6 +128,11 @@ Fluxo econômico validado via `scripts/external-agent-client.ts` contra o Render
 
 Status atual: **OK**.
 
+Evidências (2026-01-29):
+
+- PIX + Crypto: gate 403 antes do pagamento e 200 após pagamento, webhooks idempotentes (`deduped: true`), settlements com reversão em refund.
+- Agent Matrix (Render): `failed: 0` (reports em `docs/pay-per-execution/agent-matrix-reports/`).
+
 ## 5) Fase D — Pós-operação (Trust)
 
 O agente deve conseguir:
@@ -207,4 +212,5 @@ Rodar sempre que mudar contrato público:
   - operação inválida
   - body vazio
   - whitespace/case
-- `npx tsx ./scripts/external-agent-client.ts --baseUrl https://phoenix-zero-web.onrender.com`
+- `$env:PHOENIX_ZERO_BASE_URL = "https://phoenix-zero-web.onrender.com"; npx tsx .\scripts\external-agent-client.ts`
+- Opcional: `$env:SIM_SKIP_CRYPTO = "1"` (rodar apenas PIX)

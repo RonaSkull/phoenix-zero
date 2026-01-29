@@ -6,6 +6,7 @@ Este documento consolida o estado atual do PPE e o checklist mínimo para deixar
 
 - `POST /api/compatibility` (Render): **OK** (machine-readable)
 - `POST /api/admin/tenants`: usado para criar tenant público sistêmico
+- `scripts/external-agent-client.ts` (Render): **OK** (PIX + Crypto) com PPO gate + webhooks idempotentes + settlements + refund
 
 ## Alertas de segurança (importante)
 
@@ -101,7 +102,15 @@ Invoke-RestMethod -Method Post -Uri $uri -ContentType "application/json" -Body $
 Use o cliente externo (executa o fluxo completo, incluindo simulação de webhooks):
 
 ```powershell
-npx tsx ./scripts/external-agent-client.ts --baseUrl https://phoenix-zero-web.onrender.com
+$env:PHOENIX_ZERO_BASE_URL = "https://phoenix-zero-web.onrender.com"
+npx tsx .\scripts\external-agent-client.ts
+```
+
+Opcional (rodar apenas PIX e pular Crypto):
+
+```powershell
+$env:SIM_SKIP_CRYPTO = "1"
+npx tsx .\scripts\external-agent-client.ts
 ```
 
 Pré‑requisitos (no seu terminal local, não no Render):
@@ -119,6 +128,11 @@ Resultado esperado (alto nível):
 - `execute` após pagamento → `200 ok: true`
 - settlements: `pending -> settled -> reverted` (refund)
 - notificações (se configuradas): `customerNotifications.telegram/whatsapp ok: true`
+
+Evidências (2026-01-29):
+
+- PIX: `execute` 403 antes do pagamento, webhook 200 + `deduped:true`, `execute` 200 após pagamento, settlements `pending -> settled -> reverted`, notificações Telegram/WhatsApp `ok:true`.
+- Crypto: webhook NowPayments 200 + `deduped:true`, `execute` 200 após pagamento, settlements `pending -> reverted` (refund).
 
 ## Pendências (não bloqueiam go-live)
 

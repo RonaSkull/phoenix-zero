@@ -162,9 +162,10 @@ async function main() {
   const nowPaymentsIpnSecret = env('NOWPAYMENTS_IPN_SECRET');
   const hasTelegramToken = Boolean(env('TELEGRAM_BOT_TOKEN'));
   const skipPix = ['1', 'true', 'yes', 'y'].includes(env('SIM_SKIP_PIX').toLowerCase());
+  const skipCrypto = ['1', 'true', 'yes', 'y'].includes(env('SIM_SKIP_CRYPTO').toLowerCase());
 
   console.log('External agent simulation');
-  console.log(JSON.stringify({ baseUrl, hasTelegramToken, hasNowPaymentsSecret: Boolean(nowPaymentsIpnSecret), skipPix }, null, 2));
+  console.log(JSON.stringify({ baseUrl, hasTelegramToken, hasNowPaymentsSecret: Boolean(nowPaymentsIpnSecret), skipPix, skipCrypto }, null, 2));
 
   {
     try {
@@ -471,7 +472,7 @@ async function main() {
     console.log('Simulation finished.');
   }
 
-  {
+  if (!skipCrypto) {
     console.log('---');
     console.log('Crypto (NowPayments) simulation');
     if (!nowPaymentsIpnSecret && baseUrl.includes('onrender.com')) {
