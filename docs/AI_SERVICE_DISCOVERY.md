@@ -27,6 +27,9 @@ It provides:
 It also provides a `docs` URL that can be fetched over HTTP:
 - `GET /api/docs/ai-service-discovery` (Content-Type: `text/markdown`)
 
+Optional (recommended for blind agents):
+- `GET /api/capabilities` (machine-friendly summary of endpoints, auth model, and supported operations)
+
 ---
 
 ## 2) Pricing catalog (LLM-friendly)

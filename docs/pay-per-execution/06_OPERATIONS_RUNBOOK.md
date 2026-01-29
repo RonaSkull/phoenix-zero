@@ -18,6 +18,19 @@ Checklist:
 - Use `scripts/external-agent-client.ts`.
 - Você precisa do `PHOENIX_ZERO_ADMIN_TOKEN`.
 
+No Windows, rode via:
+
+```powershell
+npx tsx ./scripts/external-agent-client.ts --baseUrl https://phoenix-zero-web.onrender.com
+```
+
+Variáveis recomendadas no terminal local:
+
+- `PHOENIX_ZERO_ADMIN_TOKEN`
+- `ASAAS_WEBHOOK_SECRET`
+- `NOWPAYMENTS_IPN_SECRET`
+- (Opcional) `SIM_TELEGRAM_CHAT_ID`
+
 ## 4) Como suportar cliente (fluxo)
 - Cliente integra `POST /api/checkout/create`
 - Cliente aguarda paid (poll status) ou recebe notificação

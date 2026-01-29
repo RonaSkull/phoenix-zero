@@ -96,11 +96,40 @@ $body = @{
 Invoke-RestMethod -Method Post -Uri $uri -ContentType "application/json" -Body $body
 ```
 
+### 5) Teste E2E “agent POV” (Render) — recomendado
+
+Use o cliente externo (executa o fluxo completo, incluindo simulação de webhooks):
+
+```powershell
+npx tsx ./scripts/external-agent-client.ts --baseUrl https://phoenix-zero-web.onrender.com
+```
+
+Pré‑requisitos (no seu terminal local, não no Render):
+
+- `PHOENIX_ZERO_ADMIN_TOKEN` (token do Render)
+- `ASAAS_WEBHOOK_SECRET` (secret do Render)
+- `NOWPAYMENTS_IPN_SECRET` (secret do Render)
+- (Opcional) `TELEGRAM_BOT_TOKEN` + `SIM_TELEGRAM_CHAT_ID`
+- (Opcional) `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM`
+
+Resultado esperado (alto nível):
+
+- `execute` antes do pagamento → `403` com `PPO_GATE_BLOCKED`
+- webhook simulado → `200 ok: true` + idempotência (`deduped: true`)
+- `execute` após pagamento → `200 ok: true`
+- settlements: `pending -> settled -> reverted` (refund)
+- notificações (se configuradas): `customerNotifications.telegram/whatsapp ok: true`
+
 ## Pendências (não bloqueiam go-live)
 
 - Assinatura criptográfica do catálogo (`/api/pricing` e `/.well-known`) como upgrade pós-go-live (doc/decisão primeiro; implementação depois)
 - Decidir política do `GET /api/compatibility` atual (social preview) vs compatibilidade de agentes
-- Rodar testes “do ponto de vista de agentes” contra o Render e corrigir falhas
+- Padronizar execução local de scripts no Windows: usar `npx tsx` para rodar arquivos `.ts` diretamente
+
+## Política atual (documentada) — `GET /api/compatibility`
+
+- `POST /api/compatibility`: contrato machine‑readable para agentes (produção)
+- `GET /api/compatibility`: mantido para social preview / tooling legado (não é o fluxo canônico de agentes)
 
 ## Lista de tasks (para não perder o foco)
 

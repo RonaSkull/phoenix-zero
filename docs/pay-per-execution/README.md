@@ -13,6 +13,9 @@ Este diretório contém a documentação **organizada e separada** do produto **
 ## Links (ordem recomendada)
 - `00_MASTER_ROADMAP.md`
 - `10_GO_LIVE_STATUS.md`
+- `11_AGENT_TEST_JOURNEY.md`
+- `12_AGENT_EXAMPLES.md`
+- `13_POST_GO_LIVE_SIGNING.md`
 - `01_DEPLOY_RENDER.md`
 - `02_API_CONTRACT.md`
 - `03_PRICING.md`

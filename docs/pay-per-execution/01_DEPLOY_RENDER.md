@@ -63,6 +63,12 @@ Use o cliente externo (sem acesso ao backend):
 
 - `scripts/external-agent-client.ts`
 
+No Windows, rode via:
+
+```powershell
+npx tsx ./scripts/external-agent-client.ts --baseUrl https://phoenix-zero-web.onrender.com
+```
+
 Você precisa exportar no seu terminal local:
 - `PHOENIX_ZERO_BASE_URL=https://phoenix-zero-web.onrender.com`
 - `PHOENIX_ZERO_ADMIN_TOKEN=<token do Render>`

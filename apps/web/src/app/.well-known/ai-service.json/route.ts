@@ -17,7 +17,8 @@ export async function GET() {
       discovery: {
         pricing: '/api/pricing',
         compatibility: '/api/compatibility',
-        docs: '/api/docs/ai-service-discovery'
+        docs: '/api/docs/ai-service-discovery',
+        capabilities: '/api/capabilities'
       },
       capabilities: ['ppo-gated-execution', 'replay-safe', 'settlement-aware', 'agent-native', 'human-compatible'],
       trustModel: {
