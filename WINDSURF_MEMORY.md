@@ -63,3 +63,13 @@ Este arquivo é uma memória fixa para dar continuidade ao projeto **Phoenix Zer
 
 ## Último marco conhecido
 - Commit de go-live com compat de lineItems + docs PPE + fix readiness e2e (push para `origin/main`), disparando deploy no Render.
+
+## Checkpoint (2026-01-29)
+- E2E remoto (Render) passou com subset: `scripts/agentic-stress-e2e.ps1 -Mode real:pix -BaseUrl https://phoenix-zero-web.onrender.com -OnlyLevels L5,L11`.
+- `scripts/agentic-stress-e2e.ps1`: adicionou `-OnlyLevels` e default `AGENTIC_STRESS_ONLY=L5,L11` em `real:*`.
+- `agentic-stress-test.ts`: `L11` aceita `402` (tenant unpaid) como bloqueio válido em modo real; correções TS em `amountCents`.
+- Agent Matrix (Render) passou com `failed: 0` e report salvo em `docs/pay-per-execution/agent-matrix-reports/`.
+- `scripts/agent-matrix-runner.ts`: aumentou timeout e adicionou retry/backoff para cold start do Render (envs: `PHOENIX_ZERO_HTTP_TIMEOUT_MS`, `PHOENIX_ZERO_HTTP_RETRIES`).
+- Commits:
+  - `dc4e012` test(agentic): stabilize Render real E2E
+  - `4cea2e2` test(agent-matrix): harden runner for Render
