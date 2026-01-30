@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { postgresEnabled, readKvJson, writeKvJson } from './pg-kv';
+import { postgresEnabled, readKvJson, updateKvJsonLocked, writeKvJson } from './pg-kv';
 import { phoenixZeroTmpDir } from './tmp-dir';
 import { activateBillingAccount } from './billing-accounts';
 import { getTenantById } from './tenants';
@@ -296,8 +296,35 @@ async function ensureAsaasCustomerId(params: {
     };
   }
 
-  db.asaasCustomerByTenantId[params.tenantId] = customerId;
-  await saveDb(db);
+  if (postgresEnabled()) {
+    await updateKvJsonLocked<any>('payment-intents', (current) => {
+      const json = current as any;
+      let nextDb: PaymentsDb;
+      if (!json || (json.version !== 1 && json.version !== 2)) {
+        nextDb = { version: 2, intents: {}, asaasCustomerByTenantId: {} };
+      } else if (json.version === 2) {
+        nextDb = {
+          version: 2,
+          intents: typeof json.intents === 'object' && json.intents ? json.intents : {},
+          asaasCustomerByTenantId:
+            typeof json.asaasCustomerByTenantId === 'object' && json.asaasCustomerByTenantId ? json.asaasCustomerByTenantId : {}
+        };
+      } else {
+        const v1 = json as PaymentsDbV1;
+        nextDb = {
+          version: 2,
+          intents: typeof v1.intents === 'object' && v1.intents ? v1.intents : {},
+          asaasCustomerByTenantId: {}
+        };
+      }
+
+      nextDb.asaasCustomerByTenantId[params.tenantId] = customerId;
+      return nextDb;
+    });
+  } else {
+    db.asaasCustomerByTenantId[params.tenantId] = customerId;
+    await saveDb(db);
+  }
   return { ok: true, customerId };
 }
 
@@ -801,9 +828,36 @@ export async function createPaymentIntent(params: {
       breakdown: { lineTotalsCents: computed.lineTotalsCents }
     };
 
-    const db = await loadDb();
-    db.intents[intent.id] = intent;
-    await saveDb(db);
+    if (postgresEnabled()) {
+      await updateKvJsonLocked<any>('payment-intents', (current) => {
+        const json = current as any;
+        let db: PaymentsDb;
+        if (!json || (json.version !== 1 && json.version !== 2)) {
+          db = { version: 2, intents: {}, asaasCustomerByTenantId: {} };
+        } else if (json.version === 2) {
+          db = {
+            version: 2,
+            intents: typeof json.intents === 'object' && json.intents ? json.intents : {},
+            asaasCustomerByTenantId:
+              typeof json.asaasCustomerByTenantId === 'object' && json.asaasCustomerByTenantId ? json.asaasCustomerByTenantId : {}
+          };
+        } else {
+          const v1 = json as PaymentsDbV1;
+          db = {
+            version: 2,
+            intents: typeof v1.intents === 'object' && v1.intents ? v1.intents : {},
+            asaasCustomerByTenantId: {}
+          };
+        }
+
+        db.intents[intent.id] = intent;
+        return db;
+      });
+    } else {
+      const db = await loadDb();
+      db.intents[intent.id] = intent;
+      await saveDb(db);
+    }
 
     console.log('[CHECKOUT_CREATE] created', {
       paymentId: intent.id,
@@ -950,8 +1004,52 @@ export async function updatePaymentIntentStatus(params: {
       providerPaymentId: String(params.providerPaymentId || existing.providerPaymentId || '').trim() || existing.providerPaymentId
     };
 
-    db.intents[paymentId] = next;
-    await saveDb(db);
+    if (postgresEnabled()) {
+      await updateKvJsonLocked<any>('payment-intents', (current) => {
+        const json = current as any;
+        let locked: PaymentsDb;
+        if (!json || (json.version !== 1 && json.version !== 2)) {
+          locked = { version: 2, intents: {}, asaasCustomerByTenantId: {} };
+        } else if (json.version === 2) {
+          locked = {
+            version: 2,
+            intents: typeof json.intents === 'object' && json.intents ? json.intents : {},
+            asaasCustomerByTenantId:
+              typeof json.asaasCustomerByTenantId === 'object' && json.asaasCustomerByTenantId ? json.asaasCustomerByTenantId : {}
+          };
+        } else {
+          const v1 = json as PaymentsDbV1;
+          locked = {
+            version: 2,
+            intents: typeof v1.intents === 'object' && v1.intents ? v1.intents : {},
+            asaasCustomerByTenantId: {}
+          };
+        }
+
+        locked.intents[paymentId] = next;
+        return locked;
+      });
+    } else {
+      db.intents[paymentId] = next;
+      await saveDb(db);
+    }
+
+    if (status === 'failed') {
+      const providerPaymentId = String(next.providerPaymentId || '').trim();
+      if (providerPaymentId) {
+        await import('./payment-proofs')
+          .then(async (m) => {
+            const proof = await m.getPaymentProofByProviderPaymentId({ provider: next.provider, providerPaymentId });
+            if (!proof) return;
+            await m.updatePaymentProofStatus({ id: proof.id, status });
+            console.log('[PPO] revoked', { paymentId: next.id, proofId: proof.id, provider: next.provider, providerPaymentId });
+          })
+          .catch((e) => {
+            const message = e instanceof Error ? e.message : String(e);
+            console.warn('[PPO] revoke failed', { paymentId: next.id, provider: next.provider, providerPaymentId, message });
+          });
+      }
+    }
 
     if (!wasPaid && status === 'paid') {
       await import('./payment-proofs')

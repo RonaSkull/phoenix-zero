@@ -487,6 +487,33 @@ export async function tryConsumePaymentProofUnits(params: {
 export async function updatePaymentProofStatus(params: { id: string; status: PaymentStatus }): Promise<void> {
   const id = String(params.id || '').trim();
   if (!id) return;
+ 
+  if (postgresEnabled()) {
+    await updateKvJsonLocked<PaymentProofsDb>('payment-proofs', (current) => {
+      const db: PaymentProofsDb =
+        !current || (current as any).version !== 1
+          ? { version: 1, proofs: {}, byProviderPaymentId: {} }
+          : {
+              version: 1,
+              proofs: typeof (current as any).proofs === 'object' && (current as any).proofs ? (current as any).proofs : {},
+              byProviderPaymentId:
+                typeof (current as any).byProviderPaymentId === 'object' && (current as any).byProviderPaymentId
+                  ? (current as any).byProviderPaymentId
+                  : {}
+            };
+
+      const existing = db.proofs[id];
+      if (!existing) return db;
+
+      const nextStatus = statusToProofStatus(params.status);
+      const verifiedAt = nextStatus === 'paid_confirmed' ? existing.verifiedAt || nowIso() : existing.verifiedAt;
+
+      db.proofs[id] = { ...existing, status: nextStatus, verifiedAt };
+      return db;
+    });
+    return;
+  }
+
   const db = await loadDb();
   const existing = db.proofs[id];
   if (!existing) return;
