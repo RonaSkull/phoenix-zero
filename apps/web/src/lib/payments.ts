@@ -955,6 +955,34 @@ export async function updatePaymentIntentStatus(params: {
     const existing = db.intents[paymentId];
     if (!existing) return { ok: false, reason: 'Payment not found' };
 
+    if (existing.status === 'failed' && status !== 'failed') {
+      console.log('[PAYMENT_STATUS] ignore regression', {
+        paymentId: existing.id,
+        tenantId: existing.tenantId,
+        from: existing.status,
+        to: status,
+        provider: params.provider || existing.provider,
+        providerPaymentId: String(params.providerPaymentId || existing.providerPaymentId || '').slice(0, 12) || undefined,
+        updatedBy: String(params.lastUpdatedBy || '').trim() || undefined,
+        sourceEventId: String(params.sourceEventId || '').slice(0, 12) || undefined
+      });
+      return { ok: true, intent: existing };
+    }
+
+    if (existing.status === 'paid' && status === 'pending') {
+      console.log('[PAYMENT_STATUS] ignore regression', {
+        paymentId: existing.id,
+        tenantId: existing.tenantId,
+        from: existing.status,
+        to: status,
+        provider: params.provider || existing.provider,
+        providerPaymentId: String(params.providerPaymentId || existing.providerPaymentId || '').slice(0, 12) || undefined,
+        updatedBy: String(params.lastUpdatedBy || '').trim() || undefined,
+        sourceEventId: String(params.sourceEventId || '').slice(0, 12) || undefined
+      });
+      return { ok: true, intent: existing };
+    }
+
     if (existing.status !== status || (params.provider && existing.provider !== params.provider)) {
       console.log('[PAYMENT_STATUS] update', {
         paymentId: existing.id,
