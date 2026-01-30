@@ -40,37 +40,37 @@ Você pode dizer **"está live"** quando todos estiverem verdadeiros:
 ## 5) Checklist em ordem (executar sem pular)
 
 ### A. Render / DB / envs (produção)
-- [ ] Configurar `DATABASE_URL` (Neon) + `PGSSLMODE=require`
-- [ ] Setar `PHOENIX_ZERO_PUBLIC_BASE_URL`
-- [ ] Setar `PHOENIX_ZERO_ADMIN_TOKEN` (gerado no Render)
-- [ ] Criar tenant público sistêmico (read-only) e setar `PHOENIX_ZERO_PUBLIC_API_KEY` (para `GET /api/pricing` sem auth)
-- [ ] PIX:
+- [x] Configurar `DATABASE_URL` (Neon) + `PGSSLMODE=require`
+- [x] Setar `PHOENIX_ZERO_PUBLIC_BASE_URL`
+- [x] Setar `PHOENIX_ZERO_ADMIN_TOKEN` (gerado no Render)
+- [x] Criar tenant público sistêmico (read-only) e setar `PHOENIX_ZERO_PUBLIC_API_KEY` (para `GET /api/pricing` sem auth)
+- [x] PIX:
   - [x] `PAYMENTS_PIX_PROVIDER=asaas`
   - [x] `ASAAS_API_KEY`
   - [x] `ASAAS_WEBHOOK_SECRET`
-- [ ] Crypto:
+- [x] Crypto:
   - [x] `PAYMENTS_CRYPTO_PROVIDER=nowpayments`
   - [x] `NOWPAYMENTS_API_KEY`
   - [x] `NOWPAYMENTS_IPN_SECRET`
-- [ ] Notificações:
+- [x] Notificações:
   - [x] `TELEGRAM_BOT_TOKEN`
   - [x] `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM`
-- [ ] Validar `/api/health` em produção
+- [x] Validar `/api/health` em produção
 
 Guia: `01_DEPLOY_RENDER.md`
 
 ### B. Persistência pós‑restart
-- [ ] Criar um pagamento (simulado ou real)
-- [ ] Confirmar que PPO existe (`/verify/<proofId>`)
-- [ ] Reiniciar o serviço no Render
-- [ ] Confirmar que PPO/provas/settlements ainda existem
+- [x] Criar um pagamento (simulado ou real)
+- [x] Confirmar que PPO existe (`/verify/<proofId>`)
+- [x] Reiniciar o serviço no Render
+- [x] Confirmar que PPO/provas/settlements ainda existem
 
 Guia: `01_DEPLOY_RENDER.md` + `docs/PERSISTENCIA.md`
 
 ### C. LineItems (clareza produto vs operação)
-- [ ] Definir contrato recomendado: `product` (o “o que”) e `operation` (o “como”)
-- [ ] Garantir compatibilidade: aceitar inputs antigos sem quebrar pricing
-- [ ] Documentar mapping/normalização
+- [x] Definir contrato recomendado: `product` (o “o que”) e `operation` (o “como”)
+- [x] Garantir compatibilidade: aceitar inputs antigos sem quebrar pricing
+- [x] Documentar mapping/normalização
 
 Guia: `02_API_CONTRACT.md` e `03_PRICING.md`
 

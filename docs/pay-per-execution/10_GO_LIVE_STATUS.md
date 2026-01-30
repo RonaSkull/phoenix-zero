@@ -7,6 +7,8 @@ Este documento consolida o estado atual do PPE e o checklist mínimo para deixar
 - `POST /api/compatibility` (Render): **OK** (machine-readable)
 - `POST /api/admin/tenants`: usado para criar tenant público sistêmico
 - `scripts/external-agent-client.ts` (Render): **OK** (PIX + Crypto) com PPO gate + webhooks idempotentes + settlements + refund
+- Persistência pós-restart (Render): **OK** (PPOs continuam disponíveis via `/verify/<proofId>` após restart)
+- `/api/health` (Render): **OK**
 
 ## Alertas de segurança (importante)
 
