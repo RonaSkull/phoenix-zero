@@ -69,11 +69,6 @@ export async function providerDowntimeTest(params: {
   }
 
   // 2) webhook_never_arrives: provider respondeu, mas liquidação não chega.
-  const sim = env('PHOENIX_ZERO_SIMULATE_PROVIDER_DOWNTIME').toLowerCase();
-  if (!sim.includes('asaas:ghost')) {
-    throw new Error('MISSING_SIMULATION_FLAG: set PHOENIX_ZERO_SIMULATE_PROVIDER_DOWNTIME=asaas:ghost on the server before running webhook_never_arrives');
-  }
-
   const checkout = await checkoutCreate(params.baseUrl, {
     apiKey: params.apiKey,
     currency: 'BRL',
@@ -99,6 +94,10 @@ export async function providerDowntimeTest(params: {
   const s0 = await checkoutStatus(params.baseUrl, { apiKey: params.apiKey, paymentId });
   const providerPaymentId = String(s0.json?.providerPaymentId || '').trim();
   if (!providerPaymentId) throw new Error('MISSING_PROVIDER_PAYMENT_ID');
+
+  if (!providerPaymentId.startsWith('asaas_sim_')) {
+    throw new Error('MISSING_SIMULATION_FLAG: set PHOENIX_ZERO_SIMULATE_PROVIDER_DOWNTIME=asaas:ghost on the server (Render) and redeploy');
+  }
 
   // não manda webhook: espera e valida que não vira paid
   await sleepMs(1500);
