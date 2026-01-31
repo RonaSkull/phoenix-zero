@@ -2282,10 +2282,10 @@ Senior mode (contrato + robustez de API):
 
 - `partial-failure` (modo A/B/C validado; ver evidências abaixo)
 - `risk-window` (settlement não pode liquidar dentro da janela; ver evidências abaixo)
+- `provider-downtime` (timeout e webhook ausente; ver evidências abaixo)
 
 ### ⏳ Checklist (pendente)
 
-- `provider-downtime` (simular indisponibilidade de provider e comportamento esperado)
 - `chaos` (volume alto: milhares de execuções + refunds/chargebacks + eventos fora de ordem)
 - `auditor externo` (UX: entender proof/refund/execução em < 1 min)
 
@@ -2295,6 +2295,8 @@ Senior mode (contrato + robustez de API):
 - `partial-failure` modo B: `hardening_2026-01-31T12-56-54-419Z`
 - `partial-failure` modo C: `hardening_2026-01-31T12-40-20-163Z`
 - `risk-window`: `hardening_2026-01-31T13-23-16-801Z`
+- `provider-downtime` `provider_timeout`: `hardening_2026-01-31T16-32-19-696Z`
+- `provider-downtime` `webhook_never_arrives`: `hardening_2026-01-31T16-59-16-650Z`
 
 Notas de higiene (Render):
 

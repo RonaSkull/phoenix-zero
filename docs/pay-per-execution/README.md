@@ -5,6 +5,9 @@ Este diretório contém a documentação **organizada e separada** do produto **
 ## Definição curta (1 frase)
 **Execução de agentes de IA condicionada a pagamento, com prova verificável, sem humanos no loop.**
 
+## Onboarding de agentes (rápido)
+- Obter `x-api-key`: `POST /api/public/agent-signup` (ver `12_AGENT_EXAMPLES.md`)
+
 ## O que este pack NÃO é
 - Não é um redesign do produto inteiro.
 - Não é um split de repositório.
@@ -13,8 +16,12 @@ Este diretório contém a documentação **organizada e separada** do produto **
 ## Links (ordem recomendada)
 - `00_MASTER_ROADMAP.md`
 - `10_GO_LIVE_STATUS.md`
+- `18_GO_LIVE_PENDENCIAS.md`
+- `17_GO_LIVE_CONTRACT.md`
 - `11_AGENT_TEST_JOURNEY.md`
+- `16_AGENT_SIMULATIONS_RUNBOOK.md`
 - `12_AGENT_EXAMPLES.md`
+- `15_POSITIONING_SEGMENTS.md`
 - `13_POST_GO_LIVE_SIGNING.md`
 - `14_AGENT_READINESS_REPORT.md`
 - `01_DEPLOY_RENDER.md`

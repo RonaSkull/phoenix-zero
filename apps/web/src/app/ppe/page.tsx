@@ -71,6 +71,9 @@ export default function PpeLandingPage() {
             <summary style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.88)', fontWeight: 700 }}>How to test with your API key</summary>
             <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.6, fontSize: 13 }}>
               <div style={{ opacity: 0.9 }}>Use the tenant API key in header <code style={{ opacity: 0.9 }}>x-api-key</code>.</div>
+              <div style={{ marginTop: 10, opacity: 0.9 }}>
+                Operational contract: <a href="/api/docs/go-live-contract" target="_blank" rel="noreferrer">/api/docs/go-live-contract</a>
+              </div>
               <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: '#0b1020', color: '#e5e7eb', padding: 14, borderRadius: 12, marginTop: 10 }}>
 {`curl -s -X POST https://phoenix-zero-web.onrender.com/api/checkout/create \
   -H "content-type: application/json" \

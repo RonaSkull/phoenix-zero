@@ -5,8 +5,41 @@
 - O site é "documentação e legitimação"; a venda real acontece via API.
 - Autenticação por `x-api-key` (tenant).
 
+Contrato operacional (go-live):
+
+- `17_GO_LIVE_CONTRACT.md`
+
 ## 2) Autenticação
 - Header: `x-api-key: <TENANT_API_KEY>`
+
+## 2.1) Obter `TENANT_API_KEY` (onboarding público)
+
+- `POST /api/public/agent-signup`
+
+Observações:
+
+- Endpoint público, com rate limit.
+- Retorna `tenantId` e `apiKey` (use como `x-api-key`).
+
+Exemplo (PowerShell):
+
+```powershell
+$base = "https://SEU-DOMINIO"
+
+$body = @{
+  name = "My Agent"
+  email = "my-agent@example.com"
+  agentType = "buyer"
+  intendedUse = "autonomous agent integration"
+  acceptsTermsVersion = "2026-01-v1"
+  acceptsFixedPricing = $true
+  billingMode = "prepaid"
+  currency = "USD"
+} | ConvertTo-Json
+
+$res = Invoke-RestMethod -Method Post -Uri "$base/api/public/agent-signup" -ContentType "application/json" -Body $body
+$res.tenant.apiKey
+```
 
 ## 3) Checkout / Pagamento
 
