@@ -99,6 +99,39 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
+async function sleepMs(ms: number): Promise<void> {
+  await new Promise((r) => setTimeout(r, Math.max(0, Math.trunc(ms))));
+}
+
+function env(name: string): string {
+  return String(process.env[name] || '').trim();
+}
+
+function envInt0(name: string, def: number): number {
+  const raw = env(name);
+  if (!raw) return def;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return def;
+  return Math.max(0, Math.trunc(n));
+}
+
+function simulateProviderFailureMode(provider: 'asaas' | 'nowpayments'): '' | 'down' | 'timeout' | 'ghost' {
+  const raw = env('PHOENIX_ZERO_SIMULATE_PROVIDER_DOWNTIME');
+  if (!raw) return '';
+  const parts = raw
+    .split(',')
+    .map((p) => String(p || '').trim().toLowerCase())
+    .filter(Boolean);
+  for (const p of parts) {
+    if (p === provider) return 'down';
+    if (p === `${provider}:down`) return 'down';
+    if (p === `${provider}:timeout`) return 'timeout';
+    if (p === `${provider}:ghost`) return 'ghost';
+    if (p === `${provider}:ok_no_webhook`) return 'ghost';
+  }
+  return '';
+}
+
 export async function findPaymentIntentByProviderPaymentId(params: {
   provider: PaymentProvider;
   providerPaymentId: string;
@@ -755,34 +788,68 @@ export async function createPaymentIntent(params: {
           : 'Complete crypto payment (provider integration pending)';
 
     if (provider === 'pix' && paymentsPixProvider() === 'asaas' && asaasApiKey()) {
-      const mode = String(process.env.ASAAS_ENV || '').trim().toLowerCase();
-      const amountCentsForCharge = mode === 'sandbox' ? Math.max(500, Math.trunc(amountCents)) : Math.trunc(amountCents);
-      const asaas = await createAsaasPixCharge({
-        tenantId,
-        tenantName: tenant.name,
-        amountCents: amountCentsForCharge,
-        description: `Phoenix Zero payment ${id}`,
-        externalReference: id
-      });
-      if (!asaas.ok) return { ok: false, reason: asaas.reason };
-      providerPaymentId = asaas.providerPaymentId;
-      checkoutUrl = asaas.checkoutUrl;
-      instructions = asaas.instructions;
+      const sim = simulateProviderFailureMode('asaas');
+      if (sim === 'timeout') {
+        const ms = envInt0('PHOENIX_ZERO_SIMULATE_PROVIDER_TIMEOUT_MS', 8000);
+        await sleepMs(ms);
+        return { ok: false, reason: 'Asaas charge create failed: simulated timeout' };
+      }
+      if (sim === 'down') {
+        return { ok: false, reason: 'Asaas charge create failed: simulated provider downtime' };
+      }
 
-      amountCents = amountCentsForCharge;
+      if (sim === 'ghost') {
+        providerPaymentId = `asaas_sim_${b64Url(randomBytes(12))}`;
+        checkoutUrl = checkoutUrl || `/checkout/${id}`;
+        instructions = 'Simulated provider ok (no webhook expected)';
+      } else {
+
+        const mode = String(process.env.ASAAS_ENV || '').trim().toLowerCase();
+        const amountCentsForCharge = mode === 'sandbox' ? Math.max(500, Math.trunc(amountCents)) : Math.trunc(amountCents);
+        const asaas = await createAsaasPixCharge({
+          tenantId,
+          tenantName: tenant.name,
+          amountCents: amountCentsForCharge,
+          description: `Phoenix Zero payment ${id}`,
+          externalReference: id
+        });
+        if (!asaas.ok) return { ok: false, reason: asaas.reason };
+        providerPaymentId = asaas.providerPaymentId;
+        checkoutUrl = asaas.checkoutUrl;
+        instructions = asaas.instructions;
+
+        amountCents = amountCentsForCharge;
+      }
     }
 
     if (provider === 'crypto' && paymentsCryptoProvider() === 'nowpayments' && nowPaymentsApiKey()) {
-      const invoice = await createNowPaymentsInvoice({
-        priceAmount: computed.amountCents / 100,
-        priceCurrency: currency,
-        orderId: id,
-        orderDescription: `Phoenix Zero payment ${id}`
-      });
-      if (!invoice.ok) return { ok: false, reason: invoice.reason };
-      providerPaymentId = invoice.providerPaymentId;
-      checkoutUrl = invoice.checkoutUrl;
-      instructions = invoice.instructions;
+      const sim = simulateProviderFailureMode('nowpayments');
+      if (sim === 'timeout') {
+        const ms = envInt0('PHOENIX_ZERO_SIMULATE_PROVIDER_TIMEOUT_MS', 8000);
+        await sleepMs(ms);
+        return { ok: false, reason: 'NowPayments invoice create failed: simulated timeout' };
+      }
+      if (sim === 'down') {
+        return { ok: false, reason: 'NowPayments invoice create failed: simulated provider downtime' };
+      }
+
+      if (sim === 'ghost') {
+        providerPaymentId = `nowpayments_sim_${b64Url(randomBytes(12))}`;
+        checkoutUrl = checkoutUrl || `/checkout/${id}`;
+        instructions = 'Simulated provider ok (no webhook expected)';
+      } else {
+
+        const invoice = await createNowPaymentsInvoice({
+          priceAmount: computed.amountCents / 100,
+          priceCurrency: currency,
+          orderId: id,
+          orderDescription: `Phoenix Zero payment ${id}`
+        });
+        if (!invoice.ok) return { ok: false, reason: invoice.reason };
+        providerPaymentId = invoice.providerPaymentId;
+        checkoutUrl = invoice.checkoutUrl;
+        instructions = invoice.instructions;
+      }
     }
 
     const intent: PaymentIntent = {
