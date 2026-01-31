@@ -19,6 +19,7 @@ tmp
 apps/web/tmp
 apps/web/.next*
 .pz-tmp/
+phoenix-zero-agent-simulations/out/
 keys/phoenix-zero-ed25519.json
 keys/phoenix-zero-issuer-ed25519.json
 keys/phoenix-zero-registry-authority-ed25519.json
