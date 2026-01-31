@@ -12,10 +12,12 @@ import { cacheHeadersTest } from './tests/cache-headers.test';
 import { negotiationAbuseTest } from './tests/negotiation-abuse.test';
 import { paramInjectionTest } from './tests/param-injection.test';
 import { partialFailureTest } from './tests/partial-failure.test';
+import { providerDowntimeTest } from './tests/provider-downtime.test';
 import { proofReuseAttackTest } from './tests/proof-reuse-attack.test';
 import { quantityAbuseTest } from './tests/quantity-abuse.test';
 import { raceGateTest } from './tests/race-gate.test';
 import { rateLimitTest } from './tests/rate-limit.test';
+import { riskWindowTest } from './tests/risk-window.test';
 import { stateConsistencyTest } from './tests/state-consistency.test';
 import { webhookOutOfOrderTest } from './tests/webhook-ordering.test';
 
@@ -248,6 +250,24 @@ async function main() {
       run: async () => {
         const agentId = `ag_${b64Url(randomBytes(12))}`;
         return partialFailureTest({ baseUrl, apiKey, asaasWebhookSecret, agentId, taskType, operation });
+      }
+    },
+    {
+      testId: 'risk-window',
+      enabled: only.has('risk-window') || env('PHOENIX_ZERO_HARDENING_RISK_WINDOW_ENABLED') === 'true',
+      run: async () => {
+        const adminToken = env('PHOENIX_ZERO_ADMIN_TOKEN');
+        if (!adminToken) throw new Error('Missing PHOENIX_ZERO_ADMIN_TOKEN (required for risk-window test)');
+        const agentId = `ag_${b64Url(randomBytes(12))}`;
+        return riskWindowTest({ baseUrl, apiKey, asaasWebhookSecret, adminToken, agentId, taskType, operation });
+      }
+    },
+    {
+      testId: 'provider-downtime',
+      enabled: only.has('provider-downtime') || env('PHOENIX_ZERO_HARDENING_PROVIDER_DOWNTIME_ENABLED') === 'true',
+      run: async () => {
+        const agentId = `ag_${b64Url(randomBytes(12))}`;
+        return providerDowntimeTest({ baseUrl, apiKey, asaasWebhookSecret, agentId, taskType, operation });
       }
     },
     {
