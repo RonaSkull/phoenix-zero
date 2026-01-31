@@ -20,7 +20,13 @@ type ExecuteRequestBody = {
   taskId: string;
   taskType: string;
   requireSignature?: boolean;
+  simulateFailure?: boolean;
 };
+
+function envBool(name: string): boolean {
+  const v = String(process.env[name] || '').trim().toLowerCase();
+  return v === '1' || v === 'true' || v === 'yes' || v === 'y' || v === 'on';
+}
 
 export async function POST(req: Request, ctx: { params: { agentId: string } }) {
   const auth = await requireTenant(req);
@@ -63,6 +69,14 @@ export async function POST(req: Request, ctx: { params: { agentId: string } }) {
   const taskId = String(body?.taskId || '').trim();
   const taskType = String(body?.taskType || '').trim();
   const requireSignature = body?.requireSignature === true;
+  const simulateFailure = body?.simulateFailure === true;
+
+  if (simulateFailure && process.env.NODE_ENV === 'production' && !envBool('PHOENIX_ZERO_ALLOW_SIMULATED_FAILURE')) {
+    return Response.json(
+      { ok: false, reason: 'simulateFailure not allowed' },
+      { status: 400, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
+    );
+  }
 
   if (!taskId || !taskType) {
     return Response.json({ ok: false, reason: 'Missing taskId or taskType' }, { status: 400, headers: jsonUtf8Headers() });
@@ -75,7 +89,12 @@ export async function POST(req: Request, ctx: { params: { agentId: string } }) {
       taskId,
       taskType,
       requireSignature,
-      action: async () => ({ executed: true })
+      action: async () => {
+        if (simulateFailure) {
+          throw new Error('SIMULATED_HANDLER_FAILURE');
+        }
+        return { executed: true };
+      }
     });
 
     console.log('[AGENTS_EXECUTE] allowed', { tenantId: auth.ctx.tenantId, agentId, taskId, taskType });

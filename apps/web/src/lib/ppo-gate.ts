@@ -1,4 +1,4 @@
-import { listPaymentProofsByAgent, tryConsumePaymentProofUnits, type PaymentProof } from './payment-proofs';
+import { listPaymentProofsByAgent, tryConsumePaymentProofUnits, tryReleasePaymentProofUnits, type PaymentProof } from './payment-proofs';
 
 type GateReason =
   | 'NO_PPO'
@@ -35,6 +35,13 @@ function selectMatchingPaidProof(params: {
 function parseBool(v: unknown): boolean {
   const s = String(v ?? '').trim().toLowerCase();
   return s === '1' || s === 'true' || s === 'yes' || s === 'y';
+}
+
+function failurePolicy(): 'on_success' | 'always' | 'refund' {
+  const raw = String(process.env.PHOENIX_ZERO_PPO_FAILURE_POLICY || '').trim().toLowerCase();
+  if (raw === 'always') return 'always';
+  if (raw === 'refund') return 'refund';
+  return 'on_success';
 }
 
 export async function checkPpoGate(params: {
@@ -152,8 +159,11 @@ export async function executeWithPPOGate<T>(params: {
     throw new PpoGateBlockedError(gate);
   }
 
-  if (gate.proofId) {
-    const consumed = await tryConsumePaymentProofUnits({ id: gate.proofId, units: 1 });
+  const proofId = gate.proofId;
+  const policy = failurePolicy();
+
+  if (proofId) {
+    const consumed = await tryConsumePaymentProofUnits({ id: proofId, units: 1 });
     if (!consumed.ok) {
       throw new PpoGateBlockedError({
         ...gate,
@@ -163,5 +173,14 @@ export async function executeWithPPOGate<T>(params: {
     }
   }
 
-  return params.action();
+  try {
+    return await params.action();
+  } catch (e) {
+    if (proofId && policy !== 'always') {
+      const markRefunded = policy === 'refund';
+      await tryReleasePaymentProofUnits({ id: proofId, units: 1, markRefunded }).catch(() => {
+      });
+    }
+    throw e;
+  }
 }

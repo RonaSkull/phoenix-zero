@@ -98,6 +98,7 @@ export type PaymentProof = {
 
   totalUnits?: number;
   usedUnits?: number;
+  refundedUnits?: number;
 };
 
 type PaymentProofsDb = {
@@ -108,6 +109,77 @@ type PaymentProofsDb = {
 
 function nowIso(): string {
   return new Date().toISOString();
+}
+
+export async function tryReleasePaymentProofUnits(params: {
+  id: string;
+  units: number;
+  markRefunded?: boolean;
+}): Promise<{ ok: true; proof: PaymentProof } | { ok: false; reason: 'not_found' | 'invalid' }> {
+  const id = String(params.id || '').trim();
+  const units = Math.max(1, Math.trunc(Number(params.units ?? 1)));
+  const markRefunded = Boolean(params.markRefunded);
+  if (!id || !Number.isFinite(units) || units <= 0) return { ok: false, reason: 'invalid' };
+
+  if (postgresEnabled()) {
+    try {
+      const nextDb = await updateKvJsonLocked<PaymentProofsDb>('payment-proofs', (current) => {
+        const db: PaymentProofsDb =
+          !current || (current as any).version !== 1
+            ? { version: 1, proofs: {}, byProviderPaymentId: {} }
+            : {
+                version: 1,
+                proofs: typeof (current as any).proofs === 'object' && (current as any).proofs ? (current as any).proofs : {},
+                byProviderPaymentId:
+                  typeof (current as any).byProviderPaymentId === 'object' && (current as any).byProviderPaymentId
+                    ? (current as any).byProviderPaymentId
+                    : {}
+              };
+
+        const existing = db.proofs[id];
+        if (!existing) throw new Error('PPO_NOT_FOUND');
+
+        const totalUnits = Math.max(1, Math.trunc(Number((existing as any).totalUnits ?? 1)));
+        const usedUnits = Math.max(0, Math.trunc(Number((existing as any).usedUnits ?? 0)));
+        const nextUsed = Math.max(0, usedUnits - units);
+        const refundedUnits = Math.max(0, Math.trunc(Number((existing as any).refundedUnits ?? 0)));
+        db.proofs[id] = {
+          ...existing,
+          totalUnits,
+          usedUnits: nextUsed,
+          refundedUnits: markRefunded ? refundedUnits + units : refundedUnits
+        };
+        return db;
+      });
+
+      const proof = (nextDb as any)?.proofs?.[id] as PaymentProof | undefined;
+      if (!proof) return { ok: false, reason: 'not_found' };
+      return { ok: true, proof };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg === 'PPO_NOT_FOUND') return { ok: false, reason: 'not_found' };
+      throw e;
+    }
+  }
+
+  const db = await loadDb();
+  const existing = db.proofs[id];
+  if (!existing) return { ok: false, reason: 'not_found' };
+
+  const totalUnits = Math.max(1, Math.trunc(Number((existing as any).totalUnits ?? 1)));
+  const usedUnits = Math.max(0, Math.trunc(Number((existing as any).usedUnits ?? 0)));
+  const nextUsed = Math.max(0, usedUnits - units);
+  const refundedUnits = Math.max(0, Math.trunc(Number((existing as any).refundedUnits ?? 0)));
+
+  const next: PaymentProof = {
+    ...existing,
+    totalUnits,
+    usedUnits: nextUsed,
+    refundedUnits: markRefunded ? refundedUnits + units : refundedUnits
+  };
+  db.proofs[id] = next;
+  await saveDb(db);
+  return { ok: true, proof: next };
 }
 
 function b64Url(buf: Uint8Array): string {
