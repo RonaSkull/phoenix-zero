@@ -116,6 +116,22 @@ export async function checkPpoGate(params: {
     };
   }
 
+  const totalUnits = Math.max(1, Math.trunc(Number((proof as any)?.totalUnits ?? 1)));
+  const usedUnits = Math.max(0, Math.trunc(Number((proof as any)?.usedUnits ?? 0)));
+  const remaining = totalUnits - usedUnits;
+  if (remaining < 1) {
+    return {
+      ok: true,
+      allowed: false,
+      reason: 'INSUFFICIENT_UNITS',
+      agentId,
+      taskId,
+      taskType,
+      proofId: proof.id,
+      proof
+    };
+  }
+
   return {
     ok: true,
     allowed: true,
