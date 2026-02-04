@@ -76,52 +76,61 @@ function issuedAtWithinWindow(issuedAt: string, windowSeconds: number):
 }
 
 export async function POST(req: Request, ctx: { params: { agentId: string } }) {
-  const auth = await requireTenant(req);
-  if (!auth.ok) {
-    console.warn('[AGENTS_EXECUTE] unauthorized', { status: auth.status, reason: auth.reason });
-    return Response.json({ ok: false, reason: auth.reason }, { status: auth.status, headers: jsonUtf8Headers() });
-  }
+  let tenantIdForError: string | null = null;
+  let agentIdForError: string | null = null;
+  let sovereignContextForError: null | { executionClassId: string } = null;
 
-  const rl = rateLimitTenantApi({
-    req,
-    tenantId: auth.ctx.tenantId,
-    apiKeyHash: auth.ctx.apiKeyHash,
-    envRpmName: 'PHOENIX_ZERO_PPE_EXECUTE_RPM',
-    defaultRpm: 300,
-    ipEnvRpmName: 'PHOENIX_ZERO_PPE_EXECUTE_IP_RPM',
-    ipDefaultRpm: 0
-  });
-  if (!rl.ok) {
-    return Response.json(
-      { ok: false, reason: 'Rate limit exceeded' },
-      { status: 429, headers: jsonUtf8Headers({ 'Retry-After': String(rl.retryAfterSeconds), 'Cache-Control': 'no-store' }) }
-    );
-  }
-
-  const agentId = String(ctx?.params?.agentId || '').trim();
-  if (!agentId) {
-    console.warn('[AGENTS_EXECUTE] missing agentId');
-    return Response.json({ ok: false, reason: 'Missing agentId' }, { status: 400, headers: jsonUtf8Headers() });
-  }
-
-  console.log('[AGENTS_EXECUTE] incoming', { tenantId: auth.ctx.tenantId, agentId });
-
-  let body: ExecuteRequestBody | null = null;
   try {
-    body = (await req.json()) as ExecuteRequestBody;
-  } catch {
-    body = null;
-  }
+    const auth = await requireTenant(req);
+    if (!auth.ok) {
+      console.warn('[AGENTS_EXECUTE] unauthorized', { status: auth.status, reason: auth.reason });
+      return Response.json({ ok: false, reason: auth.reason }, { status: auth.status, headers: jsonUtf8Headers() });
+    }
 
-  const taskId = String(body?.taskId || '').trim();
-  const taskType = String(body?.taskType || '').trim();
-  const requireSignature = body?.requireSignature === true;
-  const simulateFailure = body?.simulateFailure === true;
+    tenantIdForError = auth.ctx.tenantId;
 
-  const executionClassId = String((body as any)?.executionClassId || '').trim() || undefined;
+    const rl = rateLimitTenantApi({
+      req,
+      tenantId: auth.ctx.tenantId,
+      apiKeyHash: auth.ctx.apiKeyHash,
+      envRpmName: 'PHOENIX_ZERO_PPE_EXECUTE_RPM',
+      defaultRpm: 300,
+      ipEnvRpmName: 'PHOENIX_ZERO_PPE_EXECUTE_IP_RPM',
+      ipDefaultRpm: 0
+    });
+    if (!rl.ok) {
+      return Response.json(
+        { ok: false, reason: 'Rate limit exceeded' },
+        { status: 429, headers: jsonUtf8Headers({ 'Retry-After': String(rl.retryAfterSeconds), 'Cache-Control': 'no-store' }) }
+      );
+    }
 
-  const agentExecuteSignatureB64Url = String(body?.agentEd25519SignatureB64Url || '').trim() || undefined;
-  const agentExecuteIssuedAt = String(body?.agentExecuteIssuedAt || '').trim() || undefined;
+    const agentId = String(ctx?.params?.agentId || '').trim();
+    if (!agentId) {
+      console.warn('[AGENTS_EXECUTE] missing agentId');
+      return Response.json({ ok: false, reason: 'Missing agentId' }, { status: 400, headers: jsonUtf8Headers() });
+    }
+
+    agentIdForError = agentId;
+
+    console.log('[AGENTS_EXECUTE] incoming', { tenantId: auth.ctx.tenantId, agentId });
+
+    let body: ExecuteRequestBody | null = null;
+    try {
+      body = (await req.json()) as ExecuteRequestBody;
+    } catch {
+      body = null;
+    }
+
+    const taskId = String(body?.taskId || '').trim();
+    const taskType = String(body?.taskType || '').trim();
+    const requireSignature = body?.requireSignature === true;
+    const simulateFailure = body?.simulateFailure === true;
+
+    const executionClassId = String((body as any)?.executionClassId || '').trim() || undefined;
+
+    const agentExecuteSignatureB64Url = String(body?.agentEd25519SignatureB64Url || '').trim() || undefined;
+    const agentExecuteIssuedAt = String(body?.agentExecuteIssuedAt || '').trim() || undefined;
 
   if (simulateFailure && process.env.NODE_ENV === 'production' && !envBool('PHOENIX_ZERO_ALLOW_SIMULATED_FAILURE')) {
     return Response.json(
@@ -430,6 +439,8 @@ export async function POST(req: Request, ctx: { params: { agentId: string } }) {
       pricePerExecutionCents: Math.max(0, Math.trunc(Number(entitlement.executionClass.pricePerExecutionCents ?? 0))),
       usage: consumed.usage
     };
+
+    sovereignContextForError = { executionClassId: entitlement.executionClass.classId };
   }
 
   if (governanceEnforce) {
@@ -571,6 +582,13 @@ export async function POST(req: Request, ctx: { params: { agentId: string } }) {
     }
     const msg = e instanceof Error ? e.message : String(e);
 
+    if (simulateFailure && msg === 'SIMULATED_HANDLER_FAILURE') {
+      return Response.json(
+        { ok: false, reason: 'EXECUTE_FAILED', error: msg },
+        { status: 500, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
+      );
+    }
+
     if (semanticEnabled) {
       await appendSemanticEvent({
         tenantId: auth.ctx.tenantId,
@@ -588,7 +606,34 @@ export async function POST(req: Request, ctx: { params: { agentId: string } }) {
 
     return Response.json(
       { ok: false, reason: 'EXECUTE_FAILED', error: msg },
-      { status: 500, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
+      {
+        status: 429,
+        headers: jsonUtf8Headers({ 'Cache-Control': 'no-store', 'Retry-After': '1' })
+      }
+    );
+  }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error('[AGENTS_EXECUTE] unhandled', { tenantId: tenantIdForError, agentId: agentIdForError, error: msg });
+
+    if (tenantIdForError && agentIdForError && sovereignContextForError) {
+      const policy = sovereignFailurePolicy();
+      if (policy !== 'always') {
+        await tryReleaseExecutionEntitlement({
+          tenantId: tenantIdForError,
+          agentId: agentIdForError,
+          executionClassId: sovereignContextForError.executionClassId
+        }).catch(() => {
+        });
+      }
+    }
+
+    return Response.json(
+      { ok: false, reason: 'EXECUTE_UNAVAILABLE', error: msg },
+      {
+        status: 429,
+        headers: jsonUtf8Headers({ 'Cache-Control': 'no-store', 'Retry-After': '1' })
+      }
     );
   }
 }
