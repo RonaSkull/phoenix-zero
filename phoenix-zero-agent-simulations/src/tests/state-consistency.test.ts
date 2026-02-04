@@ -120,7 +120,9 @@ export async function stateConsistencyTest(params: {
   });
 
   if (!checkout.ok || checkout.json?.ok !== true) {
-    throw new Error(`CHECKOUT_CREATE_FAILED status=${checkout.status}`);
+    const raw = checkout.json != null ? JSON.stringify(checkout.json) : checkout.text || '';
+    const detail = raw.length > 500 ? raw.slice(0, 500) + '…' : raw;
+    throw new Error(`CHECKOUT_CREATE_FAILED status=${checkout.status} detail=${detail}`);
   }
 
   const paymentId = String(checkout.json?.paymentId || '').trim();

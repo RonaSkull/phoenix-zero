@@ -9,6 +9,7 @@ import {
   waitForCheckoutPaid
 } from '../flows/checkout';
 import { executeTask } from '../flows/execute';
+import { adminDeleteSovereignContract, adminUpsertSovereignContract } from '../flows/sovereign';
 
 function b64Url(bytes: Uint8Array): string {
   return Buffer.from(bytes)
@@ -21,6 +22,8 @@ function b64Url(bytes: Uint8Array): string {
 export async function quantityAbuseTest(params: {
   baseUrl: string;
   apiKey: string;
+  tenantId?: string;
+  adminToken?: string;
   asaasWebhookSecret?: string;
   nowPaymentsIpnSecret?: string;
   providerHint?: 'pix' | 'crypto';
@@ -40,54 +43,101 @@ export async function quantityAbuseTest(params: {
     throw new Error('Missing NOWPAYMENTS_IPN_SECRET');
   }
 
-  const checkout = await checkoutCreate(params.baseUrl, {
-    apiKey: params.apiKey,
-    currency,
-    providerHint,
-    operation: params.operation,
-    units: 1,
-    proofMeta: {
-      agentId: params.agentId,
-      taskId,
-      taskType: params.taskType,
-      taskInputHash: sha256Hex('hardening:quantity-abuse:input'),
-      taskOutputHash: sha256Hex('hardening:quantity-abuse:output')
-    }
-  });
+  const tenantId = String(params.tenantId || '').trim() || undefined;
+  const adminToken = String(params.adminToken || '').trim() || undefined;
 
-  if (!checkout.ok || checkout.json?.ok !== true) {
-    throw new Error(`CHECKOUT_CREATE_FAILED status=${checkout.status}`);
-  }
+  const contractId = `ct_${b64Url(randomBytes(12))}`;
+  const now = new Date().toISOString();
 
-  const paymentId = String(checkout.json?.paymentId || '').trim();
-  if (!paymentId) throw new Error('MISSING_PAYMENT_ID');
-
-  const s0 = await checkoutStatus(params.baseUrl, { apiKey: params.apiKey, paymentId });
-  const providerPaymentId = String(s0.json?.providerPaymentId || '').trim();
-  if (!providerPaymentId) throw new Error('MISSING_PROVIDER_PAYMENT_ID');
-
-  const evtPaid = `evt_paid_${Date.now()}_${b64Url(randomBytes(6))}`;
-  const paid = providerHint === 'crypto'
-    ? await simulateNowPaymentsWebhookPaid(params.baseUrl, {
-        providerPaymentId,
-        nowPaymentsIpnSecret: String(params.nowPaymentsIpnSecret || '').trim(),
-        eventId: evtPaid
-      })
-    : await simulatePixWebhookPaid(params.baseUrl, {
-        providerPaymentId,
-        asaasWebhookSecret: String(params.asaasWebhookSecret || '').trim() || undefined,
-        eventId: evtPaid
+  try {
+    if (tenantId && adminToken) {
+      const upsert = await adminUpsertSovereignContract(params.baseUrl, {
+        adminToken,
+        contract: {
+          contractId,
+          tenantId,
+          agentId: params.agentId,
+          status: 'active',
+          effectiveAt: now,
+          expiresAt: null,
+          defaultExecutionClassId: 'default',
+          executionClasses: [
+            {
+              classId: 'default',
+              currency: 'USD',
+              pricePerExecutionCents: 100,
+              allowedTaskTypes: [params.taskType],
+              maxDailyExecutions: 0,
+              maxMonthlyExecutions: 0
+            }
+          ]
+        }
       });
-  if (!paid.ok) throw new Error(`WEBHOOK_PAID_FAILED status=${paid.status}`);
+      if (!upsert.ok && upsert.status !== 404) {
+        throw new Error(`ADMIN_UPSERT_CONTRACT_FAILED status=${upsert.status}`);
+      }
+    }
 
-  const waited = await waitForCheckoutPaid(params.baseUrl, { apiKey: params.apiKey, paymentId, waitMs: 20_000, pollMs: 750 });
-  if (!waited.ok || !waited.paid) throw new Error('CHECKOUT_NOT_PAID');
+    const checkout = await checkoutCreate(params.baseUrl, {
+      apiKey: params.apiKey,
+      currency,
+      providerHint,
+      operation: params.operation,
+      units: 1,
+      proofMeta: {
+        agentId: params.agentId,
+        taskId,
+        taskType: params.taskType,
+        taskInputHash: sha256Hex('hardening:quantity-abuse:input'),
+        taskOutputHash: sha256Hex('hardening:quantity-abuse:output')
+      }
+    });
 
-  const exec1 = await executeTask(params.baseUrl, { apiKey: params.apiKey, agentId: params.agentId, taskId, taskType: params.taskType });
-  if (exec1.status !== 200) throw new Error(`EXECUTE_1_NOT_ALLOWED status=${exec1.status}`);
+    if (!checkout.ok || checkout.json?.ok !== true) {
+      const raw = checkout.json != null ? JSON.stringify(checkout.json) : checkout.text || '';
+      const detail = raw.length > 500 ? raw.slice(0, 500) + '…' : raw;
+      throw new Error(`CHECKOUT_CREATE_FAILED status=${checkout.status} detail=${detail}`);
+    }
 
-  const exec2 = await executeTask(params.baseUrl, { apiKey: params.apiKey, agentId: params.agentId, taskId, taskType: params.taskType });
-  if (exec2.status === 200) throw new Error('QUANTITY_ABUSE_PASSED');
+    const paymentId = String(checkout.json?.paymentId || '').trim();
+    if (!paymentId) throw new Error('MISSING_PAYMENT_ID');
 
-  return { paymentId, providerPaymentId };
+    const s0 = await checkoutStatus(params.baseUrl, { apiKey: params.apiKey, paymentId });
+    const providerPaymentId = String(s0.json?.providerPaymentId || '').trim();
+    if (!providerPaymentId) throw new Error('MISSING_PROVIDER_PAYMENT_ID');
+
+    const evtPaid = `evt_paid_${Date.now()}_${b64Url(randomBytes(6))}`;
+    const paid = providerHint === 'crypto'
+      ? await simulateNowPaymentsWebhookPaid(params.baseUrl, {
+          providerPaymentId,
+          nowPaymentsIpnSecret: String(params.nowPaymentsIpnSecret || '').trim(),
+          eventId: evtPaid
+        })
+      : await simulatePixWebhookPaid(params.baseUrl, {
+          providerPaymentId,
+          asaasWebhookSecret: String(params.asaasWebhookSecret || '').trim() || undefined,
+          eventId: evtPaid
+        });
+    if (!paid.ok) throw new Error(`WEBHOOK_PAID_FAILED status=${paid.status}`);
+
+    const waited = await waitForCheckoutPaid(params.baseUrl, { apiKey: params.apiKey, paymentId, waitMs: 20_000, pollMs: 750 });
+    if (!waited.ok || !waited.paid) throw new Error('CHECKOUT_NOT_PAID');
+
+    const exec1 = await executeTask(params.baseUrl, { apiKey: params.apiKey, agentId: params.agentId, taskId, taskType: params.taskType });
+    if (exec1.status !== 200) throw new Error(`EXECUTE_1_NOT_ALLOWED status=${exec1.status}`);
+
+    const exec2 = await executeTask(params.baseUrl, { apiKey: params.apiKey, agentId: params.agentId, taskId, taskType: params.taskType });
+    if (exec2.status === 200) throw new Error('QUANTITY_ABUSE_PASSED');
+
+    return { paymentId, providerPaymentId };
+  } finally {
+    if (tenantId && adminToken) {
+      await adminDeleteSovereignContract(params.baseUrl, {
+        adminToken,
+        tenantId,
+        agentId: params.agentId
+      }).catch(() => {
+      });
+    }
+  }
 }

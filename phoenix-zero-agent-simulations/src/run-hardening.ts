@@ -422,7 +422,16 @@ async function main() {
       enabled: !onlyCrypto && (only.size === 0 || only.has('quantity-abuse') || only.has('quantity')),
       run: async () => {
         const agentId = `ag_${b64Url(randomBytes(12))}`;
-        return quantityAbuseTest({ baseUrl, apiKey, asaasWebhookSecret, agentId, taskType, operation });
+        return quantityAbuseTest({
+          baseUrl,
+          apiKey,
+          tenantId,
+          adminToken: String(adminToken || ''),
+          asaasWebhookSecret,
+          agentId,
+          taskType,
+          operation
+        });
       }
     },
     {
@@ -433,6 +442,8 @@ async function main() {
         return quantityAbuseTest({
           baseUrl,
           apiKey,
+          tenantId,
+          adminToken: String(adminToken || ''),
           providerHint: 'crypto',
           nowPaymentsIpnSecret,
           agentId,

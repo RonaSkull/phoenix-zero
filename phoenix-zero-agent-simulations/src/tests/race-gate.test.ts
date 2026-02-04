@@ -23,6 +23,21 @@ async function sleepMs(ms: number): Promise<void> {
   await new Promise((r) => setTimeout(r, Math.max(0, Math.trunc(ms))));
 }
 
+function clip(s: string, max = 700): string {
+  const raw = String(s || '');
+  return raw.length > max ? raw.slice(0, max) + '…' : raw;
+}
+
+function formatHttpResult(res: any): string {
+  if (!res || typeof res !== 'object') return 'res=<non_object>';
+  const url = String(res.url || '').trim();
+  const status = Number(res.status);
+  const raw = res.json != null ? JSON.stringify(res.json) : String(res.text || '');
+  const detail = clip(raw);
+  const reqId = String(res.headers?.['x-request-id'] || res.headers?.['x-vercel-id'] || '').trim();
+  return `status=${Number.isFinite(status) ? status : 'NaN'} url=${url || '<unknown>'} requestId=${reqId || '<none>'} detail=${detail}`;
+}
+
 export async function raceGateTest(params: {
   baseUrl: string;
   apiKey: string;
@@ -35,8 +50,8 @@ export async function raceGateTest(params: {
   gateN?: number;
   executeN?: number;
 }): Promise<{ paymentId: string; providerPaymentId: string }> {
-  const gateN = Math.max(1, Math.min(500, Math.trunc(Number(params.gateN ?? 100))));
-  const executeN = Math.max(0, Math.min(200, Math.trunc(Number(params.executeN ?? 20))));
+  const gateN = Math.max(1, Math.min(500, Math.trunc(Number(params.gateN ?? 40))));
+  const executeN = Math.max(0, Math.min(200, Math.trunc(Number(params.executeN ?? 10))));
 
   const providerHint: 'pix' | 'crypto' = params.providerHint || 'pix';
   const currency = providerHint === 'crypto' ? 'USD' : 'BRL';
@@ -66,7 +81,9 @@ export async function raceGateTest(params: {
   });
 
   if (!checkout.ok || checkout.json?.ok !== true) {
-    throw new Error(`CHECKOUT_CREATE_FAILED status=${checkout.status}`);
+    const raw = checkout.json != null ? JSON.stringify(checkout.json) : checkout.text || '';
+    const detail = raw.length > 500 ? raw.slice(0, 500) + '…' : raw;
+    throw new Error(`CHECKOUT_CREATE_FAILED status=${checkout.status} detail=${detail}`);
   }
 
   const paymentId = String(checkout.json?.paymentId || '').trim();
@@ -109,7 +126,7 @@ export async function raceGateTest(params: {
     if (!res || typeof res !== 'object') continue;
     const status = Number(res.status);
     if (Number.isFinite(status) && status >= 500) {
-      throw new Error(`RACE_5XX status=${status}`);
+      throw new Error(`RACE_5XX ${formatHttpResult(res)}`);
     }
   }
 
@@ -144,7 +161,7 @@ export async function raceGateTest(params: {
     const ex = afterResults[i];
     if (!ex || typeof ex !== 'object') continue;
     if (Number(ex.status) === 200) throw new Error('EXECUTE_ALLOWED_AFTER_REFUND');
-    if (Number(ex.status) >= 500) throw new Error(`EXECUTE_5XX_AFTER_REFUND status=${ex.status}`);
+    if (Number(ex.status) >= 500) throw new Error(`EXECUTE_5XX_AFTER_REFUND ${formatHttpResult(ex)}`);
   }
 
   return { paymentId, providerPaymentId };
