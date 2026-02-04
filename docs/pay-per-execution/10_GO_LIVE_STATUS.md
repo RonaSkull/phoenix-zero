@@ -10,6 +10,11 @@ Este documento consolida o estado atual do PPE e o checklist mínimo para deixar
 - Persistência pós-restart (Render): **OK** (PPOs continuam disponíveis via `/verify/<proofId>` após restart)
 - `/api/health` (Render): **OK**
 
+Hardening (Render):
+
+- `race-gate` (PIX): `hardening_2026-02-04T22-28-21-940Z` (1/1)
+- `race-gate-crypto`: `hardening_2026-02-04T22-29-33-278Z` (1/1)
+
 Notas de escopo:
 
 - PIX/Asaas: GA.

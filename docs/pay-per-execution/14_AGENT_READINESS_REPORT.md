@@ -133,6 +133,11 @@ Evidências (2026-01-29):
 - PIX + Crypto: gate 403 antes do pagamento e 200 após pagamento, webhooks idempotentes (`deduped: true`), settlements com reversão em refund.
 - Agent Matrix (Render): `failed: 0` (reports em `docs/pay-per-execution/agent-matrix-reports/`).
 
+Evidências (2026-02-04):
+
+- Hardening `race-gate` (PIX): `hardening_2026-02-04T22-28-21-940Z` (1/1)
+- Hardening `race-gate-crypto`: `hardening_2026-02-04T22-29-33-278Z` (1/1)
+
 ## 5) Fase D — Pós-operação (Trust)
 
 O agente deve conseguir:

@@ -1,3 +1,10 @@
+## Atualização (2026-02-04)
+
+- Hardening `race-gate-crypto` (Render): `hardening_2026-02-04T22-29-33-278Z` (1/1)
+- Status: **OK para beta/experimental** (NowPayments) com PPO gate e refund, desde que você mantenha higiene de secrets/flags no Render.
+
+---
+
 Perfeito — vou ser direto e técnico, do jeito que você curte 👌
 Com base no que você já mostrou (inclusive o crypto hardening 12/12 passado), o core está sólido. Não é “básico”, já está acima da média. Agora o que falta não é mais crypto-by-the-book, é crypto operacional para agentes.
 
