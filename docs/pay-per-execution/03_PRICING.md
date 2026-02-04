@@ -83,7 +83,7 @@ Observação:
 
 ## 6) Moedas
 - BRL via PIX/Asaas.
-- USD via NowPayments (USDT/USDC) enquanto não houver cartão internacional.
+- USD via NowPayments (beta/experimental).
 
 ## 7) O que NÃO fazer no MVP
 - Não expor a fórmula detalhada.

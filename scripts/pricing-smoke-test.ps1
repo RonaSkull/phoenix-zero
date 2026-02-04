@@ -1,6 +1,8 @@
 param(
   [string]$Base = "",
-  [string]$AdminToken = $env:PHOENIX_ZERO_ADMIN_TOKEN
+  [string]$AdminToken = $env:PHOENIX_ZERO_ADMIN_TOKEN,
+  [string]$AgentId = "",
+  [string]$ExecutionClassId = ""
 )
 
 $ErrorActionPreference = 'Stop'
@@ -94,7 +96,14 @@ $quotes = @(
 
 foreach ($q in $quotes) {
   try {
-    $res = Invoke-RestMethod -Method Post -Uri ("$Base/api/pricing/quote") -Headers @{ 'x-api-key' = $apiKey } -ContentType 'application/json' -Body ($q | ConvertTo-Json -Depth 10 -Compress)
+    $body = $q.Clone()
+    if (-not [string]::IsNullOrWhiteSpace($AgentId)) {
+      $body.agentId = $AgentId
+      if (-not [string]::IsNullOrWhiteSpace($ExecutionClassId)) {
+        $body.executionClassId = $ExecutionClassId
+      }
+    }
+    $res = Invoke-RestMethod -Method Post -Uri ("$Base/api/pricing/quote") -Headers @{ 'x-api-key' = $apiKey } -ContentType 'application/json' -Body ($body | ConvertTo-Json -Depth 10 -Compress)
     $fp = if ($res.ok) { [math]::Round(([double]$res.finalPriceCents) / 100.0, 2) } else { $null }
     Write-Host ("- op={0} clientType={1} country={2} => ok={3} final={4} {5}" -f $q.operation, $q.clientType, $q.country, $res.ok, $fp, $res.currency)
   } catch {

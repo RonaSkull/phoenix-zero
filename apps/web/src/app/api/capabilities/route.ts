@@ -33,10 +33,22 @@ export async function GET() {
           wellKnown: '/.well-known/ai-service.json',
           pricing: '/api/pricing',
           compatibility: '/api/compatibility',
-          docs: '/api/docs/ai-service-discovery'
+          docs: '/api/docs/ai-service-discovery',
+          goLiveContract: '/api/docs/go-live-contract',
+          agentIntegrationContract: '/api/docs/agent-integration-contract',
+          howAgentsPay: '/api/docs/how-agents-pay'
         },
         auth: {
-          public: ['/.well-known/ai-service.json', '/api/pricing', '/api/compatibility', '/api/docs/ai-service-discovery', '/api/capabilities'],
+          public: [
+            '/.well-known/ai-service.json',
+            '/api/pricing',
+            '/api/compatibility',
+            '/api/docs/ai-service-discovery',
+            '/api/docs/go-live-contract',
+            '/api/docs/agent-integration-contract',
+            '/api/docs/how-agents-pay',
+            '/api/capabilities'
+          ],
           tenantApiKey: ['/api/checkout/create', '/api/checkout/status/*', '/api/agents/{agentId}/execute']
         },
         pricing: {
@@ -50,7 +62,7 @@ export async function GET() {
         },
         idempotency: {
           webhooks: true,
-          execute: 'taskId is treated as an idempotency key per agentId+tenantId'
+          checkoutCreate: 'x-idempotency-key makes POST /api/checkout/create replay-safe per tenant'
         }
       },
       { status: 200, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }

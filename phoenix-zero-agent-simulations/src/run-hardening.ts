@@ -10,6 +10,10 @@ import { agentConfusionTest } from './tests/agent-confusion.test';
 import { authBypassTest } from './tests/auth-bypass.test';
 import { cacheHeadersTest } from './tests/cache-headers.test';
 import { negotiationAbuseTest } from './tests/negotiation-abuse.test';
+import { nowPaymentsPartiallyPaidDoesNotUnlockTest } from './tests/nowpayments-partially-paid.test';
+import { nowPaymentsStatusRegressionIgnoredTest } from './tests/nowpayments-status-regression.test';
+import { nowPaymentsWebhookSignatureInvalidTest } from './tests/nowpayments-webhook-signature-invalid.test';
+import { nowPaymentsWebhookUnknownInvoiceTest } from './tests/nowpayments-webhook-unknown-invoice.test';
 import { paramInjectionTest } from './tests/param-injection.test';
 import { partialFailureTest } from './tests/partial-failure.test';
 import { providerDowntimeTest } from './tests/provider-downtime.test';
@@ -18,6 +22,7 @@ import { quantityAbuseTest } from './tests/quantity-abuse.test';
 import { raceGateTest } from './tests/race-gate.test';
 import { rateLimitTest } from './tests/rate-limit.test';
 import { riskWindowTest } from './tests/risk-window.test';
+import { sovereignEntitlementTest } from './tests/sovereign-entitlement.test';
 import { stateConsistencyTest } from './tests/state-consistency.test';
 import { webhookOutOfOrderTest } from './tests/webhook-ordering.test';
 
@@ -136,9 +141,8 @@ async function main() {
 
   const baseUrl = baseUrlFromEnv();
   const asaasWebhookSecret = env('ASAAS_WEBHOOK_SECRET') || undefined;
-  if (!asaasWebhookSecret) {
-    throw new Error('Missing ASAAS_WEBHOOK_SECRET');
-  }
+  const nowPaymentsIpnSecret = env('NOWPAYMENTS_IPN_SECRET');
+  const adminToken = env('PHOENIX_ZERO_ADMIN_TOKEN') || undefined;
 
   const operation = env('PHOENIX_ZERO_HARDENING_OPERATION') || 'protect_video';
   const taskType = env('PHOENIX_ZERO_HARDENING_TASK_TYPE') || operation;
@@ -155,6 +159,11 @@ async function main() {
   const sleepBetweenMs = Math.max(0, Math.trunc(envInt('PHOENIX_ZERO_HARDENING_SLEEP_BETWEEN_MS', 500)));
 
   const only = parseOnlySet();
+  const onlyCrypto = only.has('crypto');
+
+  if (onlyCrypto && !nowPaymentsIpnSecret) {
+    throw new Error('Missing NOWPAYMENTS_IPN_SECRET (required for --only=crypto)');
+  }
 
   const suiteRunId = `hardening_${nowId()}`;
   const outDir = join(process.cwd(), 'out', suiteRunId);
@@ -163,7 +172,7 @@ async function main() {
   const signup = await publicAgentSignup(baseUrl, {
     agentType: 'platform_engineer',
     intendedUse: 'hardening suite',
-    currency: 'BRL'
+    currency: onlyCrypto ? 'USD' : 'BRL'
   });
 
   if (!signup.ok) {
@@ -172,6 +181,7 @@ async function main() {
   }
 
   const apiKey = signup.apiKey;
+  const tenantId = signup.tenantId;
 
   const tests: Array<{
     testId: string;
@@ -180,39 +190,174 @@ async function main() {
   }> = [
     {
       testId: 'auth-bypass',
-      enabled: only.size === 0 || only.has('auth-bypass') || only.has('bypass') || only.has('auth'),
+      enabled: only.size === 0 || onlyCrypto || only.has('auth-bypass') || only.has('bypass') || only.has('auth'),
       run: async () => {
         const agentId = `ag_${b64Url(randomBytes(12))}`;
         return authBypassTest({ baseUrl, agentId });
       }
     },
     {
+      testId: 'sovereign-entitlement',
+      enabled:
+        !onlyCrypto &&
+        (only.size === 0 ? Boolean(adminToken) : true) &&
+        (only.size === 0 ||
+          only.has('sovereign-entitlement') ||
+          only.has('sovereign') ||
+          only.has('contract') ||
+          only.has('pricing-contract')),
+      run: async () => {
+        const agentId = `ag_${b64Url(randomBytes(12))}`;
+        return sovereignEntitlementTest({
+          baseUrl,
+          apiKey,
+          tenantId,
+          adminToken: String(adminToken || ''),
+          asaasWebhookSecret,
+          nowPaymentsIpnSecret,
+          agentId,
+          taskType,
+          operation
+        });
+      }
+    },
+    {
       testId: 'state-consistency',
-      enabled: only.size === 0 || only.has('state-consistency') || only.has('consistency') || only.has('ftu'),
+      enabled: !onlyCrypto && (only.size === 0 || only.has('state-consistency') || only.has('consistency') || only.has('ftu')),
       run: async () => {
         const agentId = `ag_${b64Url(randomBytes(12))}`;
         return stateConsistencyTest({ baseUrl, apiKey, asaasWebhookSecret, agentId, taskType, operation });
       }
     },
     {
+      testId: 'state-consistency-crypto',
+      enabled: Boolean(nowPaymentsIpnSecret) && (only.size === 0 || only.has('state-consistency-crypto') || only.has('consistency-crypto') || only.has('crypto')),
+      run: async () => {
+        const agentId = `ag_${b64Url(randomBytes(12))}`;
+        return stateConsistencyTest({
+          baseUrl,
+          apiKey,
+          providerHint: 'crypto',
+          nowPaymentsIpnSecret,
+          agentId,
+          taskType,
+          operation
+        });
+      }
+    },
+    {
       testId: 'webhook-ordering',
-      enabled: only.size === 0 || only.has('webhook-ordering') || only.has('ordering') || only.has('webhooks'),
+      enabled: !onlyCrypto && (only.size === 0 || only.has('webhook-ordering') || only.has('ordering') || only.has('webhooks')),
       run: async () => {
         const agentId = `ag_${b64Url(randomBytes(12))}`;
         return webhookOutOfOrderTest({ baseUrl, apiKey, asaasWebhookSecret, agentId, taskType, operation });
       }
     },
     {
+      testId: 'webhook-ordering-crypto',
+      enabled: Boolean(nowPaymentsIpnSecret) && (only.size === 0 || only.has('webhook-ordering-crypto') || only.has('ordering-crypto') || only.has('crypto')),
+      run: async () => {
+        const agentId = `ag_${b64Url(randomBytes(12))}`;
+        return webhookOutOfOrderTest({
+          baseUrl,
+          apiKey,
+          providerHint: 'crypto',
+          nowPaymentsIpnSecret,
+          agentId,
+          taskType,
+          operation
+        });
+      }
+    },
+    {
+      testId: 'nowpayments-webhook-signature-invalid',
+      enabled:
+        Boolean(nowPaymentsIpnSecret) &&
+        (only.size === 0 || only.has('nowpayments-webhook-signature-invalid') || only.has('nowpayments') || only.has('crypto')),
+      run: async () => {
+        const agentId = `ag_${b64Url(randomBytes(12))}`;
+        return nowPaymentsWebhookSignatureInvalidTest({
+          baseUrl,
+          apiKey,
+          nowPaymentsIpnSecret,
+          agentId,
+          taskType,
+          operation
+        });
+      }
+    },
+    {
+      testId: 'nowpayments-webhook-unknown-invoice',
+      enabled:
+        Boolean(nowPaymentsIpnSecret) &&
+        (only.size === 0 || only.has('nowpayments-webhook-unknown-invoice') || only.has('nowpayments') || only.has('crypto')),
+      run: async () => {
+        return nowPaymentsWebhookUnknownInvoiceTest({ baseUrl, nowPaymentsIpnSecret });
+      }
+    },
+    {
+      testId: 'nowpayments-partially-paid',
+      enabled:
+        Boolean(nowPaymentsIpnSecret) &&
+        (only.size === 0 || only.has('nowpayments-partially-paid') || only.has('nowpayments') || only.has('crypto')),
+      run: async () => {
+        const agentId = `ag_${b64Url(randomBytes(12))}`;
+        return nowPaymentsPartiallyPaidDoesNotUnlockTest({
+          baseUrl,
+          apiKey,
+          nowPaymentsIpnSecret,
+          agentId,
+          taskType,
+          operation
+        });
+      }
+    },
+    {
+      testId: 'nowpayments-status-regression',
+      enabled:
+        Boolean(nowPaymentsIpnSecret) &&
+        (only.size === 0 || only.has('nowpayments-status-regression') || only.has('nowpayments') || only.has('crypto')),
+      run: async () => {
+        const agentId = `ag_${b64Url(randomBytes(12))}`;
+        return nowPaymentsStatusRegressionIgnoredTest({
+          baseUrl,
+          apiKey,
+          nowPaymentsIpnSecret,
+          agentId,
+          taskType,
+          operation
+        });
+      }
+    },
+    {
       testId: 'race-gate',
-      enabled: only.size === 0 || only.has('race-gate') || only.has('race'),
+      enabled: !onlyCrypto && (only.size === 0 || only.has('race-gate') || only.has('race')),
       run: async () => {
         const agentId = `ag_${b64Url(randomBytes(12))}`;
         return raceGateTest({ baseUrl, apiKey, asaasWebhookSecret, agentId, taskType, operation, gateN, executeN });
       }
     },
     {
+      testId: 'race-gate-crypto',
+      enabled: Boolean(nowPaymentsIpnSecret) && (only.size === 0 || only.has('race-gate-crypto') || only.has('race-crypto') || only.has('crypto')),
+      run: async () => {
+        const agentId = `ag_${b64Url(randomBytes(12))}`;
+        return raceGateTest({
+          baseUrl,
+          apiKey,
+          providerHint: 'crypto',
+          nowPaymentsIpnSecret,
+          agentId,
+          taskType,
+          operation,
+          gateN,
+          executeN
+        });
+      }
+    },
+    {
       testId: 'cache-headers',
-      enabled: only.size === 0 || only.has('cache-headers') || only.has('cache'),
+      enabled: only.size === 0 || onlyCrypto || only.has('cache-headers') || only.has('cache'),
       run: async () => {
         const agentId = `ag_${b64Url(randomBytes(12))}`;
         return cacheHeadersTest({ baseUrl, apiKey, agentId });
@@ -220,7 +365,7 @@ async function main() {
     },
     {
       testId: 'proof-reuse-attack',
-      enabled: only.size === 0 || only.has('proof-reuse-attack') || only.has('proof-reuse') || only.has('reuse') || only.has('adversarial'),
+      enabled: !onlyCrypto && (only.size === 0 || only.has('proof-reuse-attack') || only.has('proof-reuse') || only.has('reuse') || only.has('adversarial')),
       run: async () => {
         const agentA = `ag_${b64Url(randomBytes(12))}`;
         const agentB = `ag_${b64Url(randomBytes(12))}`;
@@ -228,8 +373,26 @@ async function main() {
       }
     },
     {
+      testId: 'proof-reuse-attack-crypto',
+      enabled: Boolean(nowPaymentsIpnSecret) && (only.size === 0 || only.has('proof-reuse-attack-crypto') || only.has('proof-reuse-crypto') || only.has('reuse-crypto') || only.has('crypto') || only.has('adversarial')),
+      run: async () => {
+        const agentA = `ag_${b64Url(randomBytes(12))}`;
+        const agentB = `ag_${b64Url(randomBytes(12))}`;
+        return proofReuseAttackTest({
+          baseUrl,
+          apiKey,
+          providerHint: 'crypto',
+          nowPaymentsIpnSecret,
+          agentA,
+          agentB,
+          taskType,
+          operation
+        });
+      }
+    },
+    {
       testId: 'agent-swap-attack',
-      enabled: only.size === 0 || only.has('agent-swap-attack') || only.has('agent-swap') || only.has('swap') || only.has('adversarial'),
+      enabled: !onlyCrypto && (only.size === 0 || only.has('agent-swap-attack') || only.has('agent-swap') || only.has('swap') || only.has('adversarial')),
       run: async () => {
         const agentA = `ag_${b64Url(randomBytes(12))}`;
         const agentB = `ag_${b64Url(randomBytes(12))}`;
@@ -237,17 +400,52 @@ async function main() {
       }
     },
     {
+      testId: 'agent-swap-attack-crypto',
+      enabled: Boolean(nowPaymentsIpnSecret) && (only.size === 0 || only.has('agent-swap-attack-crypto') || only.has('agent-swap-crypto') || only.has('swap-crypto') || only.has('crypto') || only.has('adversarial')),
+      run: async () => {
+        const agentA = `ag_${b64Url(randomBytes(12))}`;
+        const agentB = `ag_${b64Url(randomBytes(12))}`;
+        return agentSwapAttackTest({
+          baseUrl,
+          apiKey,
+          providerHint: 'crypto',
+          nowPaymentsIpnSecret,
+          agentA,
+          agentB,
+          taskType,
+          operation
+        });
+      }
+    },
+    {
       testId: 'quantity-abuse',
-      enabled: only.size === 0 || only.has('quantity-abuse') || only.has('quantity'),
+      enabled: !onlyCrypto && (only.size === 0 || only.has('quantity-abuse') || only.has('quantity')),
       run: async () => {
         const agentId = `ag_${b64Url(randomBytes(12))}`;
         return quantityAbuseTest({ baseUrl, apiKey, asaasWebhookSecret, agentId, taskType, operation });
       }
     },
     {
+      testId: 'quantity-abuse-crypto',
+      enabled: Boolean(nowPaymentsIpnSecret) && (only.size === 0 || only.has('quantity-abuse-crypto') || only.has('quantity-crypto') || only.has('crypto')),
+      run: async () => {
+        const agentId = `ag_${b64Url(randomBytes(12))}`;
+        return quantityAbuseTest({
+          baseUrl,
+          apiKey,
+          providerHint: 'crypto',
+          nowPaymentsIpnSecret,
+          agentId,
+          taskType,
+          operation
+        });
+      }
+    },
+    {
       testId: 'partial-failure',
       enabled: only.has('partial-failure') || env('PHOENIX_ZERO_HARDENING_PARTIAL_FAILURE_ENABLED') === 'true',
       run: async () => {
+        if (!asaasWebhookSecret) throw new Error('Missing ASAAS_WEBHOOK_SECRET (required for partial-failure test)');
         const agentId = `ag_${b64Url(randomBytes(12))}`;
         return partialFailureTest({ baseUrl, apiKey, asaasWebhookSecret, agentId, taskType, operation });
       }
@@ -258,6 +456,7 @@ async function main() {
       run: async () => {
         const adminToken = env('PHOENIX_ZERO_ADMIN_TOKEN');
         if (!adminToken) throw new Error('Missing PHOENIX_ZERO_ADMIN_TOKEN (required for risk-window test)');
+        if (!asaasWebhookSecret) throw new Error('Missing ASAAS_WEBHOOK_SECRET (required for risk-window test)');
         const agentId = `ag_${b64Url(randomBytes(12))}`;
         return riskWindowTest({ baseUrl, apiKey, asaasWebhookSecret, adminToken, agentId, taskType, operation });
       }
@@ -266,13 +465,14 @@ async function main() {
       testId: 'provider-downtime',
       enabled: only.has('provider-downtime') || env('PHOENIX_ZERO_HARDENING_PROVIDER_DOWNTIME_ENABLED') === 'true',
       run: async () => {
+        if (!asaasWebhookSecret) throw new Error('Missing ASAAS_WEBHOOK_SECRET (required for provider-downtime test)');
         const agentId = `ag_${b64Url(randomBytes(12))}`;
         return providerDowntimeTest({ baseUrl, apiKey, asaasWebhookSecret, agentId, taskType, operation });
       }
     },
     {
       testId: 'agent-confusion',
-      enabled: only.size === 0 || only.has('agent-confusion') || only.has('confusion'),
+      enabled: only.size === 0 || onlyCrypto || only.has('agent-confusion') || only.has('confusion'),
       run: async () => {
         const agentId = `ag_${b64Url(randomBytes(12))}`;
         return agentConfusionTest({ baseUrl, apiKey, agentId, taskType, operation });
@@ -280,7 +480,7 @@ async function main() {
     },
     {
       testId: 'negotiation-abuse',
-      enabled: only.size === 0 || only.has('negotiation-abuse') || only.has('negotiation'),
+      enabled: only.size === 0 || onlyCrypto || only.has('negotiation-abuse') || only.has('negotiation'),
       run: async () => {
         const agentId = `ag_${b64Url(randomBytes(12))}`;
         return negotiationAbuseTest({ baseUrl, apiKey, agentId });
@@ -288,7 +488,7 @@ async function main() {
     },
     {
       testId: 'param-injection',
-      enabled: only.size === 0 || only.has('param-injection') || only.has('injection'),
+      enabled: only.size === 0 || onlyCrypto || only.has('param-injection') || only.has('injection'),
       run: async () => {
         const agentId = `ag_${b64Url(randomBytes(12))}`;
         return paramInjectionTest({ baseUrl, apiKey, agentId });
@@ -296,7 +496,7 @@ async function main() {
     },
     {
       testId: 'rate-limit',
-      enabled: only.size === 0 || only.has('rate-limit') || only.has('ratelimit'),
+      enabled: only.size === 0 || onlyCrypto || only.has('rate-limit') || only.has('ratelimit'),
       run: async () => {
         const agentId = `ag_${b64Url(randomBytes(12))}`;
         return rateLimitTest({ baseUrl, apiKey, agentId });

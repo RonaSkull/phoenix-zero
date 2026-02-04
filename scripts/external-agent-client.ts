@@ -75,6 +75,42 @@ function canonicalJson(obj: any): string {
   return JSON.stringify(out);
 }
 
+async function sleepMs(ms: number): Promise<void> {
+  await new Promise((r) => setTimeout(r, Math.max(0, Math.trunc(ms))));
+}
+
+async function waitForCheckoutStatus(params: {
+  baseUrl: string;
+  apiKey: string;
+  paymentId: string;
+  desired: string;
+  waitMs: number;
+  pollMs: number;
+}): Promise<{ ok: boolean; last: { status: number; json: any; text: string } }> {
+  const deadline = Date.now() + Math.max(0, Math.trunc(params.waitMs));
+  let last = await httpJsonRetry({
+    method: 'GET',
+    url: `${params.baseUrl}/api/checkout/status?paymentId=${encodeURIComponent(params.paymentId)}`,
+    apiKey: params.apiKey
+  });
+
+  while (Date.now() <= deadline) {
+    const got = String(last.json?.status || '').trim();
+    if (last.ok && got === params.desired) {
+      return { ok: true, last: { status: last.status, json: last.json, text: last.text } };
+    }
+    await sleepMs(params.pollMs);
+    last = await httpJsonRetry({
+      method: 'GET',
+      url: `${params.baseUrl}/api/checkout/status?paymentId=${encodeURIComponent(params.paymentId)}`,
+      apiKey: params.apiKey
+    });
+  }
+
+  const got = String(last.json?.status || '').trim();
+  return { ok: last.ok && got === params.desired, last: { status: last.status, json: last.json, text: last.text } };
+}
+
 function b64Url(bytes: Uint8Array): string {
   return Buffer.from(bytes)
     .toString('base64')
@@ -339,8 +375,19 @@ async function main() {
             console.error('Expected deduped:true on duplicate webhook event.');
             process.exitCode = 1;
           } else {
-            const statusRes = await httpJsonRetry({ method: 'GET', url: `${baseUrl}/api/checkout/status?paymentId=${encodeURIComponent(paymentId)}`, apiKey });
-            console.log('Payment status:', JSON.stringify({ status: statusRes.status, body: statusRes.json }, null, 2));
+            const waitedPaid = await waitForCheckoutStatus({
+              baseUrl,
+              apiKey,
+              paymentId,
+              desired: 'paid',
+              waitMs: envInt('SIM_WAIT_FOR_STATUS_MS', 12_000),
+              pollMs: envInt('SIM_STATUS_POLL_MS', 900)
+            });
+            console.log('Payment status:', JSON.stringify({ status: waitedPaid.last.status, body: waitedPaid.last.json }, null, 2));
+            if (!waitedPaid.ok) {
+              console.error('Expected checkout/status to become paid after webhook but it did not.');
+              process.exitCode = 1;
+            }
 
             const statusResOtherTenant = await httpJsonRetry({
               method: 'GET',
@@ -449,6 +496,17 @@ async function main() {
               apiKey
             });
             console.log('Agent settlements (after refund):', JSON.stringify({ status: settlements2.status, body: settlements2.json }, null, 2));
+
+            const gateAfterRefund = await httpJsonRetry({
+              method: 'GET',
+              url: `${baseUrl}/api/agents/${encodeURIComponent(agentId)}/gate?taskId=${encodeURIComponent(taskId)}&taskType=${encodeURIComponent(taskType)}`,
+              apiKey
+            });
+            console.log('Gate after refund (expected allowed=false):', JSON.stringify({ status: gateAfterRefund.status, body: gateAfterRefund.json }, null, 2));
+            if (gateAfterRefund.status !== 200 || gateAfterRefund.json?.allowed !== false) {
+              console.error('Expected gate.allowed=false after refund.');
+              process.exitCode = 1;
+            }
 
             const entries2: any[] = Array.isArray(settlements2.json?.settlements)
               ? settlements2.json.settlements

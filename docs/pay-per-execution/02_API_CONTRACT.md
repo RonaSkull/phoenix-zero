@@ -46,6 +46,15 @@ $res.tenant.apiKey
 ### `POST /api/checkout/create`
 Cria uma intenção de pagamento (PaymentIntent) e retorna `paymentId` e `checkoutUrl`.
 
+Idempotência (recomendado):
+
+- Header opcional: `x-idempotency-key: <string>`
+- Quando enviado, o endpoint se torna idempotente **por tenant**.
+- Em produção, isso é garantido pela persistência (Postgres).
+- Repetir a mesma chamada (mesma chave e mesmo payload efetivo) retorna o mesmo `paymentId`.
+- Reusar a mesma chave com payload diferente retorna **HTTP 409**.
+- Se a criação estiver em andamento para aquela chave, retorna **HTTP 409**.
+
 Campos importantes:
 - `providerHint`: `pix` | `crypto`
 - `lineItems`: array (pricing)
@@ -71,12 +80,14 @@ Erros comuns:
 - HTTP 400: `{ ok: false, reason: ... }` (JSON inválido / campos inválidos)
 - HTTP 401: `{ ok: false, reason: "Unauthorized" }` (sem `x-api-key`)
 - HTTP 403: `{ ok: false, reason: "tenantId mismatch" }` (se tentar setar `tenantId` diferente)
+- HTTP 409: `{ ok: false, reason: "IDEMPOTENCY_KEY_REUSED" | "IDEMPOTENCY_IN_PROGRESS" }`
 
 Exemplo (curl):
 ```bash
 curl -sS -X POST "https://SEU-DOMINIO/api/checkout/create" \
   -H "content-type: application/json" \
   -H "x-api-key: TENANT_API_KEY" \
+  -H "x-idempotency-key: <UUID-OU-CHAVE-DO-SEU-PEDIDO>" \
   -d '{
     "currency": "BRL",
     "providerHint": "pix",

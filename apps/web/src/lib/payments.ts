@@ -9,6 +9,7 @@ import { getTenantById } from './tenants';
 import { recordUsage } from './usage-ledger';
 import {
   calculateFinalPrice,
+  getDiscountContextViolations,
   getCommissionProfile,
   getPricingProfile,
   getPricingProfileVersion,
@@ -105,6 +106,11 @@ async function sleepMs(ms: number): Promise<void> {
 
 function env(name: string): string {
   return String(process.env[name] || '').trim();
+}
+
+function envBool(name: string): boolean {
+  const v = env(name).toLowerCase();
+  return v === '1' || v === 'true' || v === 'yes' || v === 'y' || v === 'on';
 }
 
 function envInt0(name: string, def: number): number {
@@ -466,6 +472,11 @@ function nowPaymentsApiKey(): string {
   return String(process.env.NOWPAYMENTS_API_KEY || '').trim();
 }
 
+function nowPaymentsPayCurrency(): string | undefined {
+  const raw = String(process.env.PHOENIX_ZERO_NOWPAYMENTS_PAY_CURRENCY || '').trim();
+  return raw ? raw : undefined;
+}
+
 async function nowPaymentsFetch(path: string, init: RequestInit): Promise<Response> {
   const key = nowPaymentsApiKey();
   const url = `${nowPaymentsApiBaseUrl()}${path}`;
@@ -613,7 +624,11 @@ async function computeTotalCents(params: {
   lineItems: CheckoutLineItem[];
 }): Promise<
   | { ok: true; amountCents: number; lineTotalsCents: number[]; normalizedLineItems: CheckoutLineItem[] }
-  | { ok: false; reason: string }
+  | {
+      ok: false;
+      reason: string;
+      details?: Array<{ lineItemIndex: number; field: 'plan' | 'guaranteeWindow'; value: string; multiplier: number }>;
+    }
 > {
   const tenant = await getTenantById(params.tenantId);
   if (!tenant) return { ok: false, reason: 'Tenant not found' };
@@ -632,7 +647,11 @@ async function computeTotalCents(params: {
   const normalizedLineItems: CheckoutLineItem[] = [];
   let total = 0;
 
-  for (const li of params.lineItems) {
+  const allowDiscountContext = envBool('PHOENIX_ZERO_ALLOW_DISCOUNT_CONTEXT');
+  const discountViolations: Array<{ lineItemIndex: number; field: 'plan' | 'guaranteeWindow'; value: string; multiplier: number }> = [];
+
+  for (let lineItemIndex = 0; lineItemIndex < params.lineItems.length; lineItemIndex += 1) {
+    const li = params.lineItems[lineItemIndex];
     const opInput = String(li?.operation || '').trim().toLowerCase();
     const opAsProduct = opInput && !opInput.startsWith('protect_') && looksLikeProductId(opInput) ? opInput : '';
     const productCandidate =
@@ -688,6 +707,13 @@ async function computeTotalCents(params: {
       pages
     };
 
+    if (!allowDiscountContext) {
+      const violations = getDiscountContextViolations({ scope, pricingProfile });
+      for (const v of violations) {
+        discountViolations.push({ lineItemIndex, field: v.field, value: v.value, multiplier: v.multiplier });
+      }
+    }
+
     const basePriceCentsRaw = pricingProfile.basePriceCentsByOp[operation];
     const basePriceCents =
       typeof basePriceCentsRaw === 'number' && Number.isFinite(basePriceCentsRaw)
@@ -707,7 +733,36 @@ async function computeTotalCents(params: {
     total += lineTotal;
   }
 
+  if (!allowDiscountContext && discountViolations.length > 0) {
+    return { ok: false, reason: 'DISCOUNT_CONTEXT_NOT_ALLOWED', details: discountViolations };
+  }
+
   return { ok: true, amountCents: Math.max(0, Math.trunc(total)), lineTotalsCents, normalizedLineItems };
+}
+
+export async function quoteCheckoutAmount(params: {
+  tenantId: string;
+  currency: string;
+  pricingProfileId: string;
+  pricingVersionId?: string;
+  lineItems: CheckoutLineItem[];
+}): Promise<
+  | { ok: true; amountCents: number; lineTotalsCents: number[]; normalizedLineItems: CheckoutLineItem[] }
+  | {
+      ok: false;
+      reason: string;
+      details?: Array<{ lineItemIndex: number; field: 'plan' | 'guaranteeWindow'; value: string; multiplier: number }>;
+    }
+> {
+  const items = Array.isArray(params.lineItems) ? params.lineItems.filter(Boolean) : [];
+  if (items.length <= 0) return { ok: false, reason: 'Missing lineItems' };
+  return computeTotalCents({
+    tenantId: params.tenantId,
+    currency: params.currency,
+    pricingProfileId: params.pricingProfileId,
+    pricingVersionId: params.pricingVersionId,
+    lineItems: items
+  });
 }
 
 export async function createPaymentIntent(params: {
@@ -731,7 +786,14 @@ export async function createPaymentIntent(params: {
       telegramChatId?: string;
     };
   };
-}): Promise<{ ok: true; intent: PaymentIntent } | { ok: false; reason: string }> {
+}): Promise<
+  | { ok: true; intent: PaymentIntent }
+  | {
+      ok: false;
+      reason: string;
+      details?: Array<{ lineItemIndex: number; field: 'plan' | 'guaranteeWindow'; value: string; multiplier: number }>;
+    }
+> {
   try {
     const tenantId = String(params.tenantId || '').trim();
     if (!tenantId) return { ok: false, reason: 'Missing tenantId' };
@@ -772,6 +834,13 @@ export async function createPaymentIntent(params: {
     }
 
     const provider = normalizeProvider(params.providerHint);
+
+    if (provider === 'pix') {
+      const cur = currency.trim().toUpperCase();
+      if (cur !== 'BRL') {
+        return { ok: false, reason: 'PIX_REQUIRES_BRL_CURRENCY' };
+      }
+    }
 
     let amountCents = computed.amountCents;
 
@@ -842,6 +911,7 @@ export async function createPaymentIntent(params: {
         const invoice = await createNowPaymentsInvoice({
           priceAmount: computed.amountCents / 100,
           priceCurrency: currency,
+          payCurrency: nowPaymentsPayCurrency(),
           orderId: id,
           orderDescription: `Phoenix Zero payment ${id}`
         });
@@ -1153,6 +1223,64 @@ export async function updatePaymentIntentStatus(params: {
           if (!proof) return;
 
           console.log('[PPO] created', { paymentId: next.id, proofId: proof.id, tenantId: next.tenantId, provider: next.provider });
+
+          const semanticEnabled = (() => {
+            const v = String(process.env.PHOENIX_ZERO_SEMANTIC_LEDGER_ENABLED || '').trim().toLowerCase();
+            return v === '1' || v === 'true' || v === 'yes' || v === 'y' || v === 'on';
+          })();
+
+          if (semanticEnabled) {
+            await import('./agent-semantic-ledger')
+              .then((l) => {
+                const agentId = String((next as any)?.proofMeta?.agentId || '').trim();
+                if (!agentId) return;
+                return l.appendSemanticEvent({
+                  tenantId: next.tenantId,
+                  agentId,
+                  action: 'checkout_paid',
+                  ok: true,
+                  paymentIntentId: next.id,
+                  proofId: proof.id,
+                  amountCents: Math.max(0, Math.trunc(next.amountCents)),
+                  currency: String(next.currency || '').trim() || undefined,
+                  taskId: String((next as any)?.proofMeta?.taskId || '').trim() || undefined,
+                  taskType: String((next as any)?.proofMeta?.taskType || '').trim() || undefined,
+                  signatureB64Url: String((next as any)?.proofMeta?.agentEd25519SignatureB64Url || '').trim() || undefined,
+                  meta: {
+                    provider: next.provider,
+                    providerPaymentId: String(next.providerPaymentId || '').trim() || undefined
+                  }
+                });
+              })
+              .catch((e) => {
+                const message = e instanceof Error ? e.message : String(e);
+                console.warn('[SEMANTIC_LEDGER] append failed', { paymentId: next.id, message });
+              });
+          }
+
+          const governanceEnabled = (() => {
+            const v = String(process.env.PHOENIX_ZERO_AGENT_GOVERNANCE_ENFORCE_PAID || '').trim().toLowerCase();
+            return v === '1' || v === 'true' || v === 'yes' || v === 'y' || v === 'on';
+          })();
+
+          if (governanceEnabled) {
+            await import('./agent-governance')
+              .then(async (g) => {
+                const agentId = String((next as any)?.proofMeta?.agentId || '').trim();
+                if (!agentId) return;
+                await g.checkAndConsumeAgentGovernance({
+                  tenantId: next.tenantId,
+                  agentId,
+                  action: 'checkout:create',
+                  amountCents: Math.max(0, Math.trunc(next.amountCents)),
+                  consume: true
+                });
+              })
+              .catch((e) => {
+                const message = e instanceof Error ? e.message : String(e);
+                console.warn('[AGENT_GOVERNANCE] consume failed', { paymentId: next.id, message });
+              });
+          }
 
           await import('./settlement/store')
             .then((s) =>

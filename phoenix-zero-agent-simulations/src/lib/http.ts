@@ -59,7 +59,7 @@ export async function readJsonSafe(res: Response): Promise<{ json: any; text: st
 }
 
 export async function httpJson(params: {
-  method: 'GET' | 'POST';
+  method: 'GET' | 'POST' | 'DELETE';
   url: string;
   apiKey?: string;
   headers?: Record<string, string>;
@@ -161,7 +161,7 @@ export async function httpJson(params: {
 }
 
 export async function httpText(params: {
-  method: 'GET' | 'POST';
+  method: 'GET' | 'POST' | 'DELETE';
   url: string;
   headers?: Record<string, string>;
   body?: any;

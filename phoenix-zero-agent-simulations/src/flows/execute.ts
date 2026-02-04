@@ -16,7 +16,15 @@ export async function ppoGateCheck(baseUrl: string, params: { apiKey: string; ag
 
 export async function executeTask(
   baseUrl: string,
-  params: { apiKey: string; agentId: string; taskId: string; taskType: string; requireSignature?: boolean }
+  params: {
+    apiKey: string;
+    agentId: string;
+    taskId: string;
+    taskType: string;
+    requireSignature?: boolean;
+    executionClassId?: string;
+    simulateFailure?: boolean;
+  }
 ): Promise<{ ok: boolean; status: number; json: any }> {
   return httpJson({
     method: 'POST',
@@ -26,7 +34,8 @@ export async function executeTask(
       taskId: params.taskId,
       taskType: params.taskType,
       requireSignature: params.requireSignature === true,
-      simulateFailure: (params as any).simulateFailure === true
+      simulateFailure: params.simulateFailure === true,
+      ...(params.executionClassId ? { executionClassId: params.executionClassId } : {})
     }
   });
 }

@@ -80,9 +80,18 @@ function parseIsoOrNull(v: unknown): string | null {
   return new Date(ms).toISOString();
 }
 
+function envInt0(name: string, def: number): number {
+  const raw = String(process.env[name] || '').trim();
+  if (!raw) return def;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return def;
+  return Math.max(0, Math.trunc(n));
+}
+
 function providerRiskMs(provider: SettlementProvider): number {
-  if (provider === 'pix') return 0;
-  if (provider === 'crypto') return 0;
+  if (provider === 'pix') return envInt0('PHOENIX_ZERO_SETTLEMENT_RISK_WINDOW_MS_PIX', 0);
+  if (provider === 'crypto') return envInt0('PHOENIX_ZERO_SETTLEMENT_RISK_WINDOW_MS_CRYPTO', 0);
+  if (provider === 'card') return envInt0('PHOENIX_ZERO_SETTLEMENT_RISK_WINDOW_MS_CARD', 7 * 24 * 60 * 60 * 1000);
   return 7 * 24 * 60 * 60 * 1000;
 }
 

@@ -10,6 +10,11 @@ Este documento consolida o estado atual do PPE e o checklist mínimo para deixar
 - Persistência pós-restart (Render): **OK** (PPOs continuam disponíveis via `/verify/<proofId>` após restart)
 - `/api/health` (Render): **OK**
 
+Notas de escopo:
+
+- PIX/Asaas: GA.
+- Crypto/NowPayments: beta/experimental (best-effort).
+
 ## Alertas de segurança (importante)
 
 - Endpoints `/api/admin/*` devem sempre exigir `PHOENIX_ZERO_ADMIN_TOKEN`.
@@ -19,8 +24,12 @@ Este documento consolida o estado atual do PPE e o checklist mínimo para deixar
 
 - Discovery:
   - `GET /.well-known/ai-service.json`
+- Onboarding (obter tenant `x-api-key`):
+  - `POST /api/public/agent-signup`
 - Docs (HTTP, agent-friendly):
   - `GET /api/docs/ai-service-discovery`
+  - `GET /api/docs/go-live-contract`
+  - `GET /api/docs/agent-integration-contract`
 - Pricing catalog (público; requer tenant público configurado):
   - `GET /api/pricing`
 - Compatibility feedback:
@@ -83,6 +92,8 @@ $base = "https://phoenix-zero-web.onrender.com"
 
 Invoke-RestMethod -Method Get -Uri "$base/.well-known/ai-service.json"
 Invoke-RestMethod -Method Get -Uri "$base/api/docs/ai-service-discovery"
+Invoke-RestMethod -Method Get -Uri "$base/api/docs/go-live-contract"
+Invoke-RestMethod -Method Get -Uri "$base/api/docs/agent-integration-contract"
 Invoke-RestMethod -Method Get -Uri "$base/api/pricing"
 ```
 

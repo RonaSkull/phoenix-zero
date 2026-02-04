@@ -54,6 +54,8 @@ O Render deve checar:
   - `/api/health`
   - `/.well-known/ai-service.json`
   - `/api/docs/ai-service-discovery`
+  - `/api/docs/go-live-contract`
+  - `/api/docs/agent-integration-contract`
   - `/api/pricing` (sem headers; depende do `PHOENIX_ZERO_PUBLIC_API_KEY`)
   - `/provas`
   - `/verify/<proofId>`

@@ -27,6 +27,11 @@ It provides:
 It also provides a `docs` URL that can be fetched over HTTP:
 - `GET /api/docs/ai-service-discovery` (Content-Type: `text/markdown`)
 
+Operational / integration contracts (HTTP):
+
+- `GET /api/docs/go-live-contract`
+- `GET /api/docs/agent-integration-contract`
+
 Optional (recommended for blind agents):
 - `GET /api/capabilities` (machine-friendly summary of endpoints, auth model, and supported operations)
 

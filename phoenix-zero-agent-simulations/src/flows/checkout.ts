@@ -18,12 +18,13 @@ export async function checkoutCreate(baseUrl: string, params: {
     taskOutputHash: string;
   };
 }) {
+  const currency = params.providerHint === 'pix' ? 'BRL' : params.currency;
   return httpJson({
     method: 'POST',
     url: `${baseUrl}/api/checkout/create`,
     apiKey: params.apiKey,
     body: {
-      currency: params.currency,
+      currency,
       providerHint: params.providerHint,
       lineItems: [{ operation: params.operation, units: params.units }],
       proofMeta: params.proofMeta
@@ -118,6 +119,70 @@ export async function simulateNowPaymentsWebhookPaid(baseUrl: string, params: {
     ipn_id: params.eventId,
     invoice_id: params.providerPaymentId,
     payment_status: 'finished',
+    actually_paid_at: new Date().toISOString()
+  };
+
+  const raw = JSON.stringify(body);
+  const canonical = canonicalJson(body);
+  const sig = hmacSha512Hex(params.nowPaymentsIpnSecret, canonical || raw);
+
+  return httpJson({
+    method: 'POST',
+    url: `${baseUrl}/api/webhooks/nowpayments`,
+    headers: { 'x-nowpayments-sig': sig },
+    body
+  });
+}
+
+export async function simulateNowPaymentsWebhook(baseUrl: string, params: {
+  providerPaymentId: string;
+  nowPaymentsIpnSecret?: string;
+  eventId: string;
+  paymentStatus: string;
+  signatureOverride?: string;
+  omitSignature?: boolean;
+  extra?: Record<string, any>;
+}) {
+  const body = {
+    id: params.eventId,
+    ipn_id: params.eventId,
+    invoice_id: params.providerPaymentId,
+    payment_status: params.paymentStatus,
+    ...(params.extra || {})
+  };
+
+  const raw = JSON.stringify(body);
+  const canonical = canonicalJson(body);
+
+  const headers: Record<string, string> = {};
+  if (!params.omitSignature) {
+    const sig =
+      typeof params.signatureOverride === 'string'
+        ? params.signatureOverride
+        : params.nowPaymentsIpnSecret
+          ? hmacSha512Hex(params.nowPaymentsIpnSecret, canonical || raw)
+          : '';
+    if (sig) headers['x-nowpayments-sig'] = sig;
+  }
+
+  return httpJson({
+    method: 'POST',
+    url: `${baseUrl}/api/webhooks/nowpayments`,
+    headers: Object.keys(headers).length ? headers : undefined,
+    body
+  });
+}
+
+export async function simulateNowPaymentsWebhookRefund(baseUrl: string, params: {
+  providerPaymentId: string;
+  nowPaymentsIpnSecret: string;
+  eventId: string;
+}) {
+  const body = {
+    id: params.eventId,
+    ipn_id: params.eventId,
+    invoice_id: params.providerPaymentId,
+    payment_status: 'refunded',
     actually_paid_at: new Date().toISOString()
   };
 

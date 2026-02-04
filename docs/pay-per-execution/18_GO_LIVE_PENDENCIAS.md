@@ -18,13 +18,7 @@ Base:
 
 ### ❌ Bloqueadores de go-live público
 
-- **Idempotência / contrato de retry do `POST /api/checkout/create`**
-  - risco: cliente com retry automático gerar múltiplas cobranças para o mesmo pedido lógico.
-  - decisão necessária: contrato explícito (já documentado em `17_GO_LIVE_CONTRACT.md`) e/ou mecanismo de idempotência (se vier depois, muda o contrato).
-
-- **Semântica de “failed” (finalidade) e caso `failed -> paid`**
-  - risco: cliente paga, mas o sistema ignora e não libera execução (suporte/chargeback).
-  - decisão necessária: declarar **`failed` como final** no go-live (já documentado em `17_GO_LIVE_CONTRACT.md`).
+- Nenhum (idempotência do `POST /api/checkout/create` e política de `failed` como final já estão documentadas em `17_GO_LIVE_CONTRACT.md`).
 
 ### ⚠️ Riscos aceitáveis em beta (comunicados, mas não bloqueadores)
 
@@ -48,7 +42,6 @@ Base:
 
 - **Chaos / auditor externo** (validação de escala e UX)
 - **WhatsApp WABA** (se `/verify/<proofId>` for o canal principal; WhatsApp vira upgrade)
-- **Hardening equivalente para Crypto** (se Crypto não for anunciado como GA no go-live)
 
 ---
 
@@ -56,6 +49,11 @@ Base:
 
 - `provider-downtime` `provider_timeout`: `hardening_2026-01-31T16-32-19-696Z`
 - `provider-downtime` `webhook_never_arrives`: `hardening_2026-01-31T16-59-16-650Z`
+
+- **Pós-higiene (baseline suite completa)**: `hardening_2026-02-01T09-47-24-706Z` (12/12)
+
+- **Hardening equivalente (Crypto)**: `hardening_2026-02-01T11-43-17-012Z` (12/12; `--only=crypto`)
+- **Hardening Crypto + extra webhook tests**: `hardening_2026-02-01T13-21-14-614Z` (16/16; `--only=crypto`)
 
 ---
 
@@ -69,6 +67,37 @@ Base:
   - `PHOENIX_ZERO_SETTLEMENT_RISK_WINDOW_MS_*` (remover overrides)
 
 - Rodar **1 hardening suite completa pós-higiene** e registrar `suiteRunId` como evidência final.
+
+Checklist (operacional):
+
+1) Render Dashboard -> serviço `phoenix-zero-web` -> Environment:
+   - deletar as variáveis acima (não “setar vazio”, e sim remover a chave)
+2) Redeploy limpo (ou Restart do serviço)
+3) Validar rapidamente (sem auth):
+   - `GET /api/health`
+   - `GET /.well-known/ai-service.json`
+   - `GET /api/docs/go-live-contract`
+   - `GET /api/docs/agent-integration-contract`
+4) Rodar a **baseline hardening suite** (local) contra o Render e capturar o `suiteRunId`:
+
+PowerShell (exemplo):
+
+```powershell
+$env:PHOENIX_ZERO_BASE_URL = "https://phoenix-zero-web.onrender.com"
+$env:ASAAS_WEBHOOK_SECRET = "<ASAAS_WEBHOOK_SECRET do Render>"
+
+# (opcional; só se você quiser incluir testes/fluxos crypto no harness)
+# $env:NOWPAYMENTS_IPN_SECRET = "<NOWPAYMENTS_IPN_SECRET do Render>"
+
+npm --prefix .\phoenix-zero-agent-simulations install
+npm --prefix .\phoenix-zero-agent-simulations run sim:hardening
+```
+
+Evidência:
+
+- o comando imprime um JSON no final com `suiteRunId: "hardening_..."`
+- os artefatos ficam em `phoenix-zero-agent-simulations/out/<suiteRunId>/summary.json` e `summary.md`
+- copiar o `suiteRunId` e colar na seção **2) Evidências** acima.
 
 ---
 
@@ -88,6 +117,7 @@ Base:
 ## 5) Lista de pendências operacionais (curta)
 
 - **(Render) Higiene de envs temporárias** (remover flags acima + redeploy limpo)
-- **Rodar suite completa pós-higiene** e registrar `suiteRunId`
+- **Rodar suite completa pós-higiene** e registrar `suiteRunId` (feito; ver seção 2)
+- **Rodar hardening equivalente (Crypto)** e registrar `suiteRunId` (feito; ver seção 2)
 - **WhatsApp**: diagnosticar delivery / WABA (se for parte da promessa de produto)
-- **Crypto**: decidir se é anunciado como GA ou beta (e alinhar com hardening)
+- **Crypto**: anunciar como beta/experimental (docs alinhados)

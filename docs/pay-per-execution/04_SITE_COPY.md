@@ -11,17 +11,40 @@ Execution is released only after payment confirmation.
 ## WHAT THIS IS
 Phoenix Zero PPE is an API‑first payment‑gated execution layer for AI agents.
 
+## WHO THIS IS FOR
+- AI agent builders who need monetization and economic enforcement for autonomous actions
+- SaaS products exposing paid capabilities (paid API actions) without subscriptions
+- Platforms/marketplaces that must prevent unpaid executions
+
+## ROLES (UCP-style)
+- Platform/Agent: discovers pricing, creates checkout, triggers execution
+- Phoenix Zero PPE: enforces payment-gated execution, issues proof (PPO), tracks settlements
+- Payment rails: PIX (Asaas) and crypto (NowPayments, beta)
+
 ## HOW IT WORKS
-1) Request an execution via API
-2) A payment link is generated (PIX / crypto)
-3) Execution runs after confirmation
-4) Receive result + receipt/proof
+Negotiation → Acquisition → Completion:
+1) Discover & validate (Discovery/Pricing/Compatibility)
+2) Create checkout (PIX / crypto)
+3) Payment confirmation generates a proof
+4) Execute after confirmation
+5) Receive result + receipt/proof
 
 ## WHY THIS EXISTS
 - No unpaid executions
 - No human approval
 - Fully automated
 - Built for agents and developers
+
+## KEY FEATURES
+- Dynamic discovery: `/.well-known/ai-service.json`
+- Agent-friendly pricing & compatibility endpoints
+- PPO Gate: execution is blocked until paid (machine-readable errors)
+- Verifiable proof: public `/verify/<proofId>` + tenant-scoped PPO APIs
+- Multi-provider payments: BRL (PIX) + USD (crypto, beta)
+- Webhook idempotency (safe against replay)
+
+## TRANSPORT
+REST-first today. MCP/A2A adapters can be added without changing the core API.
 
 ## USE CASES
 - Paid automation workflows
@@ -49,7 +72,10 @@ Only execution metadata required for billing and proof.
 No. Pay only for what you execute.
 
 ### Do you support crypto?
-Yes. USDT/USDC via NowPayments.
+Yes (beta). Via NowPayments.
+
+### Do you depend on payment providers?
+We use established payment rails to move money (PIX and crypto). Standard processing fees may apply. The system is designed to be modular so additional providers can be supported.
 
 ## O QUE VOCÊ DEVE FALAR (sempre)
 - “Pay‑per‑execution”

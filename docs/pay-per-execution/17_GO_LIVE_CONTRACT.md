@@ -1,81 +1,112 @@
-# PPE — Go‑Live Contract (API pública)
+# PPE — Go‑Live Contract (Public API)
 
-Este documento define o **contrato operacional explícito** do Phoenix Zero PPE no go‑live.
+This document defines the **explicit operational contract** for Phoenix Zero PPE at go‑live.
 
-Objetivo:
+Objective:
 
-- remover ambiguidades para integrações de clientes/agentes
-- reduzir suporte ("isso é bug" vs "isso é comportamento esperado")
-- proteger o produto contra integrações que assumem padrões errados
+- Remove ambiguity for customer/agent integrations
+- Reduce support load ("this is a bug" vs "this is expected behavior")
+- Protect the product against integrations that assume incorrect patterns
 
-## 1) Criação de checkout — `POST /api/checkout/create`
+## Quick reference
 
-- **Não é idempotente.**
-- Cada request **bem‑sucedida** cria um novo `paymentId`.
+| Topic | Rule |
+| --- | --- |
+| Idempotency (checkout) | Use `x-idempotency-key` on `POST /api/checkout/create` |
+| Status `pending` | May persist (provider latency + webhooks + cold start) |
+| Status `failed` | **Final** at go-live (`failed -> paid` is ignored) |
+| Gate | Always `HTTP 200` (use `allowed`/`reason`) |
+| Blocked execute | `HTTP 403` + `reason: "PPO_GATE_BLOCKED"` |
 
-Regras para clientes:
+Main endpoints:
 
-- Clientes **não devem** aplicar retry automático cego em `POST /api/checkout/create`.
-- Em timeout/erro de rede:
-  - trate como **indeterminado**
-  - e resolva manualmente ou via reconciliação (ex.: checando o provedor/checkout URL) conforme seu fluxo.
+```text
+POST /api/checkout/create
+GET  /api/checkout/status?paymentId=...
+GET  /api/agents/{agentId}/gate
+POST /api/agents/{agentId}/execute
+```
 
-## 2) Status de pagamento — `GET /api/checkout/status?paymentId=...`
+## 1) Checkout creation — `POST /api/checkout/create`
 
-Estados possíveis (alto nível):
+Currency:
+
+- PIX/Asaas: `currency` **MUST be `BRL`**.
+
+- Without `x-idempotency-key`: **not idempotent**.
+  - Each **successful** request creates a new `paymentId`.
+
+- With `x-idempotency-key`: **idempotent (per tenant)**.
+  - The server deduplicates by `(tenantId, x-idempotency-key)`.
+  - In production, this is guaranteed by persistence (Postgres).
+  - Re-sending the same request (same key + same effective payload) returns the **same** `paymentId`.
+  - Reusing the same key with a **different payload** returns **HTTP 409** (conflict).
+  - If creation is still in progress for that key, returns **HTTP 409** (in progress); clients must wait and retry.
+
+Client rules:
+
+- Clients **MUST** use `x-idempotency-key` and can safely retry.
+- On timeout/network error:
+  - retry with the **same** `x-idempotency-key`
+  - on **HTTP 409** (in progress), wait and retry
+  - if still indeterminate, resolve via reconciliation (e.g., checking provider/checkout URL) according to your flow.
+
+## 2) Payment status — `GET /api/checkout/status?paymentId=...`
+
+Possible states (high level):
 
 - `pending`
 - `paid`
 - `failed`
 
-Notas operacionais:
+Operational notes:
 
-- `pending` pode persistir por tempo indeterminado (latência de provedor + webhooks + cold start).
-- O backend pode revalidar com o provedor de forma **eventual** (não é sincronismo forte).
+- `pending` may persist for an indeterminate amount of time (provider latency + webhooks + cold start).
+- The backend may revalidate with the provider **eventually** (not strong synchronization).
 
-Finalidade:
+Finality:
 
-- **`failed` é final no go‑live.**
-- Transições `failed -> paid` são ignoradas por design.
+- **`failed` is final at go‑live.**
+- Transitions `failed -> paid` are ignored by design.
 
-## 3) Webhooks (PIX/Asaas e Crypto/NowPayments)
+## 3) Webhooks (PIX/Asaas and Crypto/NowPayments)
 
-- Eventos são deduplicados por `eventId` do provedor.
-- Ordem de entrega não é garantida.
-- Retentativas do provedor são esperadas.
+- Events are deduplicated by the provider `eventId`.
+- Delivery order is not guaranteed.
+- Provider retries are expected.
 
-## 4) Gate econômico — `GET /api/agents/{agentId}/gate`
+## 4) Economic gate — `GET /api/agents/{agentId}/gate`
 
-- Retorna **HTTP 200** mesmo quando a execução está bloqueada.
-- O bloqueio/liberação é expresso pelos campos do JSON:
+- Returns **HTTP 200** even when execution is blocked.
+- Block/allow is expressed via JSON fields:
   - `allowed: true | false`
   - `reason`
 
-Clientes **não devem** inferir permissão pela semântica do HTTP status.
+Clients **MUST NOT** infer permission based on HTTP status semantics.
 
-## 5) Execução — `POST /api/agents/{agentId}/execute`
+## 5) Execution — `POST /api/agents/{agentId}/execute`
 
-Semântica:
+Semantics:
 
-- `403` com `reason: "PPO_GATE_BLOCKED"` → execução bloqueada (não pago / policy)
-- `500` com `reason: "EXECUTE_FAILED"` → falha interna de execução
+- `403` with `reason: "PPO_GATE_BLOCKED"` → execution blocked (not paid / policy)
+- `500` with `reason: "EXECUTE_FAILED"` → internal execution failure
 
 Retries:
 
-- `403` **não deve** ser retry.
-- `500` pode ser retry a critério do cliente.
+- `403` **MUST NOT** be retried.
+- `500` may be retried at the client's discretion.
 
-## 6) Semântica de erros (compatibilidade)
+## 6) Error semantics (compatibility)
 
-- Mensagens livres como `reason`/`error` são **descritivas**, não contratos rígidos.
-- Clientes **não devem** fazer lógica de negócio baseada em strings de erro.
+- Free-form messages like `reason`/`error` are **descriptive**, not strict contracts.
+- Clients **MUST NOT** implement business logic based on error strings.
 
-## 7) Expectativas de ambiente
+## 7) Environment expectations
 
-- O serviço pode sofrer cold start e atrasos de processamento.
-- Pagamentos podem levar tempo para refletir (por design operacional, não necessariamente defeito).
+- The service may experience cold starts and processing delays.
+- Payments may take time to reflect (operational design, not necessarily a defect).
 
-## 8) Escopo do go‑live
+## 8) Go-live scope
 
-- PIX/Asaas: suportado.
-- Crypto/NowPayments: suportado se anunciado; caso contrário tratar como beta/experimental.
+- PIX/Asaas: supported.
+- Crypto/NowPayments: beta/experimental (supported, but subject to operational availability; may be disabled by operational decision).

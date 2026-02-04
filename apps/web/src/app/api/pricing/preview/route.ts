@@ -8,6 +8,7 @@ import { isAiClientMode } from '../../../../core/modes/ai-client';
 import {
   calculateFinalPrice,
   durationBucketKey,
+  getDiscountContextViolations,
   getCommissionProfile,
   getPricingProfile,
   getTaxProfile,
@@ -35,6 +36,11 @@ function safeMultiplier(m: unknown): number {
   if (m <= 0) return 1;
   if (m > 1000) return 1000;
   return m;
+}
+
+function envBool(name: string): boolean {
+  const v = String(process.env[name] || '').trim().toLowerCase();
+  return v === '1' || v === 'true' || v === 'yes' || v === 'y' || v === 'on';
 }
 
 function clampNonNegativeInt(n: unknown, max: number): number {
@@ -212,7 +218,8 @@ export async function POST(req: Request) {
     });
     const consequence = consequenceFromRisk(risk);
 
-    const plan = (body?.plan || '').trim() || consequence.recommendedPlan;
+    const planFromBody = (body?.plan || '').trim();
+    const plan = planFromBody || 'unknown';
 
     const guaranteeWindow = (body?.guaranteeWindow || '').trim() || 'unknown';
 
@@ -243,6 +250,23 @@ export async function POST(req: Request) {
     const pricingProfile = await getPricingProfile(tenant.pricingProfile, scope.currency);
     const commissionProfile = await getCommissionProfile(tenant.commissionProfile);
     const taxProfile = await getTaxProfile(tenant.taxProfile);
+
+    if (!envBool('PHOENIX_ZERO_ALLOW_DISCOUNT_CONTEXT')) {
+      const violations = getDiscountContextViolations({ scope, pricingProfile });
+      if (violations.length > 0) {
+        ok = false;
+        httpStatus = 400;
+        return Response.json(
+          {
+            ok: false,
+            reasonCode: 'DISCOUNT_CONTEXT_NOT_ALLOWED',
+            reason: 'DISCOUNT_CONTEXT_NOT_ALLOWED',
+            details: violations
+          },
+          { status: 400, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
+        );
+      }
+    }
 
     const basePriceCentsRaw = pricingProfile.basePriceCentsByOp[operation];
     let basePriceCents =

@@ -73,3 +73,48 @@ Este arquivo é uma memória fixa para dar continuidade ao projeto **Phoenix Zer
 - Commits:
   - `dc4e012` test(agentic): stabilize Render real E2E
   - `4cea2e2` test(agent-matrix): harden runner for Render
+
+## Checkpoint (2026-01-30)
+
+- Criado harness externo agent-native: `phoenix-zero-agent-simulations/` (fora do backend)
+  - Personas: `automation_engineer`, `agent_founder`, `compliance_buyer`, `naive_agent`, `hostile_agent`
+  - Runner: `npm run sim` grava artifacts em `phoenix-zero-agent-simulations/out/<suiteRunId>/`:
+    - `summary.json`, `summary.md`
+    - `agent-readiness-report.md` (one-pager enterprise gerado automaticamente)
+  - Env vars principais:
+    - `PHOENIX_ZERO_BASE_URL` (default: Render)
+    - (opcional para automação full paid-flow) `ASAAS_WEBHOOK_SECRET`, `NOWPAYMENTS_IPN_SECRET`
+    - (opcional para fluxo manual sem secrets) `PHOENIX_ZERO_WAIT_FOR_PAYMENT_MS` (poll em `/api/checkout/status`)
+  - Requisito: Node >= 20 + `npm install` dentro da pasta
+
+- Criado adapter MCP local (stdio) como wrapper do REST existente (não é feature do backend)
+  - Rodar: `npm run mcp`
+  - Tools: `discover`, `pricing`, `compatibility`, `checkoutCreate` (exige `apiKey`)
+
+- Execução inicial da suite (Render) sem `ASAAS_WEBHOOK_SECRET`:
+  - `suite_2026-01-30T11-19-36-115Z`: passou 2/5 (falhas: pagamento não confirmado + rate limit no signup)
+  - Ajustes feitos no harness: retry/backoff para cold start e `agent-signup` (429), gap entre cenários
+  - `suite_2026-01-30T11-24-31-475Z`: passou 2/5 (falhas: pagamento não confirmado)
+
+- Hardening suite (Render) — resultado estável:
+  - `hardening_2026-01-30T19-15-51-811Z`: **30/30**
+  - `run-hardening.ts` passou a incluir testes "senior mode":
+    - `auth-bypass`, `param-injection`, `agent-confusion`, `negotiation-abuse`, `cache-headers`, `rate-limit`
+
+- Links públicos /verify:
+  - `GET /verify/<proofId>` não deve quebrar links de Telegram/WhatsApp
+  - Quando proof não existe: renderiza "Proof not found" (HTTP 200)
+  - Quando proof existe mas não está publicável (refund/chargeback/pending): renderiza "Proof not available" (HTTP 200)
+
+## Checkpoint (2026-02-01)
+
+- Hardening suite crypto-only (Render) com testes extras de webhook NowPayments passou **16/16**:
+  - `hardening_2026-02-01T13-21-14-614Z` (`--only=crypto`)
+  - Evidência registrada em `docs/pay-per-execution/18_GO_LIVE_PENDENCIAS.md`.
+- NowPayments: decisão de **não fixar `pay_currency`** por enquanto (deixar default/choice no provider).
+  - Env opcional adicionada: `PHOENIX_ZERO_NOWPAYMENTS_PAY_CURRENCY` (se quiser fixar no futuro).
+- Docs/copy alinhados para go-live conservador:
+  - PIX/Asaas = GA; Crypto/NowPayments = beta/experimental.
+  - Removida promessa explícita de `USDT/USDC` no pack PPE.
+- Frontend `/ppe` alinhado com o contrato:
+  - Exemplo `operation`/`taskType` corrigido para `protect_video`.

@@ -51,7 +51,7 @@ export async function requireTenantOrPublic(req: Request): Promise<
   if (!publicApiKey) {
     return {
       ok: false,
-      status: 500,
+      status: 403,
       reason: 'Public tenant is not configured (set PHOENIX_ZERO_PUBLIC_API_KEY and restart the server)'
     };
   }
@@ -60,7 +60,7 @@ export async function requireTenantOrPublic(req: Request): Promise<
   if (!resolved.ok) {
     return {
       ok: false,
-      status: 500,
+      status: 403,
       reason: 'Public tenant is not configured (PHOENIX_ZERO_PUBLIC_API_KEY does not match any tenant)'
     };
   }

@@ -19,6 +19,29 @@ export async function GET(req: Request) {
   try {
     const auth = await requireTenantOrPublic(req);
     if (!auth.ok) {
+      const reason = String(auth.reason || 'Unauthorized');
+      const isPublicNotConfigured = reason.toLowerCase().includes('public tenant is not configured');
+      if (isPublicNotConfigured) {
+        return Response.json(
+          {
+            ok: false,
+            reasonCode: 'PUBLIC_PRICING_DISABLED',
+            reason:
+              'Public pricing is disabled. Create an agent session to obtain an x-api-key, then retry GET /api/pricing with x-api-key.',
+            nextSteps: [
+              { method: 'POST', path: '/api/public/agent-signup', purpose: 'Obtain x-api-key (tenant credential)' },
+              { method: 'GET', path: '/api/pricing', headers: { 'x-api-key': 'YOUR_KEY' } },
+              { method: 'GET', path: '/api/compatibility' }
+            ],
+            docs: {
+              agentIntegrationContract: '/api/docs/agent-integration-contract',
+              agentTrustModel: '/api/docs/agent-trust-model',
+              discovery: '/.well-known/ai-service.json'
+            }
+          },
+          { status: auth.status, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
+        );
+      }
       return Response.json(
         { ok: false, reason: auth.reason },
         { status: auth.status, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
@@ -44,6 +67,28 @@ export async function GET(req: Request) {
     const examples = {
       checkoutCreate: {
         providerHint: 'pix',
+        currency: 'BRL',
+        pricingProfileId: tenant.pricingProfile,
+        lineItems: [
+          {
+            operation: 'protect_video',
+            product: 'video_protection',
+            units: 10,
+            country: tenant.country,
+            clientType: tenant.clientType,
+            sector: tenant.sector
+          }
+        ],
+        proofMeta: {
+          agentId: 'agent://your-agent',
+          taskId: 'task_123',
+          taskType: 'protect_video',
+          taskInputHash: 'sha256:...',
+          taskOutputHash: 'sha256:...'
+        }
+      },
+      checkoutCreateCrypto: {
+        providerHint: 'crypto',
         currency: pricingProfile.currency,
         pricingProfileId: tenant.pricingProfile,
         lineItems: [
@@ -92,6 +137,8 @@ export async function GET(req: Request) {
       units: 'int >= 1 (PPO balance debits 1 unit per execution by default)',
       pricingProfileId: 'string (optional override)',
       pricingVersionId: 'string (optional; if supported by checkout)',
+      providerHint: 'string (pix | crypto)',
+      currency: 'string (PIX requires BRL; crypto supports USD/USDC depending on availability)',
       proofMeta: {
         agentId: 'string',
         taskId: 'string',
@@ -131,6 +178,16 @@ export async function GET(req: Request) {
         isPublicTenant: auth.isPublic,
         tenantId,
         currency: pricingProfile.currency,
+        payment: {
+          providers: [
+            { providerHint: 'pix', currency: 'BRL', note: 'PIX via Asaas requires BRL' },
+            { providerHint: 'crypto', currency: 'USD|USDC', note: 'Crypto via NowPayments typically uses USD/USDC' }
+          ],
+          currencyRules: {
+            pix: { requiredCurrency: 'BRL' },
+            crypto: { allowedCurrencies: ['USD', 'USDC'] }
+          }
+        },
         pricingProfileId: pricingProfile.id,
         operations: ops,
         multipliers: {

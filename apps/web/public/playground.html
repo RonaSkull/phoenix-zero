@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phoenix Zero Playground</title>
+    <style>
+      :root {
+        --bg: #070a12;
+        --panel: rgba(15, 23, 42, 0.75);
+        --panel2: rgba(2, 6, 23, 0.55);
+        --border: rgba(148, 163, 184, 0.18);
+        --text: rgba(226, 232, 240, 0.92);
+        --muted: rgba(226, 232, 240, 0.68);
+        --accent: #60a5fa;
+        --good: #22c55e;
+        --bad: #ef4444;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+        background:
+          radial-gradient(1100px 650px at 10% 0%, rgba(59, 130, 246, 0.22), transparent 60%),
+          radial-gradient(900px 600px at 85% 15%, rgba(34, 197, 94, 0.12), transparent 60%),
+          linear-gradient(180deg, #050712, var(--bg));
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 18px 14px 56px;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 14px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: rgba(2, 6, 23, 0.55);
+        backdrop-filter: blur(10px);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .logo {
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.95), rgba(34, 197, 94, 0.75));
+      }
+      h1 {
+        font-size: 14px;
+        margin: 0;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+      }
+      .sub {
+        margin-top: 2px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: rgba(2, 6, 23, 0.55);
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 999px;
+        background: var(--bad);
+      }
+      .dot.ok {
+        background: var(--good);
+      }
+      .hero {
+        margin-top: 14px;
+        padding: 14px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: rgba(2, 6, 23, 0.42);
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      .grid {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 14px;
+      }
+      .grid2 {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      @media (max-width: 980px) {
+        .grid,
+        .grid2 {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: linear-gradient(180deg, var(--panel), var(--panel2));
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+      }
+      .card .in {
+        padding: 14px;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      h2 {
+        font-size: 13px;
+        margin: 0;
+        font-weight: 700;
+      }
+      p {
+        margin: 7px 0 0;
+        color: var(--muted);
+        font-size: 12.5px;
+        line-height: 1.45;
+      }
+      label {
+        display: block;
+        margin: 10px 0 6px;
+        color: rgba(226, 232, 240, 0.55);
+        font-size: 11.5px;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 10px 10px;
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        background: rgba(2, 6, 23, 0.6);
+        color: var(--text);
+        outline: none;
+        font-size: 13px;
+      }
+      textarea {
+        min-height: 120px;
+        font-family: var(--mono);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+      .btns {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+      button {
+        border: 0;
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-weight: 700;
+        font-size: 13px;
+        color: rgba(226, 232, 240, 0.95);
+        cursor: pointer;
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.92), rgba(37, 99, 235, 0.92));
+      }
+      button.secondary {
+        background: rgba(2, 6, 23, 0.5);
+        border: 1px solid var(--border);
+      }
+      button.danger {
+        background: rgba(239, 68, 68, 0.92);
+      }
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .mono {
+        font-family: var(--mono);
+      }
+      .kv {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        background: rgba(2, 6, 23, 0.5);
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .kv .k {
+        color: rgba(226, 232, 240, 0.55);
+        font-size: 11.5px;
+      }
+      .kv .v {
+        color: rgba(226, 232, 240, 0.9);
+        font-size: 12px;
+        text-align: right;
+        word-break: break-all;
+      }
+      .pre {
+        margin-top: 10px;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        border-radius: 12px;
+        background: rgba(2, 6, 23, 0.65);
+        padding: 10px;
+        font-family: var(--mono);
+        font-size: 12px;
+        line-height: 1.45;
+        max-height: 320px;
+        overflow: auto;
+      }
+      .foot {
+        margin-top: 14px;
+        padding: 14px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: rgba(2, 6, 23, 0.38);
+        color: var(--muted);
+        font-size: 12.5px;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="top">
+        <div class="brand">
+          <div class="logo"></div>
+          <div>
+            <h1>Phoenix Zero Playground</h1>
+            <div class="sub">PPE validation: Sandbox vs Real</div>
+          </div>
+        </div>
+        <div class="pill"><span class="dot" id="gateDot"></span><span class="mono" id="gateChip">GATE</span></div>
+      </div>
+
+      <div class="hero">
+        Pagamento = Prova = Permissão para Executar. Sandbox e produção usam o mesmo enforcement.
+        <div style="margin-top: 8px"><strong>Sandbox:</strong> PPO emitido via fallback (sem pagamento)</div>
+        <div><strong>Real:</strong> PPO emitido via PIX/Crypto (pagamento real)</div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="in">
+            <div class="row">
+              <h2>1) Agent Signup (public)</h2>
+              <span class="pill"><span class="mono" id="sessId">sess</span></span>
+            </div>
+            <p>Provisiona um tenant e retorna <span class="mono">x-api-key</span>.</p>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div>
+                <label>Name</label>
+                <input id="name" placeholder="Studio Demo" />
+              </div>
+              <div>
+                <label>Email</label>
+                <input id="email" placeholder="you@example.com" />
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div>
+                <label>Agent Type</label>
+                <input id="agentType" placeholder="mcp_agent" />
+              </div>
+              <div>
+                <label>Currency</label>
+                <select id="currency">
+                  <option value="USD">USD</option>
+                  <option value="BRL">BRL</option>
+                  <option value="EUR">EUR</option>
+                </select>
+              </div>
+            </div>
+
+            <label>Intended Use</label>
+            <input id="use" placeholder="PPE validation" />
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div>
+                <label>acceptsTermsVersion</label>
+                <input id="terms" value="v1" />
+              </div>
+              <div>
+                <label>acceptsFixedPricing</label>
+                <select id="fixed">
+                  <option value="true">true</option>
+                  <option value="false">false</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="btns">
+              <button id="btnSignup">Provision Tenant</button>
+              <button id="btnPricing" class="secondary" disabled>GET /api/pricing</button>
+              <button id="btnReset" class="danger">Reset</button>
+            </div>
+
+            <div class="kv"><div class="k">tenantId</div><div class="v mono" id="tenantId">-</div></div>
+            <div class="kv"><div class="k">x-api-key</div><div class="v mono" id="apiKey">-</div></div>
+            <div class="kv"><div class="k">agentId</div><div class="v mono" id="agentId">-</div></div>
+
+            <div class="pre" id="outPricing">{}</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="in">
+            <div class="row">
+              <h2>2) PPO Gate + Execute</h2>
+              <span class="pill"><span class="mono">/api/agents/*</span></span>
+            </div>
+            <p>Sem PPO válido: bloqueia. Com PPO válido: permite e consome 1 unidade por execução.</p>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+              <div>
+                <label>taskType</label>
+                <input id="taskType" value="protect_video" />
+              </div>
+              <div>
+                <label>executionClassId</label>
+                <select id="executionClassId">
+                  <option value="">(auto)</option>
+                </select>
+              </div>
+              <div>
+                <label>taskId</label>
+                <input id="taskId" placeholder="task_123" />
+              </div>
+            </div>
+
+            <div class="btns">
+              <button id="btnGate" class="secondary" disabled>GET gate</button>
+              <button id="btnExecute" disabled>POST execute</button>
+              <button id="btnProofs" class="secondary" disabled>GET proofs</button>
+            </div>
+
+            <div class="pre" id="outGate">{}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="in">
+            <div class="row">
+              <h2>Sandbox (Admin Fallback)</h2>
+              <span class="pill"><span class="mono">POST /api/admin/fallback-paid</span></span>
+            </div>
+            <p>Sandbox: PPO emitido via fallback (sem pagamento). Requer <span class="mono">x-admin-token</span>.</p>
+
+            <label>x-admin-token</label>
+            <input id="admin" type="password" placeholder="(required)" />
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div>
+                <label>units</label>
+                <input id="units" type="number" min="1" step="1" value="3" />
+              </div>
+              <div>
+                <label>currency</label>
+                <select id="fbCurrency">
+                  <option value="USD">USD</option>
+                  <option value="BRL">BRL</option>
+                  <option value="EUR">EUR</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="btns">
+              <button id="btnFallback" class="secondary" disabled>Generate PPO (fallback)</button>
+              <button id="btnClearAdmin" class="danger">Clear token</button>
+            </div>
+
+            <div class="pre" id="outFallback">{}</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="in">
+            <div class="row">
+              <h2>Real PPE (Checkout + Webhook)</h2>
+              <span class="pill"><span class="mono">POST /api/checkout/create</span></span>
+            </div>
+            <p>Real: PPO emitido via PIX/Crypto (pagamento real). Você paga e o webhook marca como paid.</p>
+
+            <label>provider</label>
+            <select id="provider">
+              <option value="pix">pix</option>
+              <option value="crypto">crypto</option>
+            </select>
+
+            <div class="btns">
+              <button id="btnCheckout" disabled>Create checkout</button>
+              <button id="btnStatus" class="secondary" disabled>GET status</button>
+            </div>
+
+            <div class="kv"><div class="k">paymentId</div><div class="v mono" id="paymentId">-</div></div>
+            <div class="kv"><div class="k">checkoutUrl</div><div class="v mono" id="checkoutUrl">-</div></div>
+
+            <div class="pre" id="outCheckout">{}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="in">
+            <div class="row">
+              <h2>Transparency</h2>
+              <span class="pill"><span class="mono">ledger/balance/settlements</span></span>
+            </div>
+            <div class="btns">
+              <button id="btnLedger" class="secondary" disabled>GET ledger</button>
+              <button id="btnBalance" class="secondary" disabled>GET balance</button>
+              <button id="btnSettlements" class="secondary" disabled>GET settlements</button>
+            </div>
+            <div class="pre" id="outTransparency">{}</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="in">
+            <div class="row">
+              <h2>Logs</h2>
+              <span class="pill"><span class="mono">client-side</span></span>
+            </div>
+            <div class="btns">
+              <button id="btnCopy" class="secondary">Copy</button>
+              <button id="btnClear" class="danger">Clear</button>
+            </div>
+            <textarea id="log" spellcheck="false" readonly></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="foot">
+        Acesse este arquivo em <span class="mono">/playground.html</span>. Se você estiver testando em produção, mantenha o
+        <span class="mono">x-admin-token</span> fora do client.
+      </div>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+
+      const state = {
+        tenantId: null,
+        apiKey: null,
+        agentId: null,
+        paymentId: null,
+        contract: null,
+        executionClassId: null
+      };
+
+      function randHex(nBytes) {
+        const a = new Uint8Array(nBytes);
+        crypto.getRandomValues(a);
+        return Array.from(a)
+          .map((b) => b.toString(16).padStart(2, '0'))
+          .join('');
+      }
+
+      function logLine(msg) {
+        const el = $('log');
+        const ts = new Date().toISOString().slice(11, 19);
+        el.value = `[${ts}] ${msg}\n` + el.value;
+      }
+
+      function setJson(el, obj) {
+        el.textContent = JSON.stringify(obj ?? null, null, 2);
+      }
+
+      function mask(s) {
+        const t = String(s || '');
+        if (!t) return '-';
+        if (t.length <= 18) return t;
+        return t.slice(0, 10) + '…' + t.slice(-6);
+      }
+
+      function setEnabled(enabled) {
+        $('btnPricing').disabled = !enabled;
+        $('btnGate').disabled = !enabled;
+        $('btnExecute').disabled = !enabled;
+        $('btnProofs').disabled = !enabled;
+        $('btnFallback').disabled = !enabled;
+        $('btnCheckout').disabled = !enabled;
+        $('btnStatus').disabled = !enabled;
+        $('btnLedger').disabled = !enabled;
+        $('btnBalance').disabled = !enabled;
+        $('btnSettlements').disabled = !enabled;
+      }
+
+      function updateTopGate(allowed) {
+        const dot = $('gateDot');
+        const chip = $('gateChip');
+        if (allowed) {
+          dot.classList.add('ok');
+          chip.textContent = 'GATE: allowed';
+        } else {
+          dot.classList.remove('ok');
+          chip.textContent = 'GATE: blocked';
+        }
+      }
+
+      async function apiFetch(path, opts = {}) {
+        const headers = new Headers(opts.headers || {});
+        headers.set('Content-Type', 'application/json; charset=utf-8');
+        if (state.apiKey) headers.set('x-api-key', state.apiKey);
+        const res = await fetch(path, { ...opts, headers });
+        const text = await res.text().catch(() => '');
+        let json = null;
+        try {
+          json = text ? JSON.parse(text) : null;
+        } catch {
+          json = { raw: text };
+        }
+        return { ok: res.ok, status: res.status, json };
+      }
+
+      function ensureTaskId() {
+        const el = $('taskId');
+        const v = String(el.value || '').trim();
+        if (v) return v;
+        const next = `task_${randHex(6)}`;
+        el.value = next;
+        return next;
+      }
+
+      function ensureAgentId() {
+        if (state.agentId) return state.agentId;
+        state.agentId = `agent_${randHex(6)}`;
+        $('agentId').textContent = state.agentId;
+        return state.agentId;
+      }
+
+      function saveLocal() {
+        localStorage.setItem(
+          'phoenix_zero_playground',
+          JSON.stringify({
+            tenantId: state.tenantId,
+            apiKey: state.apiKey,
+            agentId: state.agentId,
+            paymentId: state.paymentId,
+            contract: state.contract,
+            executionClassId: state.executionClassId
+          })
+        );
+      }
+
+      function loadLocal() {
+        const raw = localStorage.getItem('phoenix_zero_playground');
+        if (!raw) return;
+        try {
+          const v = JSON.parse(raw);
+          state.tenantId = v.tenantId || null;
+          state.apiKey = v.apiKey || null;
+          state.agentId = v.agentId || null;
+          state.paymentId = v.paymentId || null;
+          state.contract = v.contract || null;
+          state.executionClassId = v.executionClassId || null;
+        } catch {
+        }
+      }
+
+      function reflectLocal() {
+        $('tenantId').textContent = state.tenantId || '-';
+        $('apiKey').textContent = state.apiKey ? mask(state.apiKey) : '-';
+        $('agentId').textContent = state.agentId || '-';
+        $('paymentId').textContent = state.paymentId || '-';
+
+        try {
+          const sel = $('executionClassId');
+          if (sel && state.executionClassId && String(sel.value || '').trim() !== state.executionClassId) {
+            sel.value = state.executionClassId;
+          }
+        } catch {
+        }
+      }
+
+      function setExecutionClassOptions(contractPayload) {
+        const sel = $('executionClassId');
+        if (!sel) return;
+
+        const existing = String(sel.value || '').trim();
+        const desiredExisting = String(state.executionClassId || existing || '').trim();
+
+        sel.innerHTML = '';
+
+        const classes = contractPayload && contractPayload.contract ? contractPayload.contract.executionClasses : null;
+        const list = Array.isArray(classes) ? classes : [];
+
+        if (list.length <= 0) {
+          const opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = '(auto)';
+          sel.appendChild(opt);
+          state.executionClassId = '';
+          return;
+        }
+
+        for (const c of list) {
+          const id = c && c.classId ? String(c.classId).trim() : '';
+          if (!id) continue;
+          const opt = document.createElement('option');
+          opt.value = id;
+          opt.textContent = id;
+          sel.appendChild(opt);
+        }
+
+        const def = contractPayload && contractPayload.contract ? String(contractPayload.contract.defaultExecutionClassId || '').trim() : '';
+        const first = list[0] && list[0].classId ? String(list[0].classId).trim() : '';
+
+        const next = desiredExisting || def || first;
+        if (next) {
+          sel.value = next;
+          state.executionClassId = next;
+        }
+      }
+
+      async function refreshContract() {
+        const agentId = ensureAgentId();
+        if (!state.apiKey) return;
+        try {
+          const r = await apiFetch(`/api/pricing/contract?agentId=${encodeURIComponent(agentId)}`, { method: 'GET' });
+          state.contract = r.json || null;
+          if (r.ok && r.json && r.json.ok === true) {
+            setExecutionClassOptions(r.json);
+          } else {
+            setExecutionClassOptions(null);
+          }
+        } catch {
+        } finally {
+          saveLocal();
+          reflectLocal();
+        }
+      }
+
+      $('btnReset').addEventListener('click', () => {
+        localStorage.removeItem('phoenix_zero_playground');
+        state.tenantId = null;
+        state.apiKey = null;
+        state.agentId = null;
+        state.paymentId = null;
+        state.contract = null;
+        state.executionClassId = null;
+        reflectLocal();
+        setEnabled(false);
+        updateTopGate(false);
+        setJson($('outPricing'), {});
+        setJson($('outGate'), {});
+        setJson($('outFallback'), {});
+        setJson($('outCheckout'), {});
+        setJson($('outTransparency'), {});
+        logLine('reset');
+      });
+
+      $('btnClearAdmin').addEventListener('click', () => {
+        $('admin').value = '';
+        logLine('admin token cleared');
+      });
+
+      $('btnCopy').addEventListener('click', async () => {
+        await navigator.clipboard.writeText($('log').value);
+        logLine('log copied');
+      });
+
+      $('btnClear').addEventListener('click', () => {
+        $('log').value = '';
+      });
+
+      $('btnSignup').addEventListener('click', async () => {
+        const payload = {
+          name: String($('name').value || '').trim(),
+          email: String($('email').value || '').trim(),
+          agentType: String($('agentType').value || '').trim(),
+          intendedUse: String($('use').value || '').trim(),
+          acceptsTermsVersion: String($('terms').value || '').trim(),
+          acceptsFixedPricing: String($('fixed').value || '').trim().toLowerCase() === 'true',
+          billingMode: 'prepaid',
+          currency: String($('currency').value || 'USD').trim()
+        };
+
+        logLine('POST /api/public/agent-signup');
+        const r = await apiFetch('/api/public/agent-signup', { method: 'POST', body: JSON.stringify(payload) });
+        setJson($('outPricing'), r.json);
+        if (!r.ok || !r.json || r.json.ok !== true) {
+          updateTopGate(false);
+          setEnabled(false);
+          return;
+        }
+
+        state.tenantId = r.json.tenant.tenantId;
+        state.apiKey = r.json.tenant.apiKey;
+        ensureAgentId();
+
+        saveLocal();
+        reflectLocal();
+        setEnabled(true);
+        logLine('tenant provisioned');
+
+        await refreshContract();
+      });
+
+      $('btnPricing').addEventListener('click', async () => {
+        logLine('GET /api/pricing');
+        const r = await apiFetch('/api/pricing', { method: 'GET' });
+        setJson($('outPricing'), r.json);
+      });
+
+      $('btnGate').addEventListener('click', async () => {
+        const agentId = ensureAgentId();
+        const taskType = String($('taskType').value || '').trim();
+        const taskId = String($('taskId').value || '').trim() || undefined;
+
+        const qs = new URLSearchParams();
+        if (taskType) qs.set('taskType', taskType);
+        if (taskId) qs.set('taskId', taskId);
+
+        logLine(`GET /api/agents/${agentId}/gate?${qs.toString()}`);
+        const r = await apiFetch(`/api/agents/${encodeURIComponent(agentId)}/gate?${qs.toString()}`, { method: 'GET' });
+        setJson($('outGate'), r.json);
+        updateTopGate(Boolean(r.json && r.json.allowed === true));
+      });
+
+      $('btnExecute').addEventListener('click', async () => {
+        const agentId = ensureAgentId();
+        const taskType = String($('taskType').value || '').trim();
+        const taskId = ensureTaskId();
+
+        const executionClassId = String($('executionClassId') && $('executionClassId').value ? $('executionClassId').value : '').trim() || undefined;
+
+        logLine(`POST /api/agents/${agentId}/execute`);
+        await refreshContract();
+        const r = await apiFetch(`/api/agents/${encodeURIComponent(agentId)}/execute`, {
+          method: 'POST',
+          body: JSON.stringify(Object.assign({ taskId, taskType }, executionClassId ? { executionClassId } : {}))
+        });
+        setJson($('outGate'), r.json);
+        await $('btnGate').click();
+      });
+
+      $('btnProofs').addEventListener('click', async () => {
+        const agentId = ensureAgentId();
+        logLine(`GET /api/agents/${agentId}/proofs`);
+        const r = await apiFetch(`/api/agents/${encodeURIComponent(agentId)}/proofs`, { method: 'GET' });
+        setJson($('outGate'), r.json);
+      });
+
+      $('btnFallback').addEventListener('click', async () => {
+        const adminToken = String($('admin').value || '').trim();
+        if (!adminToken) return;
+
+        const agentId = ensureAgentId();
+        const taskType = String($('taskType').value || '').trim();
+        const taskId = ensureTaskId();
+
+        const units = Math.max(1, Math.trunc(Number($('units').value || '1')));
+        const currency = String($('fbCurrency').value || 'USD').trim();
+
+        const payload = {
+          tenantId: state.tenantId,
+          agentId,
+          taskType,
+          taskId,
+          units,
+          currency,
+          taskInputHash: `sha256:${randHex(16)}`,
+          taskOutputHash: `sha256:${randHex(16)}`
+        };
+
+        logLine('POST /api/admin/fallback-paid');
+        const r = await apiFetch('/api/admin/fallback-paid', {
+          method: 'POST',
+          headers: { 'x-admin-token': adminToken },
+          body: JSON.stringify(payload)
+        });
+        setJson($('outFallback'), r.json);
+        await $('btnGate').click();
+      });
+
+      $('btnCheckout').addEventListener('click', async () => {
+        const agentId = ensureAgentId();
+        const taskType = String($('taskType').value || '').trim();
+        const taskId = ensureTaskId();
+
+        const providerHint = String($('provider').value || 'pix').trim();
+        const currency = String($('currency').value || 'USD').trim();
+
+        const units = Math.max(1, Math.trunc(Number($('units').value || '1')));
+
+        const payload = {
+          currency,
+          providerHint,
+          lineItems: [{ operation: taskType, units }],
+          proofMeta: {
+            agentId,
+            taskId,
+            taskType,
+            taskInputHash: `sha256:${randHex(16)}`,
+            taskOutputHash: `sha256:${randHex(16)}`
+          }
+        };
+
+        logLine('POST /api/checkout/create');
+        const r = await apiFetch('/api/checkout/create', { method: 'POST', body: JSON.stringify(payload) });
+        setJson($('outCheckout'), r.json);
+
+        if (r.ok && r.json && r.json.ok === true) {
+          state.paymentId = r.json.paymentId;
+          saveLocal();
+          reflectLocal();
+          $('checkoutUrl').innerHTML = r.json.checkoutUrl ? `<a href="${r.json.checkoutUrl}" target="_blank">open</a>` : '-';
+        }
+      });
+
+      $('btnStatus').addEventListener('click', async () => {
+        if (!state.paymentId) return;
+        logLine(`GET /api/checkout/status?paymentId=${state.paymentId}`);
+        const r = await apiFetch(`/api/checkout/status?paymentId=${encodeURIComponent(state.paymentId)}`, { method: 'GET' });
+        setJson($('outCheckout'), r.json);
+        if (r.ok && r.json && r.json.status === 'paid') {
+          await $('btnGate').click();
+        }
+      });
+
+      $('btnLedger').addEventListener('click', async () => {
+        const agentId = ensureAgentId();
+        logLine(`GET /api/agents/${agentId}/ledger`);
+        const r = await apiFetch(`/api/agents/${encodeURIComponent(agentId)}/ledger`, { method: 'GET' });
+        setJson($('outTransparency'), r.json);
+      });
+
+      $('btnBalance').addEventListener('click', async () => {
+        const agentId = ensureAgentId();
+        logLine(`GET /api/agents/${agentId}/balance`);
+        const r = await apiFetch(`/api/agents/${encodeURIComponent(agentId)}/balance`, { method: 'GET' });
+        setJson($('outTransparency'), r.json);
+      });
+
+      $('btnSettlements').addEventListener('click', async () => {
+        const agentId = ensureAgentId();
+        logLine(`GET /api/agents/${agentId}/settlements`);
+        const r = await apiFetch(`/api/agents/${encodeURIComponent(agentId)}/settlements`, { method: 'GET' });
+        setJson($('outTransparency'), r.json);
+      });
+
+      (function boot() {
+        $('sessId').textContent = `sess_${randHex(4)}`;
+        loadLocal();
+        reflectLocal();
+        setEnabled(Boolean(state.apiKey));
+
+        try {
+          $('executionClassId').addEventListener('change', () => {
+            const v = String($('executionClassId').value || '').trim();
+            state.executionClassId = v || '';
+            saveLocal();
+          });
+        } catch {
+        }
+
+        if (state.apiKey && state.agentId) {
+          void refreshContract();
+        }
+      })();
+    </script>
+  </body>
+</html>

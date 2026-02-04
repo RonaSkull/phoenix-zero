@@ -9,11 +9,11 @@ export const metadata = {
 
 export default function PpeLandingPage() {
   return (
-    <main className="pz-shell pz-shell--mono">
+    <main className="pz-shell pz-shell--mono pz-shell--scroll">
       <div className="pz-grid" />
       <div className="pz-glow" />
 
-      <div className="pz-container" style={{ paddingTop: 20, paddingBottom: 24 }}>
+      <div className="pz-container" style={{ paddingTop: 14, paddingBottom: 18 }}>
         <div className="pz-topline">
           <div className="pz-kicker">Phoenix Zero</div>
           <div className="pz-rule" />
@@ -30,36 +30,39 @@ export default function PpeLandingPage() {
           Run AI agents securely. Execution is released only after payment confirmation.
         </p>
 
-        <section className="pz-card-flat" style={{ maxWidth: 860, width: '100%', margin: '0 auto', display: 'grid', gap: 12 }}>
-          <div style={{ display: 'grid', gap: 6 }}>
-            <div className="pz-field-label">What this is</div>
-            <div style={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.65 }}>
-              Phoenix Zero PPE is an API-first payment-gated execution layer for AI agents.
+        <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '0 auto', display: 'grid', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 14 }}>
+            <div style={{ display: 'grid', gap: 6 }}>
+              <div className="pz-field-label">What this is</div>
+              <div style={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.65 }}>
+                Phoenix Zero PPE is an API-first payment-gated execution layer for AI agents.
+                <span style={{ opacity: 0.92 }}> Humans can use this page to get started; agents use the HTTP API directly.</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gap: 8 }}>
+              <div className="pz-field-label">How it works</div>
+              <ol style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
+                <li>Request an execution via API</li>
+                <li>A payment link is generated (PIX / crypto, beta)</li>
+                <li>Execution runs after confirmation</li>
+                <li>Receive result + receipt/proof</li>
+              </ol>
+            </div>
+
+            <div style={{ display: 'grid', gap: 8 }}>
+              <div className="pz-field-label">Why this exists</div>
+              <ul style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
+                <li>No unpaid executions</li>
+                <li>No human approval</li>
+                <li>Fully automated</li>
+                <li>Built for agents and developers</li>
+              </ul>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gap: 8 }}>
-            <div className="pz-field-label">How it works</div>
-            <ol style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
-              <li>Request an execution via API</li>
-              <li>A payment link is generated (PIX / crypto)</li>
-              <li>Execution runs after confirmation</li>
-              <li>Receive result + receipt/proof</li>
-            </ol>
-          </div>
-
-          <div style={{ display: 'grid', gap: 8 }}>
-            <div className="pz-field-label">Why this exists</div>
-            <ul style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
-              <li>No unpaid executions</li>
-              <li>No human approval</li>
-              <li>Fully automated</li>
-              <li>Built for agents and developers</li>
-            </ul>
-          </div>
-
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 2 }}>
-            <Link href="/pricing/observe" className="pz-btn" style={{ textDecoration: 'none' }}>
+            <Link href="/ppe/signup" className="pz-btn" style={{ textDecoration: 'none' }}>
               Get an API key
             </Link>
             <Link href="/provas" className="pz-btn" style={{ textDecoration: 'none', opacity: 0.85 }}>
@@ -72,20 +75,30 @@ export default function PpeLandingPage() {
             <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.6, fontSize: 13 }}>
               <div style={{ opacity: 0.9 }}>Use the tenant API key in header <code style={{ opacity: 0.9 }}>x-api-key</code>.</div>
               <div style={{ marginTop: 10, opacity: 0.9 }}>
+                Public summary: <a href="/api/pricing/public-info" target="_blank" rel="noreferrer">/api/pricing/public-info</a>
+              </div>
+              <div style={{ marginTop: 10, opacity: 0.9 }}>
                 Operational contract: <a href="/api/docs/go-live-contract" target="_blank" rel="noreferrer">/api/docs/go-live-contract</a>
+              </div>
+              <div style={{ marginTop: 6, opacity: 0.9 }}>
+                Agent integration contract: <a href="/api/docs/agent-integration-contract" target="_blank" rel="noreferrer">/api/docs/agent-integration-contract</a>
+              </div>
+              <div style={{ marginTop: 6, opacity: 0.9 }}>
+                Agent trust model: <a href="/api/docs/agent-trust-model" target="_blank" rel="noreferrer">/api/docs/agent-trust-model</a>
               </div>
               <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: '#0b1020', color: '#e5e7eb', padding: 14, borderRadius: 12, marginTop: 10 }}>
 {`curl -s -X POST https://phoenix-zero-web.onrender.com/api/checkout/create \
   -H "content-type: application/json" \
   -H "x-api-key: YOUR_API_KEY" \
+  -H "x-idempotency-key: YOUR_REQUEST_KEY" \
   -d '{
     "currency":"BRL",
     "providerHint":"pix",
-    "lineItems":[{"operation":"video_protection","units":1}],
+    "lineItems":[{"operation":"protect_video","units":1}],
     "proofMeta":{
       "agentId":"ag_demo",
       "taskId":"task_demo",
-      "taskType":"video_protection",
+      "taskType":"protect_video",
       "taskInputHash":"demo",
       "taskOutputHash":"demo"
     }
@@ -105,6 +118,7 @@ export default function PpeLandingPage() {
               <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.75 }}>
                 <li>Paid automation workflows</li>
                 <li>Agent execution marketplaces</li>
+                <li>Spend-controlled agent tools (budget + cooldown + signatures)</li>
                 <li>Proof of execution receipts</li>
                 <li>Content authenticity proofs (phase 2)</li>
               </ul>
@@ -118,12 +132,16 @@ export default function PpeLandingPage() {
             </div>
           </details>
 
-          <div style={{ display: 'grid', gap: 8, paddingTop: 6 }}>
-            <div className="pz-field-label">FAQ</div>
-            <div style={{ display: 'grid', gap: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.65 }}>
+          <details style={{ marginTop: 2 }}>
+            <summary style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.88)', fontWeight: 700 }}>FAQ</summary>
+            <div style={{ display: 'grid', gap: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.65, marginTop: 10 }}>
               <div>
                 <strong style={{ color: 'rgba(255,255,255,0.88)' }}>Can agents call the API directly?</strong>
                 <div>Yes. The API is designed for autonomous agents.</div>
+              </div>
+              <div>
+                <strong style={{ color: 'rgba(255,255,255,0.88)' }}>Is this page for humans or agents?</strong>
+                <div>Both. Humans use it as a starting point; agents integrate via HTTP.</div>
               </div>
               <div>
                 <strong style={{ color: 'rgba(255,255,255,0.88)' }}>What happens if payment fails?</strong>
@@ -139,10 +157,10 @@ export default function PpeLandingPage() {
               </div>
               <div>
                 <strong style={{ color: 'rgba(255,255,255,0.88)' }}>Do you support crypto?</strong>
-                <div>Yes. USDT/USDC via NowPayments.</div>
+                <div>Yes (beta). Via NowPayments.</div>
               </div>
             </div>
-          </div>
+          </details>
         </section>
       </div>
     </main>

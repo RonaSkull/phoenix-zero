@@ -18,6 +18,7 @@ Este diretório contém a documentação **organizada e separada** do produto **
 - `10_GO_LIVE_STATUS.md`
 - `18_GO_LIVE_PENDENCIAS.md`
 - `17_GO_LIVE_CONTRACT.md`
+- `20_AGENT_INTEGRATION_CONTRACT.md`
 - `11_AGENT_TEST_JOURNEY.md`
 - `16_AGENT_SIMULATIONS_RUNBOOK.md`
 - `12_AGENT_EXAMPLES.md`

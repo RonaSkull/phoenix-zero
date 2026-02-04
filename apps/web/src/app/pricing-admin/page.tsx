@@ -79,6 +79,9 @@ export default function PricingWizardPage() {
   const [redeemUrl, setRedeemUrl] = useState('');
 
   const [operation, setOperation] = useState('verify_by_url');
+  const [quoteAgentId, setQuoteAgentId] = useState('');
+  const [quoteExecutionClassId, setQuoteExecutionClassId] = useState('');
+  const [quoteContract, setQuoteContract] = useState<any | null>(null);
   const [quoteClientType, setQuoteClientType] = useState('');
   const [quoteSector, setQuoteSector] = useState('');
   const [quoteCountry, setQuoteCountry] = useState('');
@@ -136,8 +139,12 @@ export default function PricingWizardPage() {
     try {
       const storedApiKey = (localStorage.getItem('pz_pricing_wizard_api_key') || '').trim();
       const storedAdminToken = (localStorage.getItem('pz_pricing_wizard_admin_token') || '').trim();
+      const storedQuoteAgentId = (localStorage.getItem('pz_pricing_wizard_quote_agent_id') || '').trim();
+      const storedQuoteExecutionClassId = (localStorage.getItem('pz_pricing_wizard_quote_execution_class_id') || '').trim();
       if (storedApiKey) setApiKey(storedApiKey);
       if (storedAdminToken) setAdminToken(storedAdminToken);
+      if (storedQuoteAgentId) setQuoteAgentId(storedQuoteAgentId);
+      if (storedQuoteExecutionClassId) setQuoteExecutionClassId(storedQuoteExecutionClassId);
     } catch {
     }
   }, []);
@@ -148,6 +155,59 @@ export default function PricingWizardPage() {
     } catch {
     }
   }, [apiKey]);
+
+  useEffect(() => {
+    try {
+      if (quoteAgentId.trim()) localStorage.setItem('pz_pricing_wizard_quote_agent_id', quoteAgentId.trim());
+    } catch {
+    }
+  }, [quoteAgentId]);
+
+  useEffect(() => {
+    try {
+      if (quoteExecutionClassId.trim()) {
+        localStorage.setItem('pz_pricing_wizard_quote_execution_class_id', quoteExecutionClassId.trim());
+      }
+    } catch {
+    }
+  }, [quoteExecutionClassId]);
+
+  const quoteExecutionClasses = useMemo(() => {
+    const list = quoteContract && quoteContract.ok === true && quoteContract.contract ? quoteContract.contract.executionClasses : null;
+    if (!Array.isArray(list)) return [];
+    return list
+      .map((c: any) => String(c?.classId || '').trim())
+      .filter((s: string) => Boolean(s));
+  }, [quoteContract]);
+
+  useEffect(() => {
+    if (!apiKey.trim() || !quoteAgentId.trim()) {
+      setQuoteContract(null);
+      return;
+    }
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/pricing/contract?agentId=${encodeURIComponent(quoteAgentId.trim())}`, {
+          headers: { 'x-api-key': apiKey.trim() },
+          cache: 'no-store'
+        });
+        const j = await readJson(res);
+        setQuoteContract(j.json || null);
+      } catch {
+        setQuoteContract(null);
+      }
+    }, 250);
+    return () => clearTimeout(t);
+  }, [apiKey, quoteAgentId]);
+
+  useEffect(() => {
+    if (quoteExecutionClassId.trim()) return;
+    if (!quoteContract || quoteContract.ok !== true || !quoteContract.contract) return;
+    const def = String(quoteContract.contract.defaultExecutionClassId || '').trim();
+    const first = quoteExecutionClasses.length > 0 ? quoteExecutionClasses[0] : '';
+    const next = def || first;
+    if (next) setQuoteExecutionClassId(next);
+  }, [quoteContract, quoteExecutionClassId, quoteExecutionClasses]);
 
   useEffect(() => {
     try {
@@ -243,12 +303,18 @@ export default function PricingWizardPage() {
   const curlQuote = useMemo(() => {
     if (!origin) return '(aguardando pagina carregar...)';
     const body: Record<string, any> = { operation: operation.trim() };
+    if (quoteAgentId.trim()) body.agentId = quoteAgentId.trim();
+    if (quoteExecutionClassId.trim()) body.executionClassId = quoteExecutionClassId.trim();
     if (quoteClientType.trim()) body.clientType = quoteClientType.trim();
     if (quoteSector.trim()) body.sector = quoteSector.trim();
     if (quoteCountry.trim()) body.country = quoteCountry.trim();
     if (quoteCurrency.trim()) body.currency = quoteCurrency.trim();
-    return `curl -s \\\n  -X POST "${origin}/api/pricing/quote" \\\n  -H "content-type: application/json" \\\n  -H "x-api-key: ${apiKey || 'pz_...'}" \\\n  --data '${JSON.stringify(body)}'`;
-  }, [apiKey, operation, origin, quoteClientType, quoteCountry, quoteCurrency, quoteSector]);
+    return `curl -s \
+  -X POST "${origin}/api/pricing/quote" \
+  -H "content-type: application/json" \
+  -H "x-api-key: ${apiKey || 'pz_...'}" \
+  --data '${JSON.stringify(body)}'`;
+  }, [apiKey, operation, origin, quoteAgentId, quoteExecutionClassId, quoteClientType, quoteCountry, quoteCurrency, quoteSector]);
 
   async function provisionDefaults() {
     setBusy('provision');
@@ -391,6 +457,8 @@ export default function PricingWizardPage() {
     setQuoteResultRaw('');
     try {
       const body: Record<string, any> = { operation: operation.trim() };
+      if (quoteAgentId.trim()) body.agentId = quoteAgentId.trim();
+      if (quoteExecutionClassId.trim()) body.executionClassId = quoteExecutionClassId.trim();
       if (quoteClientType.trim()) body.clientType = quoteClientType.trim();
       if (quoteSector.trim()) body.sector = quoteSector.trim();
       if (quoteCountry.trim()) body.country = quoteCountry.trim();
@@ -556,6 +624,36 @@ export default function PricingWizardPage() {
             <div style={{ color: '#8FA0BF', fontSize: 13, lineHeight: 1.45 }}>Esse endpoint usa <b>x-api-key</b> (tenant). Nao usa admin token.</div>
 
             <form onSubmit={onSubmitQuote} style={{ display: 'grid', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="pz-field">
+                  <label className="pz-field-label">agentId (opcional)</label>
+                  <input className="pz-input" value={quoteAgentId} onChange={(e) => setQuoteAgentId(e.target.value)} placeholder="ag_..." />
+                </div>
+                <div className="pz-field">
+                  <label className="pz-field-label">executionClassId (opcional)</label>
+                  {quoteExecutionClasses.length > 0 ? (
+                    <select
+                      className="pz-input"
+                      value={quoteExecutionClassId}
+                      onChange={(e) => setQuoteExecutionClassId(e.target.value)}
+                    >
+                      {(quoteExecutionClasses || []).map((id) => (
+                        <option key={id} value={id}>
+                          {id}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      className="pz-input"
+                      value={quoteExecutionClassId}
+                      onChange={(e) => setQuoteExecutionClassId(e.target.value)}
+                      placeholder="default"
+                    />
+                  )}
+                </div>
+              </div>
+
               <div className="pz-field">
                 <label className="pz-field-label">operation</label>
                 <input className="pz-input" value={operation} onChange={(e) => setOperation(e.target.value)} placeholder="verify_by_url" />

@@ -16,6 +16,10 @@ export default function PricingLabPage() {
   const [country, setCountry] = useState('');
   const [currency, setCurrency] = useState('');
 
+  const [agentId, setAgentId] = useState('');
+  const [executionClassId, setExecutionClassId] = useState('');
+  const [contractPayload, setContractPayload] = useState<any | null>(null);
+
   const [guaranteeWindow, setGuaranteeWindow] = useState('');
 
   const [units, setUnits] = useState(1);
@@ -42,10 +46,69 @@ export default function PricingLabPage() {
 
   useEffect(() => {
     try {
+      const u = new URL(window.location.href);
+      const fromQuery = (u.searchParams.get('agentId') || '').trim();
+      const fromStorage = (localStorage.getItem('pz_pricing_lab_agent_id') || '').trim();
+      if (fromQuery) setAgentId(fromQuery);
+      else if (fromStorage) setAgentId(fromStorage);
+    } catch {
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
       if (apiKey.trim()) localStorage.setItem('pz_pricing_lab_api_key', apiKey.trim());
     } catch {
     }
   }, [apiKey]);
+
+  useEffect(() => {
+    try {
+      if (agentId.trim()) localStorage.setItem('pz_pricing_lab_agent_id', agentId.trim());
+    } catch {
+    }
+  }, [agentId]);
+
+  useEffect(() => {
+    if (!apiKey.trim() || !agentId.trim()) {
+      setContractPayload(null);
+      return;
+    }
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/pricing/contract?agentId=${encodeURIComponent(agentId.trim())}`, {
+          headers: { ...(apiKey.trim() ? { 'x-api-key': apiKey.trim() } : {}) },
+          cache: 'no-store'
+        });
+        const txt = await res.text();
+        try {
+          setContractPayload(txt ? JSON.parse(txt) : null);
+        } catch {
+          setContractPayload(null);
+        }
+      } catch {
+        setContractPayload(null);
+      }
+    }, 250);
+    return () => clearTimeout(t);
+  }, [apiKey, agentId]);
+
+  const executionClasses = useMemo(() => {
+    const list = contractPayload && contractPayload.ok === true && contractPayload.contract ? contractPayload.contract.executionClasses : null;
+    if (!Array.isArray(list)) return [];
+    return list
+      .map((c: any) => String(c?.classId || '').trim())
+      .filter((s: string) => Boolean(s));
+  }, [contractPayload]);
+
+  useEffect(() => {
+    if (executionClassId.trim()) return;
+    if (!contractPayload || contractPayload.ok !== true || !contractPayload.contract) return;
+    const def = String(contractPayload.contract.defaultExecutionClassId || '').trim();
+    const first = executionClasses.length > 0 ? executionClasses[0] : '';
+    const next = def || first;
+    if (next) setExecutionClassId(next);
+  }, [contractPayload, executionClassId, executionClasses]);
 
   const [loading, setLoading] = useState(false);
   const [last, setLast] = useState<QuoteResponse | null>(null);
@@ -53,6 +116,8 @@ export default function PricingLabPage() {
 
   const curlHint = useMemo(() => {
     const body: Record<string, any> = { operation };
+    if (agentId.trim()) body.agentId = agentId.trim();
+    if (executionClassId.trim()) body.executionClassId = executionClassId.trim();
     if (product.trim()) body.product = product.trim();
     if (clientType.trim()) body.clientType = clientType.trim();
     if (sector.trim()) body.sector = sector.trim();
@@ -72,7 +137,7 @@ export default function PricingLabPage() {
       `  -H "x-api-key: ${apiKey || 'TENANT_API_KEY'}" \\`,
       `  -d '${JSON.stringify(body)}'`
     ].join('\n');
-  }, [apiKey, clientType, country, currency, guaranteeWindow, operation, origin, product, units, durationSeconds, sizeBytes, pages, sector]);
+  }, [agentId, apiKey, clientType, country, currency, executionClassId, guaranteeWindow, operation, origin, product, units, durationSeconds, sizeBytes, pages, sector]);
 
   async function runQuote() {
     setLoading(true);
@@ -87,6 +152,8 @@ export default function PricingLabPage() {
         },
         body: JSON.stringify({
           operation: operation.trim(),
+          agentId: agentId.trim() || undefined,
+          executionClassId: executionClassId.trim() || undefined,
           product: product.trim() || undefined,
           clientType: clientType.trim() || undefined,
           sector: sector.trim() || undefined,
@@ -147,6 +214,32 @@ export default function PricingLabPage() {
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder="pz_..."
               />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="pz-field">
+                <label className="pz-field-label">agentId (opcional)</label>
+                <input className="pz-input" value={agentId} onChange={(e) => setAgentId(e.target.value)} placeholder="ag_..." />
+              </div>
+              <div className="pz-field">
+                <label className="pz-field-label">executionClassId (opcional)</label>
+                {executionClasses.length > 0 ? (
+                  <select className="pz-input" value={executionClassId} onChange={(e) => setExecutionClassId(e.target.value)}>
+                    {(executionClasses || []).map((id) => (
+                      <option key={id} value={id}>
+                        {id}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    className="pz-input"
+                    value={executionClassId}
+                    onChange={(e) => setExecutionClassId(e.target.value)}
+                    placeholder="default"
+                  />
+                )}
+              </div>
             </div>
 
             <div className="pz-field">

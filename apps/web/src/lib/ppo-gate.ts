@@ -153,24 +153,11 @@ export class PpoGateBlockedError extends Error {
   }
 }
 
-export async function executeWithPPOGate<T>(params: {
-  tenantId: string;
-  agentId: string;
-  taskId: string;
-  taskType: string;
-  requireSignature?: boolean;
-  limit?: number;
+export async function executeWithPPOGateDecision<T>(params: {
+  gate: PpoGateDecision;
   action: () => Promise<T>;
 }): Promise<T> {
-  const gate = await checkPpoGate({
-    tenantId: params.tenantId,
-    agentId: params.agentId,
-    taskId: params.taskId,
-    taskType: params.taskType,
-    requireSignature: params.requireSignature,
-    limit: params.limit
-  });
-
+  const gate = params.gate;
   if (!gate.allowed) {
     throw new PpoGateBlockedError(gate);
   }
@@ -199,4 +186,25 @@ export async function executeWithPPOGate<T>(params: {
     }
     throw e;
   }
+}
+
+export async function executeWithPPOGate<T>(params: {
+  tenantId: string;
+  agentId: string;
+  taskId: string;
+  taskType: string;
+  requireSignature?: boolean;
+  limit?: number;
+  action: () => Promise<T>;
+}): Promise<T> {
+  const gate = await checkPpoGate({
+    tenantId: params.tenantId,
+    agentId: params.agentId,
+    taskId: params.taskId,
+    taskType: params.taskType,
+    requireSignature: params.requireSignature,
+    limit: params.limit
+  });
+
+  return executeWithPPOGateDecision({ gate, action: params.action });
 }

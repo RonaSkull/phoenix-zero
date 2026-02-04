@@ -1,7 +1,12 @@
 import { randomBytes } from 'node:crypto';
 
 import { sha256Hex } from '../lib/http';
-import { checkoutCreate, checkoutStatus, simulatePixWebhookPaid } from '../flows/checkout';
+import {
+  checkoutCreate,
+  checkoutStatus,
+  simulateNowPaymentsWebhookPaid,
+  simulatePixWebhookPaid
+} from '../flows/checkout';
 import { executeTask, ppoGateCheck } from '../flows/execute';
 import { waitForAgentProofByPaymentId } from '../flows/proofs';
 
@@ -16,7 +21,9 @@ function b64Url(bytes: Uint8Array): string {
 export async function agentSwapAttackTest(params: {
   baseUrl: string;
   apiKey: string;
-  asaasWebhookSecret: string;
+  asaasWebhookSecret?: string;
+  nowPaymentsIpnSecret?: string;
+  providerHint?: 'pix' | 'crypto';
   agentA: string;
   agentB: string;
   taskType: string;
@@ -24,10 +31,20 @@ export async function agentSwapAttackTest(params: {
 }): Promise<{ paymentId: string; providerPaymentId: string; proofId: string }> {
   const taskId = `task_${b64Url(randomBytes(12))}`;
 
+  const providerHint: 'pix' | 'crypto' = params.providerHint || 'pix';
+  const currency = providerHint === 'crypto' ? 'USD' : 'BRL';
+
+  if (providerHint === 'pix' && !String(params.asaasWebhookSecret || '').trim()) {
+    throw new Error('Missing ASAAS_WEBHOOK_SECRET');
+  }
+  if (providerHint === 'crypto' && !String(params.nowPaymentsIpnSecret || '').trim()) {
+    throw new Error('Missing NOWPAYMENTS_IPN_SECRET');
+  }
+
   const checkout = await checkoutCreate(params.baseUrl, {
     apiKey: params.apiKey,
-    currency: 'BRL',
-    providerHint: 'pix',
+    currency,
+    providerHint,
     operation: params.operation,
     units: 1,
     proofMeta: {
@@ -51,11 +68,17 @@ export async function agentSwapAttackTest(params: {
   if (!providerPaymentId) throw new Error('MISSING_PROVIDER_PAYMENT_ID');
 
   const evtPaid = `evt_paid_${Date.now()}_${b64Url(randomBytes(6))}`;
-  const paid = await simulatePixWebhookPaid(params.baseUrl, {
-    providerPaymentId,
-    asaasWebhookSecret: params.asaasWebhookSecret,
-    eventId: evtPaid
-  });
+  const paid = providerHint === 'crypto'
+    ? await simulateNowPaymentsWebhookPaid(params.baseUrl, {
+        providerPaymentId,
+        nowPaymentsIpnSecret: String(params.nowPaymentsIpnSecret || '').trim(),
+        eventId: evtPaid
+      })
+    : await simulatePixWebhookPaid(params.baseUrl, {
+        providerPaymentId,
+        asaasWebhookSecret: String(params.asaasWebhookSecret || '').trim() || undefined,
+        eventId: evtPaid
+      });
   if (!paid.ok) throw new Error(`WEBHOOK_PAID_FAILED status=${paid.status}`);
 
   const waitedProof = await waitForAgentProofByPaymentId(params.baseUrl, {

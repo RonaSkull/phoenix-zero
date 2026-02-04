@@ -13,6 +13,7 @@ function jsonUtf8Headers(extra: Record<string, string> = {}): Record<string, str
 
 function envInt(name: string, def: number): number {
   const raw = String(process.env[name] || '').trim();
+  if (!raw) return def;
   const n = Number(raw);
   if (!Number.isFinite(n)) return def;
   return Math.floor(n);

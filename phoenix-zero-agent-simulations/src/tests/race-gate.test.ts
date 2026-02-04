@@ -1,7 +1,14 @@
 import { randomBytes } from 'node:crypto';
 
 import { sha256Hex } from '../lib/http';
-import { checkoutCreate, checkoutStatus, simulatePixWebhookPaid, simulatePixWebhookRefund } from '../flows/checkout';
+import {
+  checkoutCreate,
+  checkoutStatus,
+  simulateNowPaymentsWebhookPaid,
+  simulateNowPaymentsWebhookRefund,
+  simulatePixWebhookPaid,
+  simulatePixWebhookRefund
+} from '../flows/checkout';
 import { executeTask, ppoGateCheck } from '../flows/execute';
 
 function b64Url(bytes: Uint8Array): string {
@@ -19,7 +26,9 @@ async function sleepMs(ms: number): Promise<void> {
 export async function raceGateTest(params: {
   baseUrl: string;
   apiKey: string;
-  asaasWebhookSecret: string;
+  asaasWebhookSecret?: string;
+  nowPaymentsIpnSecret?: string;
+  providerHint?: 'pix' | 'crypto';
   agentId: string;
   taskType: string;
   operation: string;
@@ -29,12 +38,22 @@ export async function raceGateTest(params: {
   const gateN = Math.max(1, Math.min(500, Math.trunc(Number(params.gateN ?? 100))));
   const executeN = Math.max(0, Math.min(200, Math.trunc(Number(params.executeN ?? 20))));
 
+  const providerHint: 'pix' | 'crypto' = params.providerHint || 'pix';
+  const currency = providerHint === 'crypto' ? 'USD' : 'BRL';
+
+  if (providerHint === 'pix' && !String(params.asaasWebhookSecret || '').trim()) {
+    throw new Error('Missing ASAAS_WEBHOOK_SECRET');
+  }
+  if (providerHint === 'crypto' && !String(params.nowPaymentsIpnSecret || '').trim()) {
+    throw new Error('Missing NOWPAYMENTS_IPN_SECRET');
+  }
+
   const taskId = `task_${b64Url(randomBytes(12))}`;
 
   const checkout = await checkoutCreate(params.baseUrl, {
     apiKey: params.apiKey,
-    currency: 'BRL',
-    providerHint: 'pix',
+    currency,
+    providerHint,
     operation: params.operation,
     units: Math.max(1, executeN),
     proofMeta: {
@@ -61,11 +80,17 @@ export async function raceGateTest(params: {
 
   const concurrent: Array<Promise<any>> = [];
   concurrent.push(
-    simulatePixWebhookPaid(params.baseUrl, {
-      providerPaymentId,
-      asaasWebhookSecret: params.asaasWebhookSecret,
-      eventId: evtPaid
-    })
+    providerHint === 'crypto'
+      ? simulateNowPaymentsWebhookPaid(params.baseUrl, {
+          providerPaymentId,
+          nowPaymentsIpnSecret: String(params.nowPaymentsIpnSecret || '').trim(),
+          eventId: evtPaid
+        })
+      : simulatePixWebhookPaid(params.baseUrl, {
+          providerPaymentId,
+          asaasWebhookSecret: String(params.asaasWebhookSecret || '').trim() || undefined,
+          eventId: evtPaid
+        })
   );
 
   for (let i = 0; i < gateN; i += 1) {
@@ -89,11 +114,17 @@ export async function raceGateTest(params: {
   }
 
   const evtRefund = `evt_refund_${Date.now()}_${b64Url(randomBytes(6))}`;
-  const refund = await simulatePixWebhookRefund(params.baseUrl, {
-    providerPaymentId,
-    asaasWebhookSecret: params.asaasWebhookSecret,
-    eventId: evtRefund
-  });
+  const refund = providerHint === 'crypto'
+    ? await simulateNowPaymentsWebhookRefund(params.baseUrl, {
+        providerPaymentId,
+        nowPaymentsIpnSecret: String(params.nowPaymentsIpnSecret || '').trim(),
+        eventId: evtRefund
+      })
+    : await simulatePixWebhookRefund(params.baseUrl, {
+        providerPaymentId,
+        asaasWebhookSecret: String(params.asaasWebhookSecret || '').trim() || undefined,
+        eventId: evtRefund
+      });
   if (!refund.ok) throw new Error(`WEBHOOK_REFUND_FAILED status=${refund.status}`);
 
   await sleepMs(750);

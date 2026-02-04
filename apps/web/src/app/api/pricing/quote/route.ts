@@ -2,10 +2,12 @@ import { requireTenant } from '../../../../lib/tenant-auth';
 import { recordUsage } from '../../../../lib/usage-ledger';
 import {
   calculateFinalPrice,
+  getDiscountContextViolations,
   getCommissionProfile,
   getPricingProfile,
   getTaxProfile
 } from '../../../../lib/pricing';
+import { sovereignEntitlementEnforced, validateExecutionEntitlement } from '../../../../lib/sovereign-entitlement';
 
 export const runtime = 'nodejs';
 
@@ -25,6 +27,11 @@ function clampNonNegativeInt(n: unknown, max: number): number {
   const x = Number(n ?? NaN);
   if (!Number.isFinite(x)) return 0;
   return Math.max(0, Math.min(max, Math.trunc(x)));
+}
+
+function envBool(name: string): boolean {
+  const v = String(process.env[name] || '').trim().toLowerCase();
+  return v === '1' || v === 'true' || v === 'yes' || v === 'y' || v === 'on';
 }
 
 export async function POST(req: Request) {
@@ -55,6 +62,9 @@ export async function POST(req: Request) {
       | null
       | {
           operation?: string;
+          agentId?: string;
+          taskType?: string;
+          executionClassId?: string;
           product?: string;
           clientType?: string;
           sector?: string;
@@ -62,6 +72,7 @@ export async function POST(req: Request) {
           currency?: string;
           units?: number;
           guaranteeWindow?: string;
+          plan?: string;
           durationSeconds?: number;
           sizeBytes?: number;
           pages?: number;
@@ -76,6 +87,41 @@ export async function POST(req: Request) {
       );
     }
 
+    const sovereignEnforce = sovereignEntitlementEnforced();
+    const agentId = String(body?.agentId || '').trim();
+    const taskType = String(body?.taskType || operation).trim();
+    const executionClassId = String(body?.executionClassId || '').trim() || undefined;
+
+    if (sovereignEnforce) {
+      if (!agentId) {
+        httpStatus = 400;
+        return Response.json(
+          { ok: false, reasonCode: 'MISSING_AGENT_ID', reason: 'MISSING_AGENT_ID' },
+          { status: 400, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
+        );
+      }
+
+      const entitlement = await validateExecutionEntitlement({
+        tenantId: auth.ctx.tenantId,
+        agentId,
+        taskType,
+        requestedExecutionClassId: executionClassId,
+        enforce: true
+      });
+
+      if (!entitlement.allowed) {
+        httpStatus = 403;
+        return Response.json(
+          {
+            ok: false,
+            reasonCode: entitlement.reasonCode,
+            reason: entitlement.reasonCode
+          },
+          { status: 403, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
+        );
+      }
+    }
+
     const product = (body?.product || '').trim();
 
     const unitsInput = Number(body?.units ?? NaN);
@@ -86,6 +132,7 @@ export async function POST(req: Request) {
     const pages = clampNonNegativeInt(body?.pages, 10_000);
 
     const guaranteeWindow = (body?.guaranteeWindow || '').trim() || 'unknown';
+    const plan = (body?.plan || '').trim() || 'unknown';
 
     const tenant = auth.ctx.tenant;
 
@@ -99,6 +146,7 @@ export async function POST(req: Request) {
       currency: (body?.currency || tenant.currency || 'USD').trim(),
       units: unitsSafe,
       guaranteeWindow,
+      plan,
       durationSeconds,
       sizeBytes,
       pages
@@ -107,6 +155,22 @@ export async function POST(req: Request) {
     const pricingProfile = await getPricingProfile(tenant.pricingProfile, scope.currency);
     const commissionProfile = await getCommissionProfile(tenant.commissionProfile);
     const taxProfile = await getTaxProfile(tenant.taxProfile);
+
+    if (!envBool('PHOENIX_ZERO_ALLOW_DISCOUNT_CONTEXT')) {
+      const violations = getDiscountContextViolations({ scope, pricingProfile });
+      if (violations.length > 0) {
+        httpStatus = 400;
+        return Response.json(
+          {
+            ok: false,
+            reasonCode: 'DISCOUNT_CONTEXT_NOT_ALLOWED',
+            reason: 'DISCOUNT_CONTEXT_NOT_ALLOWED',
+            details: violations
+          },
+          { status: 400, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
+        );
+      }
+    }
 
     const basePriceCentsRaw = pricingProfile.basePriceCentsByOp[operation];
     const basePriceCents =
@@ -128,6 +192,9 @@ export async function POST(req: Request) {
     currency = quote.currency;
     contextSnapshot = {
       operation: scope.operation,
+      agentId: agentId || undefined,
+      taskType: taskType || undefined,
+      executionClassId,
       product: scope.product,
       clientType: scope.clientType,
       sector: scope.sector,

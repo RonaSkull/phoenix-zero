@@ -143,6 +143,42 @@ function safeMultiplier(m: unknown): number {
   return m;
 }
 
+export type DiscountContextField = 'plan' | 'guaranteeWindow';
+
+export type DiscountContextViolation = {
+  field: DiscountContextField;
+  value: string;
+  multiplier: number;
+};
+
+export function getDiscountContextViolations(params: {
+  scope: PricingContext;
+  pricingProfile: PricingProfile;
+}): DiscountContextViolation[] {
+  const scope = params.scope;
+  const pricingProfile = params.pricingProfile;
+
+  const out: DiscountContextViolation[] = [];
+
+  const planRaw = String(scope.plan || '').trim();
+  const planKey = normalizeKey(planRaw || 'unknown') || 'unknown';
+  const planMultiplierRaw = pricingProfile.multiplierByPlan?.[planKey];
+  const planMultiplier = safeMultiplier(planMultiplierRaw);
+  if (planRaw && planMultiplier > 0 && planMultiplier < 1) {
+    out.push({ field: 'plan', value: planRaw, multiplier: planMultiplier });
+  }
+
+  const guaranteeRaw = String(scope.guaranteeWindow || '').trim();
+  const guaranteeKey = normalizeKey(guaranteeRaw || 'unknown') || 'unknown';
+  const guaranteeMultiplierRaw = pricingProfile.multiplierByGuaranteeWindow?.[guaranteeKey];
+  const guaranteeMultiplier = safeMultiplier(guaranteeMultiplierRaw);
+  if (guaranteeRaw && guaranteeMultiplier > 0 && guaranteeMultiplier < 1) {
+    out.push({ field: 'guaranteeWindow', value: guaranteeRaw, multiplier: guaranteeMultiplier });
+  }
+
+  return out;
+}
+
 const VIDEO_DURATION_BUCKETS_SECONDS = [
   3, 5, 10, 15, 20, 25, 30, 45, 60, 90, 120, 180, 300, 600, 900, 1200, 1800, 2700, 3600, 5400, 7200, 10800
 ];
