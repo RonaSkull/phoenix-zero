@@ -55,6 +55,10 @@ Base:
 - **Hardening equivalente (Crypto)**: `hardening_2026-02-01T11-43-17-012Z` (12/12; `--only=crypto`)
 - **Hardening Crypto + extra webhook tests**: `hardening_2026-02-01T13-21-14-614Z` (16/16; `--only=crypto`)
 
+- `race-gate` (PIX): `hardening_2026-02-04T22-28-21-940Z` (1/1; `--only=race-gate`)
+- `race-gate-crypto`: `hardening_2026-02-04T22-29-33-278Z` (1/1; `--only=race-gate-crypto`)
+- **Suite completa (PIX + Crypto)**: `hardening_2026-02-04T23-45-27-845Z` (23/23)
+
 ---
 
 ## 3) Higiene obrigatória (Render) antes do go-live
@@ -117,7 +121,7 @@ Evidência:
 ## 5) Lista de pendências operacionais (curta)
 
 - **(Render) Higiene de envs temporárias** (remover flags acima + redeploy limpo)
-- **Rodar suite completa pós-higiene** e registrar `suiteRunId` (feito; ver seção 2)
-- **Rodar hardening equivalente (Crypto)** e registrar `suiteRunId` (feito; ver seção 2)
+- **Rodar/confirmar suite completa pós-higiene** e registrar `suiteRunId` final (atualizar seção 2)
+- **Rodar/confirmar hardening equivalente (Crypto)** e registrar `suiteRunId` final (atualizar seção 2)
 - **WhatsApp**: diagnosticar delivery / WABA (se for parte da promessa de produto)
 - **Crypto**: anunciar como beta/experimental (docs alinhados)

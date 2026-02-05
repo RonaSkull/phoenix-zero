@@ -1,172 +1,85 @@
-'use client';
+import Link from 'next/link';
 
-import { useMemo, useState } from 'react';
-
-type JsonValue = null | boolean | number | string | JsonValue[] | { [k: string]: JsonValue };
-
-function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
-}
-
-export default function Page() {
-  const [stampVideo, setStampVideo] = useState<File | null>(null);
-  const [stampMode, setStampMode] = useState<'compat' | 'strict'>('strict');
-  const [stampBusy, setStampBusy] = useState(false);
-  const [stampError, setStampError] = useState<string | null>(null);
-  const [stampOk, setStampOk] = useState<string | null>(null);
-
-  const [verifyVideo, setVerifyVideo] = useState<File | null>(null);
-  const [verifyProof, setVerifyProof] = useState<File | null>(null);
-  const [verifyBusy, setVerifyBusy] = useState(false);
-  const [verifyError, setVerifyError] = useState<string | null>(null);
-  const [verifyResult, setVerifyResult] = useState<JsonValue | null>(null);
-
-  const stampDisabled = useMemo(() => stampBusy || !stampVideo, [stampBusy, stampVideo]);
-  const verifyDisabled = useMemo(() => verifyBusy || !verifyVideo || !verifyProof, [verifyBusy, verifyVideo, verifyProof]);
-
-  async function onStamp() {
-    if (!stampVideo) return;
-    setStampBusy(true);
-    setStampError(null);
-    setStampOk(null);
-    try {
-      const form = new FormData();
-      form.set('video', stampVideo);
-      form.set('mode', stampMode);
-
-      const res = await fetch('/api/phoenix-zero/stamp-watermarked', { method: 'POST', body: form });
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || `HTTP ${res.status}`);
-      }
-
-      const blob = await res.blob();
-      downloadBlob(blob, 'phoenix-zero-stamp-watermarked.zip');
-      setStampOk('ZIP baixado com sucesso. Extraia para obter watermarked.mp4 e proof.json');
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setStampError(msg);
-    } finally {
-      setStampBusy(false);
-    }
-  }
-
-  async function onVerify() {
-    if (!verifyVideo || !verifyProof) return;
-    setVerifyBusy(true);
-    setVerifyError(null);
-    setVerifyResult(null);
-    try {
-      const form = new FormData();
-      form.set('video', verifyVideo);
-      form.set('proof', verifyProof);
-
-      const res = await fetch('/api/phoenix-zero/verify-watermarked', { method: 'POST', body: form });
-      const json = (await res.json().catch(async () => {
-        const txt = await res.text();
-        throw new Error(txt || `HTTP ${res.status}`);
-      })) as JsonValue;
-
-      if (!res.ok) {
-        setVerifyResult(json);
-        throw new Error(`Falha na verificação (HTTP ${res.status}).`);
-      }
-
-      setVerifyResult(json);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setVerifyError(msg);
-    } finally {
-      setVerifyBusy(false);
-    }
-  }
-
+export default function HomePage() {
   return (
-    <main style={{ maxWidth: 920, padding: 24, margin: '0 auto' }}>
-      <h1>Phoenix Zero</h1>
+    <main className="pz-shell pz-shell--mono pz-shell--scroll">
+      <div className="pz-grid" />
+      <div className="pz-glow" />
 
-      <section style={{ marginTop: 16, padding: 16, border: '1px solid #ddd', borderRadius: 12 }}>
-        <h2>Stamp Watermarked</h2>
-        <p>Gera watermark invisível + proof assinado e retorna um ZIP (watermarked.mp4 + proof.json).</p>
-        <div style={{ display: 'grid', gap: 12 }}>
-          <label>
-            Vídeo (mp4)
-            <input
-              style={{ display: 'block', marginTop: 6 }}
-              type="file"
-              accept="video/mp4,video/*"
-              onChange={(e) => setStampVideo(e.target.files?.[0] ?? null)}
-            />
-          </label>
-          <label>
-            Modo
-            <select
-              style={{ display: 'block', marginTop: 6, maxWidth: 220 }}
-              value={stampMode}
-              onChange={(e) => setStampMode(e.target.value === 'compat' ? 'compat' : 'strict')}
-            >
-              <option value="strict">strict (Ed25519 + SPHINCS+)</option>
-              <option value="compat">compat (fallback PQ)</option>
-            </select>
-          </label>
-          <button onClick={onStamp} disabled={stampDisabled} style={{ maxWidth: 260, padding: '10px 12px' }}>
-            {stampBusy ? 'Gerando…' : 'Gerar e baixar ZIP'}
-          </button>
-          {stampOk ? <div style={{ color: '#0a7a1f' }}>{stampOk}</div> : null}
-          {stampError ? <pre style={{ whiteSpace: 'pre-wrap', color: '#b00020' }}>{stampError}</pre> : null}
+      <div className="pz-container" style={{ paddingTop: 14, paddingBottom: 18 }}>
+        <div className="pz-topline">
+          <div className="pz-kicker">Phoenix Zero</div>
+          <div className="pz-rule" />
         </div>
-      </section>
 
-      <section style={{ marginTop: 16, padding: 16, border: '1px solid #ddd', borderRadius: 12 }}>
-        <h2>Verify Watermarked</h2>
-        <p>Verifica assinatura híbrida, watermark e fingerprint temporal contra o vídeo fornecido.</p>
-        <div style={{ display: 'grid', gap: 12 }}>
-          <label>
-            Vídeo (mp4) para verificar
-            <input
-              style={{ display: 'block', marginTop: 6 }}
-              type="file"
-              accept="video/mp4,video/*"
-              onChange={(e) => setVerifyVideo(e.target.files?.[0] ?? null)}
-            />
-          </label>
-          <label>
-            proof.json
-            <input
-              style={{ display: 'block', marginTop: 6 }}
-              type="file"
-              accept="application/json,.json"
-              onChange={(e) => setVerifyProof(e.target.files?.[0] ?? null)}
-            />
-          </label>
-          <button onClick={onVerify} disabled={verifyDisabled} style={{ maxWidth: 260, padding: '10px 12px' }}>
-            {verifyBusy ? 'Verificando…' : 'Verificar'}
-          </button>
-          {verifyError ? <pre style={{ whiteSpace: 'pre-wrap', color: '#b00020' }}>{verifyError}</pre> : null}
-          {verifyResult ? (
-            <pre style={{ whiteSpace: 'pre-wrap', background: '#f6f6f6', padding: 12, borderRadius: 8 }}>
-              {JSON.stringify(verifyResult, null, 2)}
-            </pre>
-          ) : null}
-        </div>
-      </section>
+        <nav style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginTop: 10 }}>
+          <Link href="/enterprise-demo" className="pz-btn" style={{ textDecoration: 'none' }}>
+            Enterprise Demo
+          </Link>
+          <Link href="/provas" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none' }}>
+            Proofs
+          </Link>
+          <Link href="/ai-agents" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none', opacity: 0.85 }}>
+            AI Agents
+          </Link>
+          <Link href="/tools/watermark" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none', opacity: 0.85 }}>
+            Tools
+          </Link>
+        </nav>
 
-      <section style={{ marginTop: 16 }}>
-        <h3>Endpoints</h3>
-        <ul>
-          <li>POST /api/phoenix-zero/stamp-watermarked</li>
-          <li>POST /api/phoenix-zero/verify-watermarked</li>
-          <li>POST /api/phoenix-zero/stamp</li>
-          <li>POST /api/phoenix-zero/verify</li>
-        </ul>
-      </section>
+        <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 12 }}>
+          <div style={{ display: 'grid', gap: 8 }}>
+            <h1 style={{ margin: 0, fontSize: 'clamp(26px, 4.2vw, 44px)', lineHeight: 1.12 }}>
+              Crypto settlement + reconciliation — with a verifiable proof per transaction.
+            </h1>
+            <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', fontSize: 15, lineHeight: 1.65, maxWidth: 920 }}>
+              Reduce operational loss and manual reconciliation for crypto payment flows. Every confirmed payment can produce a public proof that can be
+              verified at <code>/verify/&lt;proofId&gt;</code>.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14, marginTop: 6 }}>
+            <div style={{ display: 'grid', gap: 8 }}>
+              <div className="pz-field-label">What you get</div>
+              <ul style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
+                <li>Public audit trail: proofs page + JSON verification</li>
+                <li>Webhook ordering + idempotency hardening</li>
+                <li>Settlement state with revert on refund events</li>
+              </ul>
+            </div>
+
+            <div style={{ display: 'grid', gap: 8 }}>
+              <div className="pz-field-label">Proofs</div>
+              <div style={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.65 }}>
+                Public proofs live at <Link href="/provas">/provas</Link>. A single proof can be verified at <code>/verify/&lt;proofId&gt;</code>.
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gap: 8 }}>
+              <div className="pz-field-label">Evidence</div>
+              <div style={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.65 }}>
+                Hardening suite: <strong>23/23</strong>. suiteRunId: <code>hardening_2026-02-04T23-45-27-845Z</code>.
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 2 }}>
+            <Link href="/enterprise-demo" className="pz-btn pz-btn-primary" style={{ textDecoration: 'none' }}>
+              Book a technical demo
+            </Link>
+            <Link href="/provas" className="pz-btn" style={{ textDecoration: 'none', opacity: 0.9 }}>
+              View public proofs
+            </Link>
+          </div>
+
+          <details style={{ marginTop: 4 }}>
+            <summary style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.88)', fontWeight: 700 }}>Developer entry (PPE)</summary>
+            <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.6, fontSize: 13 }}>
+              If you are integrating agent execution, go to <Link href="/ppe">/ppe</Link> to get an API key and test the pay-per-execution flow.
+            </div>
+          </details>
+        </section>
+      </div>
     </main>
   );
 }

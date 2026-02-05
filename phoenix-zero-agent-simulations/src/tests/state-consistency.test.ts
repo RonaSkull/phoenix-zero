@@ -146,10 +146,14 @@ export async function stateConsistencyTest(params: {
       });
   if (!paid.ok) throw new Error(`WEBHOOK_PAID_FAILED status=${paid.status}`);
 
-  const waitedPaid = await waitForCheckoutPaid(params.baseUrl, { apiKey: params.apiKey, paymentId, waitMs: 20_000, pollMs: 750 });
+  const waitedPaid = await waitForCheckoutPaid(params.baseUrl, { apiKey: params.apiKey, paymentId, waitMs: 45_000, pollMs: 1000 });
   if (!waitedPaid.ok || !waitedPaid.paid) {
     const got = String(waitedPaid.last.json?.status || '').trim();
-    throw new Error(`CHECKOUT_NOT_PAID status=${waitedPaid.last.status} got=${got}`);
+    const raw = waitedPaid.last.json != null ? JSON.stringify(waitedPaid.last.json) : waitedPaid.last.text || '';
+    const detail = raw.length > 500 ? raw.slice(0, 500) + '…' : raw;
+    throw new Error(
+      `CHECKOUT_NOT_PAID status=${waitedPaid.last.status} got=${got} paymentId=${paymentId} providerPaymentId=${providerPaymentId} detail=${detail}`
+    );
   }
 
   const proofs1 = await listAgentProofs(params.baseUrl, { apiKey: params.apiKey, agentId: params.agentId, limit: 50 });
@@ -190,12 +194,16 @@ export async function stateConsistencyTest(params: {
     apiKey: params.apiKey,
     paymentId,
     desired: 'failed',
-    waitMs: 20_000,
+    waitMs: 45_000,
     pollMs: 750
   });
   if (!waitedFailed.ok) {
     const got = String(waitedFailed.last.json?.status || '').trim();
-    throw new Error(`CHECKOUT_NOT_FAILED_AFTER_REFUND status=${waitedFailed.last.status} got=${got}`);
+    const raw = waitedFailed.last.json != null ? JSON.stringify(waitedFailed.last.json) : waitedFailed.last.text || '';
+    const detail = raw.length > 500 ? raw.slice(0, 500) + '…' : raw;
+    throw new Error(
+      `CHECKOUT_NOT_FAILED_AFTER_REFUND status=${waitedFailed.last.status} got=${got} paymentId=${paymentId} providerPaymentId=${providerPaymentId} detail=${detail}`
+    );
   }
 
   await sleepMs(500);

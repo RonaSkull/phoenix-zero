@@ -38,8 +38,8 @@ function canonicalNowPaymentsBody(body: any): string {
 }
 
 function safeEqHex(aHex: string, bHex: string): boolean {
-  const a = Buffer.from(String(aHex || '').trim(), 'utf8');
-  const b = Buffer.from(String(bHex || '').trim(), 'utf8');
+  const a = Buffer.from(String(aHex || '').trim().toLowerCase(), 'utf8');
+  const b = Buffer.from(String(bHex || '').trim().toLowerCase(), 'utf8');
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
@@ -79,7 +79,12 @@ export async function POST(req: Request) {
   }
 
   if (secret) {
-    const got = String(req.headers.get('x-nowpayments-sig') || '').trim();
+    const got = String(
+      req.headers.get('x-nowpayments-sig') ||
+        req.headers.get('x-nowpayments-signature') ||
+        req.headers.get('x-nowpayments-hmac') ||
+        ''
+    ).trim();
     const canonical = canonicalNowPaymentsBody(body);
     const expectedCanonical = canonical ? createHmac('sha512', secret).update(canonical, 'utf8').digest('hex') : '';
     const expectedRaw = createHmac('sha512', secret).update(raw, 'utf8').digest('hex');
