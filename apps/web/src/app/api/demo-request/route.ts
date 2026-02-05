@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 
 import { recordDemoRequest } from '../../../lib/demo-requests';
+import { fingerprintFromRequest } from '../../../lib/agent-fingerprint';
 import { getClientIp, rateLimitOk } from '../../../lib/rate-limit';
 
 export const runtime = 'nodejs';
@@ -19,6 +20,11 @@ function envInt(name: string, def: number): number {
   const n = Number(raw);
   if (!Number.isFinite(n)) return def;
   return Math.floor(n);
+}
+
+function clampInt(n: number, min: number, max: number): number {
+  if (!Number.isFinite(n)) return min;
+  return Math.max(min, Math.min(max, Math.trunc(n)));
 }
 
 function isValidEmail(email: string): boolean {
@@ -40,6 +46,9 @@ function sha256Hex(input: string): string {
 
 export async function POST(req: Request) {
   const ip = getClientIp(req);
+  const fp = fingerprintFromRequest(req);
+  const riskBlockRaw = String(process.env.PHOENIX_ZERO_PUBLIC_DEMO_REQUEST_RISK_BLOCK_THRESHOLD || '').trim();
+  const riskBlockThreshold = riskBlockRaw ? clampInt(envInt('PHOENIX_ZERO_PUBLIC_DEMO_REQUEST_RISK_BLOCK_THRESHOLD', 100), 0, 100) : null;
   const rpm = Math.max(1, envInt('PHOENIX_ZERO_PUBLIC_DEMO_REQUEST_RPM', 6));
   const rl = rateLimitOk({ key: `PHOENIX_ZERO_PUBLIC_DEMO_REQUEST_RPM:ip:${ip}`, rpm });
   if (!rl.ok) {
@@ -47,6 +56,16 @@ export async function POST(req: Request) {
       { ok: false, reasonCode: 'RATE_LIMITED', message: 'Rate limit exceeded' },
       { status: 429, headers: jsonUtf8Headers({ 'Retry-After': String(rl.retryAfterSeconds) }) }
     );
+  }
+
+  if (fp.fp) {
+    const rlFp = rateLimitOk({ key: `PHOENIX_ZERO_PUBLIC_DEMO_REQUEST_RPM:fp:${fp.fp}`, rpm });
+    if (!rlFp.ok) {
+      return Response.json(
+        { ok: false, reasonCode: 'RATE_LIMITED', message: 'Rate limit exceeded' },
+        { status: 429, headers: jsonUtf8Headers({ 'Retry-After': String(rlFp.retryAfterSeconds) }) }
+      );
+    }
   }
 
   const body = (await req.json().catch(() => null)) as
@@ -75,6 +94,14 @@ export async function POST(req: Request) {
   const monthlyVolume = String(body.monthlyVolume || '').trim();
   const message = String(body.message || '').trim();
   const source = String(body.source || '').trim();
+
+  const riskScore = clampInt(fp.agentScore + (country ? 0 : 6), 0, 100);
+  if (typeof riskBlockThreshold === 'number' && riskScore >= riskBlockThreshold) {
+    return Response.json(
+      { ok: false, reasonCode: 'RISK_BLOCKED', message: 'Request blocked by risk policy' },
+      { status: 403, headers: jsonUtf8Headers() }
+    );
+  }
 
   const missingFields: string[] = [];
   if (!name) missingFields.push('name');
@@ -112,13 +139,17 @@ export async function POST(req: Request) {
       message: message || undefined,
       source: source || undefined,
       ip,
-      userAgent: req.headers.get('user-agent') || undefined
+      userAgent: req.headers.get('user-agent') || undefined,
+      fpHash4: fp.fp ? sha256Hex(fp.fp).slice(0, 4) : undefined
     });
 
     console.log('[DEMO_REQUEST] created', {
       id: rec.id,
       company: safeTrunc(company, 80),
       emailHash4: sha256Hex(email.toLowerCase()).slice(0, 4),
+      agentScore: fp.agentScore,
+      riskScore,
+      fpHash4: fp.fp ? sha256Hex(fp.fp).slice(0, 4) : null,
       ip
     });
 

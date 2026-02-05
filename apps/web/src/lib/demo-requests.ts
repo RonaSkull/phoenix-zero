@@ -17,6 +17,7 @@ export type DemoRequestRecord = {
   source?: string;
   ip?: string;
   userAgent?: string;
+  fpHash4?: string;
 };
 
 type DemoRequestsDb = {
@@ -128,6 +129,7 @@ export async function recordDemoRequest(params: {
   source?: string;
   ip?: string;
   userAgent?: string;
+  fpHash4?: string;
 }): Promise<DemoRequestRecord> {
   const db = await loadDb();
 
@@ -145,7 +147,8 @@ export async function recordDemoRequest(params: {
     message: params.message ? safeTrunc(params.message, 2000) : undefined,
     source: params.source ? safeTrunc(params.source, 120) : undefined,
     ip: params.ip ? safeTrunc(params.ip, 80) : undefined,
-    userAgent: params.userAgent ? safeTrunc(params.userAgent, 240) : undefined
+    userAgent: params.userAgent ? safeTrunc(params.userAgent, 240) : undefined,
+    fpHash4: params.fpHash4 ? safeTrunc(params.fpHash4, 16) : undefined
   };
 
   db.requests[id] = rec;

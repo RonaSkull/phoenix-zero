@@ -2,6 +2,7 @@ import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import type { KycStatus } from './agent-fingerprint';
 import { postgresEnabled, readKvJson, writeKvJson } from './pg-kv';
 import { phoenixZeroTmpDir } from './tmp-dir';
 
@@ -12,9 +13,12 @@ export type TenantRecord = {
   createdAt: string;
   status: TenantStatus;
   name: string;
+  companyName?: string;
   clientType: string;
   sector: string;
   country: string;
+  walletAddress?: string;
+  kycStatus?: KycStatus;
   currency: string;
   pricingProfile: string;
   commissionProfile: string;
@@ -254,9 +258,12 @@ export async function resolveTenantByApiKey(apiKey: string): Promise<
 
 export async function createTenant(params: {
   name: string;
+  companyName?: string;
   clientType: string;
   sector: string;
   country: string;
+  walletAddress?: string;
+  kycStatus?: KycStatus;
   currency: string;
   pricingProfile: string;
   commissionProfile: string;
@@ -276,9 +283,12 @@ export async function createTenant(params: {
       createdAt: nowIso(),
       status: 'active',
       name: params.name,
+      companyName: params.companyName ? String(params.companyName || '').trim() || undefined : undefined,
       clientType: params.clientType,
       sector: params.sector,
       country: params.country,
+      walletAddress: params.walletAddress ? String(params.walletAddress || '').trim() || undefined : undefined,
+      kycStatus: params.kycStatus,
       currency: params.currency,
       pricingProfile: params.pricingProfile,
       commissionProfile: params.commissionProfile,

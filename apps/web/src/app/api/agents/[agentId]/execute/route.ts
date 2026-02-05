@@ -1,8 +1,11 @@
 import { verifyPhoenixZeroPayloadSignature } from '@phoenix-zero/core';
 
+import { createHash } from 'node:crypto';
+
+import { fingerprintFromRequest } from '../../../../../lib/agent-fingerprint';
 import { requireTenant } from '../../../../../lib/tenant-auth';
 import { checkPpoGate, executeWithPPOGateDecision, PpoGateBlockedError } from '../../../../../lib/ppo-gate';
-import { rateLimitTenantApi } from '../../../../../lib/rate-limit';
+import { rateLimitOk, rateLimitTenantApi } from '../../../../../lib/rate-limit';
 import { agentHasCapability, getAgentRecord } from '../../../../../lib/agent-registry';
 import { checkAndConsumeAgentGovernance } from '../../../../../lib/agent-governance';
 import { appendSemanticEvent } from '../../../../../lib/agent-semantic-ledger';
@@ -53,6 +56,15 @@ function envInt(name: string, def: number): number {
   return Math.floor(n);
 }
 
+function clampInt(n: number, min: number, max: number): number {
+  if (!Number.isFinite(n)) return min;
+  return Math.max(min, Math.min(max, Math.trunc(n)));
+}
+
+function sha256Hex(input: string): string {
+  return createHash('sha256').update(input, 'utf8').digest('hex');
+}
+
 function sovereignFailurePolicy(): 'on_success' | 'always' | 'refund' {
   const raw = String(process.env.PHOENIX_ZERO_SOVEREIGN_FAILURE_POLICY || '').trim().toLowerCase();
   if (raw === 'always') return 'always';
@@ -89,6 +101,19 @@ export async function POST(req: Request, ctx: { params: { agentId: string } }) {
 
     tenantIdForError = auth.ctx.tenantId;
 
+    const fp = fingerprintFromRequest(req);
+    const fpRpmRaw = String(process.env.PHOENIX_ZERO_PPE_EXECUTE_FP_RPM || '').trim();
+    const fpRpm = fpRpmRaw ? Math.max(0, Math.trunc(envInt('PHOENIX_ZERO_PPE_EXECUTE_FP_RPM', 0))) : 0;
+    if (fpRpm > 0 && fp.fp) {
+      const hit = rateLimitOk({ key: `PHOENIX_ZERO_PPE_EXECUTE_FP_RPM:fp:${fp.fp}`, rpm: fpRpm });
+      if (!hit.ok) {
+        return Response.json(
+          { ok: false, reason: 'Rate limit exceeded' },
+          { status: 429, headers: jsonUtf8Headers({ 'Retry-After': String(hit.retryAfterSeconds), 'Cache-Control': 'no-store' }) }
+        );
+      }
+    }
+
     const rl = rateLimitTenantApi({
       req,
       tenantId: auth.ctx.tenantId,
@@ -113,7 +138,23 @@ export async function POST(req: Request, ctx: { params: { agentId: string } }) {
 
     agentIdForError = agentId;
 
-    console.log('[AGENTS_EXECUTE] incoming', { tenantId: auth.ctx.tenantId, agentId });
+    const riskBlockRaw = String(process.env.PHOENIX_ZERO_PPE_EXECUTE_RISK_BLOCK_THRESHOLD || '').trim();
+    const riskBlockThreshold = riskBlockRaw
+      ? clampInt(envInt('PHOENIX_ZERO_PPE_EXECUTE_RISK_BLOCK_THRESHOLD', 100), 0, 100)
+      : null;
+    const tenantKyc = String((auth.ctx.tenant as any)?.kycStatus || 'none').trim().toLowerCase();
+    const riskScore = clampInt(fp.agentScore + (tenantKyc === 'none' ? 10 : 0), 0, 100);
+    if (typeof riskBlockThreshold === 'number' && riskScore >= riskBlockThreshold) {
+      return Response.json({ ok: false, reason: 'RISK_BLOCKED' }, { status: 403, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) });
+    }
+
+    console.log('[AGENTS_EXECUTE] incoming', {
+      tenantId: auth.ctx.tenantId,
+      agentId,
+      agentScore: fp.agentScore,
+      riskScore,
+      fpHash4: fp.fp ? sha256Hex(fp.fp).slice(0, 4) : null
+    });
 
     let body: ExecuteRequestBody | null = null;
     try {

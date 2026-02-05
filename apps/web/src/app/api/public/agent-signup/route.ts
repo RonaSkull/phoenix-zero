@@ -1,3 +1,6 @@
+import { createHash } from 'node:crypto';
+
+import { computeClientRiskScore, fingerprintFromRequest } from '../../../../lib/agent-fingerprint';
 import { createTenant } from '../../../../lib/tenants';
 import { getClientIp, rateLimitOk } from '../../../../lib/rate-limit';
 
@@ -19,8 +22,25 @@ function envInt(name: string, def: number): number {
   return Math.floor(n);
 }
 
+function sha256Hex(input: string): string {
+  return createHash('sha256').update(input, 'utf8').digest('hex');
+}
+
+function parseBlocklist(raw: string): Set<string> {
+  const out = new Set<string>();
+  const parts = String(raw || '')
+    .split(/[\s,;\n\r\t]+/g)
+    .map((p) => String(p || '').trim().toLowerCase())
+    .filter(Boolean);
+  for (const p of parts) out.add(p);
+  return out;
+}
+
 export async function POST(req: Request) {
   const ip = getClientIp(req);
+  const fp = fingerprintFromRequest(req);
+  const riskBlockRaw = String(process.env.PHOENIX_ZERO_PUBLIC_SIGNUP_RISK_BLOCK_THRESHOLD || '').trim();
+  const riskBlockThreshold = riskBlockRaw ? Math.max(0, Math.min(100, envInt('PHOENIX_ZERO_PUBLIC_SIGNUP_RISK_BLOCK_THRESHOLD', 100))) : null;
   const rpm = Math.max(1, envInt('PHOENIX_ZERO_PUBLIC_SIGNUP_RPM', 6));
   const rl = rateLimitOk({ key: `PHOENIX_ZERO_PUBLIC_SIGNUP_RPM:ip:${ip}`, rpm });
   if (!rl.ok) {
@@ -28,6 +48,16 @@ export async function POST(req: Request) {
       { ok: false, reasonCode: 'RATE_LIMITED', message: 'Rate limit exceeded' },
       { status: 429, headers: jsonUtf8Headers({ 'Retry-After': String(rl.retryAfterSeconds) }) }
     );
+  }
+
+  if (fp.fp) {
+    const rlFp = rateLimitOk({ key: `PHOENIX_ZERO_PUBLIC_SIGNUP_RPM:fp:${fp.fp}`, rpm });
+    if (!rlFp.ok) {
+      return Response.json(
+        { ok: false, reasonCode: 'RATE_LIMITED', message: 'Rate limit exceeded' },
+        { status: 429, headers: jsonUtf8Headers({ 'Retry-After': String(rlFp.retryAfterSeconds) }) }
+      );
+    }
   }
 
   const body = (await req.json().catch(() => null)) as
@@ -41,6 +71,9 @@ export async function POST(req: Request) {
         acceptsFixedPricing?: boolean;
         billingMode?: string;
         currency?: string;
+        company?: string;
+        country?: string;
+        walletAddress?: string;
       };
 
   if (!body || typeof body !== 'object') {
@@ -58,6 +91,36 @@ export async function POST(req: Request) {
   const acceptsFixedPricing = Boolean(body.acceptsFixedPricing);
   const billingMode = String(body.billingMode || '').trim();
   const currency = String(body.currency || 'USD').trim() || 'USD';
+  const company = String(body.company || '').trim();
+  const country = String(body.country || '').trim();
+  const walletAddress = String(body.walletAddress || '').trim();
+
+  const scamWalletsRaw = String(process.env.PHOENIX_ZERO_SCAM_WALLETS || '').trim();
+  if (walletAddress && scamWalletsRaw) {
+    const scamWallets = parseBlocklist(scamWalletsRaw);
+    if (scamWallets.has(walletAddress.trim().toLowerCase())) {
+      return Response.json(
+        { ok: false, reasonCode: 'SCAM_WALLET_BLOCKED', message: 'Wallet blocked by policy' },
+        { status: 403, headers: jsonUtf8Headers() }
+      );
+    }
+  }
+
+  const kycStatus: 'none' | 'light' = company || country || walletAddress ? 'light' : 'none';
+  const clientRiskScore = computeClientRiskScore({
+    agentScore: fp.agentScore,
+    kycStatus,
+    company: company || undefined,
+    country: country || undefined,
+    walletAddress: walletAddress || undefined
+  });
+
+  if (typeof riskBlockThreshold === 'number' && clientRiskScore >= riskBlockThreshold) {
+    return Response.json(
+      { ok: false, reasonCode: 'RISK_BLOCKED', message: 'Request blocked by risk policy' },
+      { status: 403, headers: jsonUtf8Headers() }
+    );
+  }
 
   const missingFields: string[] = [];
   if (!name) missingFields.push('name');
@@ -89,9 +152,12 @@ export async function POST(req: Request) {
   try {
     const created = await createTenant({
       name,
+      companyName: company || undefined,
       clientType: 'self_signup',
       sector: 'self_signup',
-      country: 'unknown',
+      country: country || 'unknown',
+      walletAddress: walletAddress || undefined,
+      kycStatus,
       currency,
       pricingProfile: 'default',
       commissionProfile: 'default',
@@ -108,11 +174,14 @@ export async function POST(req: Request) {
     console.log('[PUBLIC_SIGNUP] created', {
       tenantId: created.tenant.tenantId,
       name,
-      email: email.slice(0, 64),
+      emailHash4: sha256Hex(email.toLowerCase()).slice(0, 4),
       agentType: agentType.slice(0, 64),
       intendedUse: intendedUse.slice(0, 120),
       acceptsTermsVersion: acceptsTermsVersion.slice(0, 32),
       acceptsFixedPricing,
+      agentScore: fp.agentScore,
+      riskScore: clientRiskScore,
+      fpHash4: fp.fp ? sha256Hex(fp.fp).slice(0, 4) : null,
       ip
     });
 
@@ -124,8 +193,14 @@ export async function POST(req: Request) {
           apiKey: created.apiKey,
           profile: created.tenant.pricingProfile,
           limits: {
-            maxCheckoutsPerDay: envInt('PHOENIX_ZERO_PUBLIC_SIGNUP_MAX_CHECKOUTS_PER_DAY', 10),
-            maxAmountCents: envInt('PHOENIX_ZERO_PUBLIC_SIGNUP_MAX_AMOUNT_CENTS', 5000),
+            maxCheckoutsPerDay:
+              clientRiskScore >= 80
+                ? Math.max(1, Math.floor(envInt('PHOENIX_ZERO_PUBLIC_SIGNUP_MAX_CHECKOUTS_PER_DAY', 10) / 2))
+                : envInt('PHOENIX_ZERO_PUBLIC_SIGNUP_MAX_CHECKOUTS_PER_DAY', 10),
+            maxAmountCents:
+              clientRiskScore >= 80
+                ? Math.max(100, Math.floor(envInt('PHOENIX_ZERO_PUBLIC_SIGNUP_MAX_AMOUNT_CENTS', 5000) / 2))
+                : envInt('PHOENIX_ZERO_PUBLIC_SIGNUP_MAX_AMOUNT_CENTS', 5000),
             allowedOperations: ['protect_video']
           }
         },

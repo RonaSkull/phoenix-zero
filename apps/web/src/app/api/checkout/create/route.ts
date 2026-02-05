@@ -5,8 +5,9 @@ import { createPaymentIntent, getPaymentIntentById, quoteCheckoutAmount, type Ch
 import { agentHasCapability, getAgentRecord, upsertAgentRecord } from '../../../../lib/agent-registry';
 import { checkAndConsumeAgentGovernance } from '../../../../lib/agent-governance';
 import { appendSemanticEvent } from '../../../../lib/agent-semantic-ledger';
+import { fingerprintFromRequest } from '../../../../lib/agent-fingerprint';
 import { requireTenant } from '../../../../lib/tenant-auth';
-import { rateLimitTenantApi } from '../../../../lib/rate-limit';
+import { rateLimitOk, rateLimitTenantApi } from '../../../../lib/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -53,6 +54,19 @@ function envBoolDefault(name: string, defaultValue: boolean): boolean {
   return envBool(name);
 }
 
+function envInt0(name: string, def: number): number {
+  const raw = String(process.env[name] || '').trim();
+  if (!raw) return def;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return def;
+  return Math.max(0, Math.trunc(n));
+}
+
+function clampInt(n: number, min: number, max: number): number {
+  if (!Number.isFinite(n)) return min;
+  return Math.max(min, Math.min(max, Math.trunc(n)));
+}
+
 type CheckoutIdempotencyDecision =
   | { kind: 'create' }
   | { kind: 'in_progress' }
@@ -64,6 +78,18 @@ export async function POST(req: Request) {
   const auth = await requireTenant(req);
   if (!auth.ok) {
     return Response.json({ ok: false, reason: auth.reason }, { status: auth.status, headers: jsonUtf8Headers() });
+  }
+
+  const fp = fingerprintFromRequest(req);
+  const fpRpm = envInt0('PHOENIX_ZERO_PPE_CHECKOUT_CREATE_FP_RPM', 0);
+  if (fpRpm > 0 && fp.fp) {
+    const hit = rateLimitOk({ key: `PHOENIX_ZERO_PPE_CHECKOUT_CREATE_FP_RPM:fp:${fp.fp}`, rpm: fpRpm });
+    if (!hit.ok) {
+      return Response.json(
+        { ok: false, reason: 'Rate limit exceeded' },
+        { status: 429, headers: jsonUtf8Headers({ 'Retry-After': String(hit.retryAfterSeconds), 'Cache-Control': 'no-store' }) }
+      );
+    }
   }
 
   const rl = rateLimitTenantApi({
@@ -132,6 +158,17 @@ export async function POST(req: Request) {
 
   if (!Array.isArray(lineItems) || lineItems.length <= 0) {
     return Response.json({ ok: false, reason: 'Missing lineItems' }, { status: 400, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) });
+  }
+
+  const tenantKyc = String((auth.ctx.tenant as any)?.kycStatus || 'none').trim().toLowerCase();
+  const riskBlockRaw = String(process.env.PHOENIX_ZERO_PPE_CHECKOUT_CREATE_RISK_BLOCK_THRESHOLD || '').trim();
+  const riskBlockThreshold = riskBlockRaw ? clampInt(envInt0('PHOENIX_ZERO_PPE_CHECKOUT_CREATE_RISK_BLOCK_THRESHOLD', 100), 0, 100) : null;
+  const riskScore = clampInt(fp.agentScore + (tenantKyc === 'none' ? 10 : 0) + (lineItems.length > 8 ? 10 : 0), 0, 100);
+  if (typeof riskBlockThreshold === 'number' && riskScore >= riskBlockThreshold) {
+    return Response.json(
+      { ok: false, reasonCode: 'RISK_BLOCKED', reason: 'RISK_BLOCKED' },
+      { status: 403, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
+    );
   }
 
   const missingProofMetaFields: string[] = [];
