@@ -16,6 +16,9 @@ export default function HomePage() {
           <Link href="/enterprise-demo" className="pz-btn" style={{ textDecoration: 'none' }}>
             Enterprise Demo
           </Link>
+          <Link href="/demo" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none', opacity: 0.85 }}>
+            Demo
+          </Link>
           <Link href="/provas" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none' }}>
             Proofs
           </Link>

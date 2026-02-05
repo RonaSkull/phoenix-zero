@@ -1,3 +1,5 @@
+import DemoRequestForm from './DemoRequestForm';
+
 export default function DemoPage() {
   return (
     <main style={{ maxWidth: 920 }}>
@@ -27,6 +29,8 @@ export default function DemoPage() {
           </p>
         </div>
       </section>
+
+      <DemoRequestForm />
 
       <section style={{ marginTop: 16, padding: 16, border: '1px solid #ddd', borderRadius: 12 }}>
         <p>
