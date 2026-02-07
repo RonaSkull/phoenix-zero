@@ -15,7 +15,7 @@ export default function PpeLandingPage() {
 
       <div className="pz-container" style={{ paddingTop: 14, paddingBottom: 18 }}>
         <div className="pz-topline">
-          <div className="pz-kicker">Phoenix Zero</div>
+          <div className="pz-kicker">Phoenix ZerØ</div>
           <div className="pz-rule" />
         </div>
 
@@ -44,7 +44,7 @@ export default function PpeLandingPage() {
               <div className="pz-field-label">How it works</div>
               <ol style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
                 <li>Request an execution via API</li>
-                <li>A payment link is generated (PIX / crypto, beta)</li>
+                <li>A crypto payment link is generated</li>
                 <li>Execution runs after confirmation</li>
                 <li>Receive result + receipt/proof</li>
               </ol>
@@ -92,8 +92,8 @@ export default function PpeLandingPage() {
   -H "x-api-key: YOUR_API_KEY" \
   -H "x-idempotency-key: YOUR_REQUEST_KEY" \
   -d '{
-    "currency":"BRL",
-    "providerHint":"pix",
+    "currency":"USD",
+    "providerHint":"crypto",
     "lineItems":[{"operation":"protect_video","units":1}],
     "proofMeta":{
       "agentId":"ag_demo",

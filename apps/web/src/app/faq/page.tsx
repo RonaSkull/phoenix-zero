@@ -11,7 +11,7 @@ export default function FAQPage() {
 
       <div className="pz-container" style={{ paddingTop: 14, paddingBottom: 18 }}>
         <div className="pz-topline">
-          <div className="pz-kicker">Phoenix Zero</div>
+          <div className="pz-kicker">Phoenix ZerØ</div>
           <div className="pz-rule" />
         </div>
 
@@ -135,21 +135,21 @@ export default function FAQPage() {
 
             <details>
               <summary style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.88)', fontWeight: 800 }}>
-                What is “hardening 23/23”?
-              </summary>
-              <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, fontSize: 13 }}>
-                It is an automated test suite that checks webhook ordering, idempotency, and proof/settlement invariants.
-                We publish the latest suite run ID on the homepage.
-              </div>
-            </details>
-
-            <details>
-              <summary style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.88)', fontWeight: 800 }}>
                 What do you mean by “proof-first” and “ethical messaging”?
               </summary>
               <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, fontSize: 13 }}>
                 We avoid claims we cannot prove (e.g. blanket ROI statements). Instead, we publish verifiable artifacts:
                 proof URLs, public JSON, hardening coverage, and deterministic hashes.
+              </div>
+            </details>
+
+            <details>
+              <summary style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.88)', fontWeight: 800 }}>
+                What is “hardening 23/23”?
+              </summary>
+              <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, fontSize: 13 }}>
+                It is an automated test suite that checks webhook ordering, idempotency, and proof/settlement invariants. See <Link href="/hardening">/hardening</Link>
+                for the detailed test list.
               </div>
             </details>
 

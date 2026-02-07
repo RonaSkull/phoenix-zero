@@ -40,7 +40,14 @@ export default async function HomePage() {
   const raw = await listPaymentProofs({ status: 'paid_confirmed', limit: 8 });
   const proofs = raw
     .map((p) => toPublicGuaranteeProof(p))
-    .filter(Boolean)
+    .filter((p) => {
+      if (!p) return false;
+      const provider = String((p as any).payment?.provider || '').toLowerCase();
+      const currency = String((p as any).payment?.currency || '').toUpperCase();
+      if (provider === 'pix') return false;
+      if (currency === 'BRL') return false;
+      return true;
+    })
     .slice(0, 2);
 
   return (
@@ -50,7 +57,7 @@ export default async function HomePage() {
 
       <div className="pz-container" style={{ paddingTop: 14, paddingBottom: 18 }}>
         <div className="pz-topline">
-          <div className="pz-kicker">Phoenix Zero</div>
+          <div className="pz-kicker">Phoenix ZerØ</div>
           <div className="pz-rule" />
         </div>
 
@@ -121,10 +128,18 @@ export default async function HomePage() {
           </div>
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-            <div
+            <Link
+              href="/hardening"
               style={{
-                display: 'inline-flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 14,
-                border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(0,0,0,0.25)'
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '10px 12px',
+                borderRadius: 14,
+                border: '1px solid rgba(255,255,255,0.14)',
+                background: 'rgba(0,0,0,0.25)',
+                textDecoration: 'none',
+                color: 'inherit'
               }}
             >
               <div style={{ width: 10, height: 10, borderRadius: 999, background: '#22c55e' }} />
@@ -134,7 +149,7 @@ export default async function HomePage() {
                   suiteRunId: <code>hardening_2026-02-04T23-45-27-845Z</code>
                 </div>
               </div>
-            </div>
+            </Link>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12, marginTop: 8 }}>
@@ -172,7 +187,7 @@ export default async function HomePage() {
             <div style={{ display: 'grid', gap: 8, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
               <div className="pz-field-label">Evidence</div>
               <div style={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.65 }}>
-                Hardening suite: <strong>23/23</strong>. suiteRunId: <code>hardening_2026-02-04T23-45-27-845Z</code>.
+                Hardening suite: <strong>23/23</strong>. suiteRunId: <code>hardening_2026-02-04T23-45-27-845Z</code>. <Link href="/hardening">See test list</Link>.
               </div>
             </div>
           </div>
@@ -275,18 +290,7 @@ export default async function HomePage() {
             <Link href="/faq" className="pz-btn" style={{ textDecoration: 'none', opacity: 0.9 }}>
               Enterprise FAQ
             </Link>
-            <Link href="/ppe/signup" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none', opacity: 0.9 }}>
-              Get API Key
-            </Link>
           </div>
-
-          <details style={{ marginTop: 4 }}>
-            <summary style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.88)', fontWeight: 700 }}>Technical sandbox (PPE)</summary>
-            <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.6, fontSize: 13 }}>
-              If you are integrating agent execution, go to <Link href="/ppe/signup">/ppe/signup</Link> to get an API key and test the pay-per-execution
-              flow.
-            </div>
-          </details>
         </section>
       </div>
     </main>

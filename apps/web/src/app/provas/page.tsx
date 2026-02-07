@@ -35,7 +35,16 @@ function formatAmountMinorForDisplay(amountMinor: number, currency: string): str
 
 export default async function ProvasPage() {
   const raw = await listPaymentProofs({ status: 'paid_confirmed', limit: 20 });
-  const proofs = raw.map((p) => toPublicGuaranteeProof(p)).filter(Boolean);
+  const proofs = raw
+    .map((p) => toPublicGuaranteeProof(p))
+    .filter((p) => {
+      if (!p) return false;
+      const provider = String((p as any).payment?.provider || '').toLowerCase();
+      const currency = String((p as any).payment?.currency || '').toUpperCase();
+      if (provider === 'pix') return false;
+      if (currency === 'BRL') return false;
+      return true;
+    });
 
   return (
     <main
@@ -51,7 +60,7 @@ export default async function ProvasPage() {
 
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div>
-          <div style={{ fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.7 }}>Phoenix Zero</div>
+          <div style={{ fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.7 }}>Phoenix ZerØ</div>
           <h1 style={{ margin: '6px 0 0 0', fontSize: 22 }}>Public Proofs</h1>
         </div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
