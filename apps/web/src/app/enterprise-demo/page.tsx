@@ -27,23 +27,23 @@ export default function EnterpriseDemoPage() {
         </div>
 
         <p style={{ marginTop: 10, marginBottom: 14, color: 'rgba(255,255,255,0.72)', fontSize: 14, lineHeight: 1.6, maxWidth: 920 }}>
-          Para um piloto enterprise, a demo é uma call técnica curta. Você traz um fluxo real, a gente valida integração e mostra prova pública
-          verificável por transação (ex: <code>/provas</code> e <code>/verify/&lt;proofId&gt;</code>).
+          For an enterprise pilot, we run a short technical call. You bring a real flow, we validate integration, and we show a public proof per
+          confirmed transaction (e.g. <code>/proofs</code> and <code>/verify/&lt;proofId&gt;</code>).
         </p>
 
         <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '0 auto', display: 'grid', gap: 12 }}>
           <div style={{ display: 'grid', gap: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.65 }}>
             <div>
-              <div className="pz-field-label">Envie no e-mail</div>
+              <div className="pz-field-label">Send by email</div>
               <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.75 }}>
-                <li>Volume mensal (USDC) e número de transações</li>
-                <li>Provider atual (ex: NowPayments) e blockchains envolvidas</li>
-                <li>Formato do seu ledger / reconciliação hoje</li>
+                <li>Monthly volume (USDC) and number of transactions</li>
+                <li>Current provider and settlement chains</li>
+                <li>Your current ledger/reconciliation format</li>
               </ul>
             </div>
 
             <div>
-              <div className="pz-field-label">Contato</div>
+              <div className="pz-field-label">Contact</div>
               <div style={{ marginTop: 6 }}>
                 <a href="mailto:partnerships@phoenix-zero.com" style={{ color: 'rgba(255,255,255,0.92)' }}>
                   partnerships@phoenix-zero.com
@@ -52,7 +52,7 @@ export default function EnterpriseDemoPage() {
             </div>
 
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 4 }}>
-              <Link href="/provas" className="pz-btn" style={{ textDecoration: 'none' }}>
+              <Link href="/proofs" className="pz-btn" style={{ textDecoration: 'none' }}>
                 View proofs
               </Link>
               <Link href="/ppe" className="pz-btn" style={{ textDecoration: 'none', opacity: 0.85 }}>

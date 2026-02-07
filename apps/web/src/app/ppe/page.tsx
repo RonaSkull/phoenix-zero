@@ -65,7 +65,7 @@ export default function PpeLandingPage() {
             <Link href="/ppe/signup" className="pz-btn" style={{ textDecoration: 'none' }}>
               Get an API key
             </Link>
-            <Link href="/provas" className="pz-btn" style={{ textDecoration: 'none', opacity: 0.85 }}>
+            <Link href="/proofs" className="pz-btn" style={{ textDecoration: 'none', opacity: 0.85 }}>
               View proofs
             </Link>
           </div>

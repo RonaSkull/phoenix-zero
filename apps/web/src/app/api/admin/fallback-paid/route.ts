@@ -134,7 +134,7 @@ export async function POST(req: Request) {
     tenantId,
     pricingProfileId: 'default',
     currency,
-    providerHint: 'card',
+    providerHint: 'crypto',
     lineItems,
     proofMeta: {
       agentId,

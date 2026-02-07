@@ -1,4 +1,5 @@
 const webpack = require('webpack');
+const isWindows = process.platform === 'win32';
 
 module.exports = (phase) => {
   return {
@@ -8,7 +9,7 @@ module.exports = (phase) => {
     },
     allowedDevOrigins: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5173'],
     transpilePackages: ['@phoenix-zero/core'],
-    distDir: '.next',
+    distDir: isWindows ? '.next-win' : '.next',
     async headers() {
       return [
         {
