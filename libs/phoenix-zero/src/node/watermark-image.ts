@@ -1,6 +1,5 @@
 import { createRequire } from 'node:module';
 import { resolve as resolvePath } from 'node:path';
-import { pathToFileURL } from 'node:url';
 
 import { base64UrlToBytes, bytesToBase64Url } from '../core';
 
@@ -223,7 +222,7 @@ async function getSharp(): Promise<any> {
     let lastErr: unknown;
     for (const ref of candidates) {
       try {
-        const req = createRequire(pathToFileURL(ref));
+        const req = createRequire(ref);
         const mod = req('sharp');
         return (mod as any).default ?? mod;
       } catch (e) {
