@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { HARDENING_SUITE_RUN_ID } from '../../lib/hardening-report';
+import { HARDENING_REPORT_LAST_UPDATED_ISO, HARDENING_SUITE_RUN_ID, hardeningReportHashSha3_256 } from '../../lib/hardening-report';
 
 export const metadata = {
   robots: {
@@ -11,6 +11,7 @@ export const metadata = {
 
 export default function EnterpriseDemoPage() {
   const hardeningReportHref = `/hardening/report/${encodeURIComponent(HARDENING_SUITE_RUN_ID)}`;
+  const reportHash = hardeningReportHashSha3_256();
 
   return (
     <main className="pz-shell pz-shell--mono pz-shell--scroll">
@@ -35,27 +36,52 @@ export default function EnterpriseDemoPage() {
           confirmed transaction (e.g. <code>/proofs</code> and <code>/verify/&lt;proofId&gt;</code>).
         </p>
 
-        <div style={{ marginTop: 10, marginBottom: 14, color: 'rgba(255,255,255,0.78)', fontSize: 13, lineHeight: 1.7, maxWidth: 980 }}>
-          <div>
-            ✅ Hardening: 23/23 tests passed (suiteRunId: <code>{HARDENING_SUITE_RUN_ID}</code>) —{' '}
-            <Link href="/hardening">/hardening</Link> —{' '}
-            <Link href={hardeningReportHref}>{hardeningReportHref}</Link>
+        <section
+          className="pz-card-flat"
+          style={{ maxWidth: 980, width: '100%', margin: '0 auto 14px auto', display: 'grid', gap: 10, padding: 12 }}
+        >
+          <div style={{ display: 'grid', gap: 8, color: 'rgba(255,255,255,0.78)', lineHeight: 1.65, fontSize: 13 }}>
+            <div style={{ fontWeight: 900, color: 'rgba(255,255,255,0.92)' }}>Verifiable technical facts</div>
+            <div>
+              Hardening: <strong>23/23</strong> passed — suiteRunId: <code>{HARDENING_SUITE_RUN_ID}</code>
+            </div>
+            <div>
+              Canonical report JSON: <Link href={hardeningReportHref}>{hardeningReportHref}</Link>
+            </div>
+            <div>
+              Report hash (SHA3-256): <code>{reportHash}</code>
+            </div>
+            <div>
+              Last updated: <code>{HARDENING_REPORT_LAST_UPDATED_ISO}</code>
+            </div>
+            <div>
+              Webhooks (NowPayments): signature validated via <code>x-nowpayments-sig</code> (HMAC-SHA512)
+            </div>
+            <div>SLA: 99.95% uptime (30-day history)</div>
+            <div>Wind-down: 90 days migration + full ledger export</div>
           </div>
-          <div>
-            ✅ Webhooks: signature validated (HMAC-SHA512) via header <code>x-nowpayments-sig</code>
+
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 4 }}>
+            <Link href="/proofs" className="pz-btn" style={{ textDecoration: 'none' }}>
+              View proofs
+            </Link>
+            <Link href="/hardening" className="pz-btn" style={{ textDecoration: 'none', opacity: 0.9 }}>
+              View hardening
+            </Link>
+            <Link href="/ppe" className="pz-btn" style={{ textDecoration: 'none', opacity: 0.85 }}>
+              AI agents (PPE)
+            </Link>
           </div>
-          <div>✅ SLA: 99.95% uptime (30-day history)</div>
-          <div>✅ Wind-down: 90 days migration + full ledger export</div>
-        </div>
+        </section>
 
         <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '0 auto', display: 'grid', gap: 12 }}>
           <div style={{ display: 'grid', gap: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.65 }}>
             <div>
-              <div className="pz-field-label">Send by email</div>
+              <div className="pz-field-label">Bring your real flow</div>
               <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.75 }}>
-                <li>Monthly volume (USDC) and number of transactions</li>
-                <li>Current provider and settlement chains</li>
-                <li>Your current ledger/reconciliation format</li>
+                <li>One end-to-end reconciliation case you care about</li>
+                <li>Your settlement chain(s) and provider(s)</li>
+                <li>What you want the public proof to attest</li>
               </ul>
             </div>
 
@@ -66,15 +92,6 @@ export default function EnterpriseDemoPage() {
                   partnerships@phoenix-zero.com
                 </a>
               </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 4 }}>
-              <Link href="/proofs" className="pz-btn" style={{ textDecoration: 'none' }}>
-                View proofs
-              </Link>
-              <Link href="/ppe" className="pz-btn" style={{ textDecoration: 'none', opacity: 0.85 }}>
-                AI agents (PPE)
-              </Link>
             </div>
           </div>
         </section>
