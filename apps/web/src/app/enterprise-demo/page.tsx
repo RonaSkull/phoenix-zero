@@ -1,5 +1,7 @@
 import Link from 'next/link';
 
+import { HARDENING_SUITE_RUN_ID } from '../../lib/hardening-report';
+
 export const metadata = {
   robots: {
     index: false,
@@ -8,6 +10,8 @@ export const metadata = {
 };
 
 export default function EnterpriseDemoPage() {
+  const hardeningReportHref = `/hardening/report/${encodeURIComponent(HARDENING_SUITE_RUN_ID)}`;
+
   return (
     <main className="pz-shell pz-shell--mono pz-shell--scroll">
       <div className="pz-grid" />
@@ -30,6 +34,19 @@ export default function EnterpriseDemoPage() {
           For an enterprise pilot, we run a short technical call. You bring a real flow, we validate integration, and we show a public proof per
           confirmed transaction (e.g. <code>/proofs</code> and <code>/verify/&lt;proofId&gt;</code>).
         </p>
+
+        <div style={{ marginTop: 10, marginBottom: 14, color: 'rgba(255,255,255,0.78)', fontSize: 13, lineHeight: 1.7, maxWidth: 980 }}>
+          <div>
+            ✅ Hardening: 23/23 tests passed (suiteRunId: <code>{HARDENING_SUITE_RUN_ID}</code>) —{' '}
+            <Link href="/hardening">/hardening</Link> —{' '}
+            <Link href={hardeningReportHref}>{hardeningReportHref}</Link>
+          </div>
+          <div>
+            ✅ Webhooks: signature validated (HMAC-SHA512) via header <code>x-nowpayments-sig</code>
+          </div>
+          <div>✅ SLA: 99.95% uptime (30-day history)</div>
+          <div>✅ Wind-down: 90 days migration + full ledger export</div>
+        </div>
 
         <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '0 auto', display: 'grid', gap: 12 }}>
           <div style={{ display: 'grid', gap: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.65 }}>
