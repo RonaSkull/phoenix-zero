@@ -12,20 +12,12 @@
     el.setAttribute('href', '#');
     el.setAttribute('target', '_blank');
     el.setAttribute('rel', 'noreferrer');
-    el.style.display = 'inline-flex';
-    el.style.alignItems = 'center';
-    el.style.justifyContent = 'center';
-    el.style.gap = '8px';
     el.style.padding = '10px 12px';
-    el.style.borderRadius = '9999px';
-    el.style.fontFamily = 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
-    el.style.fontSize = '14px';
-    el.style.fontWeight = '600';
-    el.style.textDecoration = 'none';
+    el.style.borderRadius = '12px';
     el.style.border = '1px solid rgba(0,0,0,0.12)';
     el.style.background = '#f3f4f6';
     el.style.color = '#111827';
-    el.textContent = 'Phoenix Zero — verificando…';
+    el.textContent = text;
     return el;
   }
 
@@ -78,7 +70,7 @@
     hostEl.appendChild(badge);
 
     if (!videoUrl || !proofUrl) {
-      badge.textContent = 'Phoenix Zero — faltam URLs';
+      badge.textContent = 'Phoenix ZerØ — faltam URLs';
       setBadgeState(badge, 'not_verified');
       return;
     }
@@ -97,12 +89,12 @@
       });
 
       if (!json || json.ok !== true) {
-        badge.textContent = 'Phoenix Zero — não verificado';
+        badge.textContent = 'Phoenix ZerØ — não verificado';
         setBadgeState(badge, 'not_verified');
         return;
       }
 
-      var title = typeof json.title === 'string' ? json.title : 'Phoenix Zero';
+      var title = typeof json.title === 'string' ? json.title : 'Phoenix ZerØ';
       var hint = typeof json.hint === 'string' ? json.hint : '';
       var decision = typeof json.decision === 'string' ? json.decision : '';
       var shareUrl = typeof json.shareUrl === 'string' ? json.shareUrl : '';
@@ -120,7 +112,7 @@
         setBadgeState(badge, 'not_verified');
       }
     } catch {
-      badge.textContent = 'Phoenix Zero — erro';
+      badge.textContent = 'Phoenix ZerØ — erro';
       setBadgeState(badge, 'not_verified');
     }
   }

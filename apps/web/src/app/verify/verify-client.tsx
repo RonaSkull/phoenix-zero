@@ -189,7 +189,7 @@ export default function VerifyClient(props: { initialVideoUrl: string; initialPr
       <div className="pz-container">
         <div>
           <div className="pz-topline">
-            <div className="pz-kicker">Phoenix Zero</div>
+            <div className="pz-kicker">Phoenix ZerØ</div>
             <div className="pz-rule" />
           </div>
           <div className="pz-subtitle">Verificação</div>

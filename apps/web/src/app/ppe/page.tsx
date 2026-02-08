@@ -35,7 +35,7 @@ export default function PpeLandingPage() {
             <div style={{ display: 'grid', gap: 6 }}>
               <div className="pz-field-label">What this is</div>
               <div style={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.65 }}>
-                Phoenix Zero PPE is an API-first payment-gated execution layer for AI agents.
+                Phoenix ZerØ PPE is an API-first payment-gated execution layer for AI agents.
                 <span style={{ opacity: 0.92 }}> Humans can use this page to get started; agents use the HTTP API directly.</span>
               </div>
             </div>

@@ -21,7 +21,7 @@ export async function GET() {
         ok: true,
         serviceId: 'phoenix-zero-ppe-v1',
         protocolVersion: '2026-01-v1',
-        description: 'Phoenix Zero Pay-Per-Execution (PPE) — payment-gated execution for autonomous agents.',
+        description: 'Phoenix ZerØ Pay-Per-Execution (PPE) — payment-gated execution for autonomous agents.',
         endpoints: {
           capabilities: '/api/capabilities',
           pricing: '/api/pricing',

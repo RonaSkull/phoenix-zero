@@ -104,7 +104,7 @@ export default function PpeSignupPage() {
 
       <div className="pz-container" style={{ paddingTop: 14, paddingBottom: 18 }}>
         <div className="pz-topline">
-          <div className="pz-kicker">Phoenix Zero</div>
+          <div className="pz-kicker">Phoenix ZerØ</div>
           <div className="pz-rule" />
         </div>
 

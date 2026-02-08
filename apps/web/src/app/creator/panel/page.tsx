@@ -173,7 +173,7 @@ export default function CreatorPanelPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
           <div>
             <div className="pz-topline">
-              <div className="pz-kicker">Phoenix Zero</div>
+              <div className="pz-kicker">Phoenix ZerØ</div>
               <div className="pz-rule" />
             </div>
             <div className="pz-subtitle">Conteúdo publicado</div>

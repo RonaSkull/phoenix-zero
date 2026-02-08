@@ -24,13 +24,13 @@ export async function generateMetadata(props: { params: { id: string } }) {
   const rec = await getShareLink(id);
   if (!rec) {
     return {
-      title: 'Phoenix Zero — Link inválido',
+      title: 'Phoenix ZerØ — Link inválido',
       robots: { index: false, follow: false }
     };
   }
 
   const cache = rec.cache;
-  const title = cache?.title || 'Phoenix Zero — Verificação';
+  const title = cache?.title || 'Phoenix ZerØ — Verificação';
   const description = cache?.hint || 'Verificação automática de autenticidade.';
 
   const base = getPublicBaseUrl(requestBaseUrl());
@@ -49,7 +49,7 @@ export async function generateMetadata(props: { params: { id: string } }) {
     openGraph: {
       url: canonical,
       type: 'website',
-      siteName: 'Phoenix Zero',
+      siteName: 'Phoenix ZerØ',
       title,
       description,
       images: [

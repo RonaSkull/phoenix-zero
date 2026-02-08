@@ -879,7 +879,7 @@ export async function createPaymentIntent(params: {
           tenantId,
           tenantName: tenant.name,
           amountCents: amountCentsForCharge,
-          description: `Phoenix Zero payment ${id}`,
+          description: `Phoenix ZerØ payment ${id}`,
           externalReference: id
         });
         if (!asaas.ok) return { ok: false, reason: asaas.reason };
@@ -908,12 +908,13 @@ export async function createPaymentIntent(params: {
         instructions = 'Simulated provider ok (no webhook expected)';
       } else {
 
+        const amountCentsForCharge = Math.trunc(amountCents);
         const invoice = await createNowPaymentsInvoice({
-          priceAmount: computed.amountCents / 100,
+          priceAmount: Number((amountCentsForCharge / 100).toFixed(2)),
           priceCurrency: currency,
           payCurrency: nowPaymentsPayCurrency(),
           orderId: id,
-          orderDescription: `Phoenix Zero payment ${id}`
+          orderDescription: `Phoenix ZerØ payment ${id}`
         });
         if (!invoice.ok) return { ok: false, reason: invoice.reason };
         providerPaymentId = invoice.providerPaymentId;

@@ -31,7 +31,7 @@ export async function GET(req: Request) {
   <text x="60" y="170" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="700" fill="#ffffff">${title}</text>
   <text x="60" y="250" font-family="Arial, Helvetica, sans-serif" font-size="30" fill="#ffffff" opacity="0.95">${hint}</text>
   <text x="60" y="560" font-family="Arial, Helvetica, sans-serif" font-size="26" fill="#ffffff" opacity="0.9">${creator}</text>
-  <text x="60" y="610" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="#ffffff" opacity="0.75">Phoenix Zero</text>
+  <text x="60" y="610" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="#ffffff" opacity="0.75">Phoenix ZerØ</text>
 </svg>`;
 
   return new Response(svg, {

@@ -104,7 +104,7 @@ export async function POST(req: Request) {
   let reply = '';
   if (/^\/start\b/i.test(text) || !text) {
     reply = [
-      'Phoenix Zero — Bot',
+      'Phoenix ZerØ — Bot',
       '',
       `Seu telegramChatId: ${chatId}`,
       '',

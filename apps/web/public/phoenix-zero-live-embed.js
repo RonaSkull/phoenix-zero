@@ -12,20 +12,12 @@
     el.setAttribute('href', '#');
     el.setAttribute('target', '_blank');
     el.setAttribute('rel', 'noreferrer');
-    el.style.display = 'inline-flex';
-    el.style.alignItems = 'center';
-    el.style.justifyContent = 'center';
-    el.style.gap = '8px';
     el.style.padding = '10px 12px';
-    el.style.borderRadius = '9999px';
-    el.style.fontFamily = 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
-    el.style.fontSize = '14px';
-    el.style.fontWeight = '600';
-    el.style.textDecoration = 'none';
+    el.style.borderRadius = '12px';
     el.style.border = '1px solid rgba(0,0,0,0.12)';
     el.style.background = '#fef3c7';
     el.style.color = '#78350f';
-    el.textContent = 'Phoenix Zero Live — verificando…';
+    el.textContent = text;
     return el;
   }
 
@@ -76,7 +68,7 @@
     hostEl.appendChild(badge);
 
     if (!jobId) {
-      badge.textContent = 'Phoenix Zero Live — falta jobId';
+      badge.textContent = 'Phoenix ZerØ Live — falta jobId';
       setBadgeState(badge, 'not_verified');
       return;
     }
@@ -90,12 +82,12 @@
       });
 
       if (!json || json.ok !== true) {
-        badge.textContent = 'Phoenix Zero Live — não verificado';
+        badge.textContent = 'Phoenix ZerØ Live — não verificado';
         setBadgeState(badge, 'not_verified');
         return;
       }
 
-      var title = typeof json.title === 'string' ? json.title : 'Phoenix Zero Live';
+      var title = typeof json.title === 'string' ? json.title : 'Phoenix ZerØ Live';
       var hint = typeof json.hint === 'string' ? json.hint : '';
       var decision = typeof json.decision === 'string' ? json.decision : '';
       var shareUrl = typeof json.shareUrl === 'string' ? json.shareUrl : '';
@@ -117,7 +109,7 @@
         setBadgeState(badge, 'not_verified');
       }
     } catch {
-      badge.textContent = 'Phoenix Zero Live — erro';
+      badge.textContent = 'Phoenix ZerØ Live — erro';
       setBadgeState(badge, 'not_verified');
     }
   }

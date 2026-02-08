@@ -20,7 +20,7 @@ export default function GlobalLandingPage() {
 
   return (
     <main style={{ maxWidth: 980 }}>
-      <h1>Phoenix Zero — Escala Global (sem plataformas)</h1>
+      <h1>Phoenix ZerØ — Escala Global (sem plataformas)</h1>
 
       <section style={box}>
         <h2 style={{ marginTop: 0 }}>O que é</h2>

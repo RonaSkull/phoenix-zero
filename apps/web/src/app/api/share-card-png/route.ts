@@ -61,7 +61,7 @@ export async function GET(req: Request) {
         'div',
         { style: { display: 'flex', flexDirection: 'column', gap: '8px' } },
         React.createElement('div', { style: { display: 'flex', fontSize: 26, opacity: 0.9 } }, creator),
-        React.createElement('div', { style: { display: 'flex', fontSize: 22, opacity: 0.75 } }, 'Phoenix Zero')
+        React.createElement('div', { style: { display: 'flex', fontSize: 22, opacity: 0.75 } }, 'Phoenix ZerØ')
       )
     );
 

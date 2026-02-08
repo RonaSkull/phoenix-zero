@@ -1,4 +1,3 @@
-import { createRequire } from 'node:module';
 import { resolve as resolvePath } from 'node:path';
 
 import { base64UrlToBytes, bytesToBase64Url } from '../core';
@@ -212,25 +211,8 @@ async function getSharp(): Promise<any> {
   try {
     const mod = (await import('sharp')) as unknown as { default?: unknown };
     return (mod as any).default ?? mod;
-  } catch {
-    // Fallback for monorepo installs where sharp lives under apps/web/node_modules.
-    const candidates = [
-      resolvePath(process.cwd(), 'apps', 'web', 'package.json'),
-      resolvePath(process.cwd(), 'package.json')
-    ];
-
-    let lastErr: unknown;
-    for (const ref of candidates) {
-      try {
-        const req = createRequire(ref);
-        const mod = req('sharp');
-        return (mod as any).default ?? mod;
-      } catch (e) {
-        lastErr = e;
-      }
-    }
-
-    const msg = lastErr instanceof Error ? lastErr.message : 'Unknown error';
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Unknown error';
     throw new Error(`watermark-image: cannot load sharp: ${msg}`);
   }
 }

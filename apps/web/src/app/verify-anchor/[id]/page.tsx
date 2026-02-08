@@ -186,7 +186,7 @@ export default async function VerifyAnchorPage(props: {
             >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
               <div>
-                <div style={{ fontSize: 13, color: '#B9C3D6', fontWeight: 700, letterSpacing: 0.2 }}>Phoenix Zero</div>
+                <div style={{ fontSize: 13, color: '#B9C3D6', fontWeight: 700, letterSpacing: 0.2 }}>Phoenix ZerØ</div>
                 <div style={{ marginTop: 6, fontSize: 22, fontWeight: 900, letterSpacing: 0.2 }}>{ui.title}</div>
               </div>
               <div

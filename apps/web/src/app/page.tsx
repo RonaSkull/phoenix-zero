@@ -48,7 +48,7 @@ export default async function HomePage() {
       if (currency === 'BRL') return false;
       return true;
     })
-    .slice(0, 2);
+    .slice(0, 1);
 
   return (
     <main className="pz-shell pz-shell--mono pz-shell--scroll">
@@ -172,7 +172,7 @@ export default async function HomePage() {
             <div style={{ display: 'grid', gap: 8, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
               <div className="pz-field-label">Payments</div>
               <div style={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.65 }}>
-                Crypto checkout via a liquidity provider (configurable). Phoenix Zero focuses on proof generation, ordering, and settlement state.
+                Crypto checkout via a liquidity provider (configurable). Phoenix ZerØ focuses on proof generation, ordering, and settlement state.
               </div>
             </div>
 

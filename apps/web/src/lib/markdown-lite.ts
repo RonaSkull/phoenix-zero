@@ -33,7 +33,7 @@ function isTableSeparator(line: string): boolean {
 }
 
 export function renderMarkdownLiteToHtml(md: string, opts?: { title?: string }): string {
-  const title = String(opts?.title || '').trim() || 'Phoenix Zero Docs';
+  const title = String(opts?.title || '').trim() || 'Phoenix ZerØ Docs';
 
   const lines = String(md || '').replace(/\r\n/g, '\n').split('\n');
 

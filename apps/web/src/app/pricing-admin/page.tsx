@@ -493,7 +493,7 @@ export default function PricingWizardPage() {
 
       <div className="pz-container">
         <div className="pz-topline">
-          <div className="pz-kicker">Phoenix Zero</div>
+          <div className="pz-kicker">Phoenix ZerØ</div>
           <div className="pz-rule" />
         </div>
         <div className="pz-subtitle">Pricing Admin</div>

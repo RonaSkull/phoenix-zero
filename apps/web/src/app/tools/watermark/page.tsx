@@ -90,7 +90,7 @@ export default function Page() {
 
   return (
     <main style={{ maxWidth: 920, padding: 24, margin: '0 auto' }}>
-      <h1>Phoenix Zero</h1>
+      <h1>Phoenix ZerØ</h1>
 
       <section style={{ marginTop: 16, padding: 16, border: '1px solid #ddd', borderRadius: 12 }}>
         <h2>Stamp Watermarked</h2>

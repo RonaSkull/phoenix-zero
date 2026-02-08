@@ -38,7 +38,7 @@ export default function FAQPage() {
           <div style={{ display: 'grid', gap: 10 }}>
             <details open>
               <summary style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.88)', fontWeight: 800 }}>
-                What is a “proof” in Phoenix Zero?
+                What is a “proof” in Phoenix ZerØ?
               </summary>
               <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, fontSize: 13 }}>
                 A proof is a public, immutable JSON payload that represents a single confirmed payment + the task hashes it settles.
@@ -67,7 +67,7 @@ export default function FAQPage() {
               </summary>
               <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, fontSize: 13 }}>
                 We create a payment intent and generate a crypto invoice via a provider (NowPayments). When the provider confirms the payment,
-                a webhook updates the intent to <code>paid</code>, and Phoenix Zero generates a public proof.
+                a webhook updates the intent to <code>paid</code>, and Phoenix ZerØ generates a public proof.
               </div>
             </details>
 
@@ -76,7 +76,7 @@ export default function FAQPage() {
                 Do you store or process our content?
               </summary>
               <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, fontSize: 13 }}>
-                No. Phoenix Zero is designed to store payment metadata, execution metadata, and cryptographic hashes.
+                No. Phoenix ZerØ is designed to store payment metadata, execution metadata, and cryptographic hashes.
                 You can structure tasks so that sensitive inputs never leave your boundary.
               </div>
             </details>
@@ -109,7 +109,7 @@ export default function FAQPage() {
                 What happens on refund/chargeback?
               </summary>
               <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, fontSize: 13 }}>
-                If the provider reports a refund/chargeback, Phoenix Zero can revert settlement state and the proof will no longer be public
+                If the provider reports a refund/chargeback, Phoenix ZerØ can revert settlement state and the proof will no longer be public
                 (<code>/verify</code> will show “not available”).
               </div>
             </details>
