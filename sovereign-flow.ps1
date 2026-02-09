@@ -3,6 +3,9 @@ $ErrorActionPreference = "Stop"
 $BASE = "https://phoenix-zero-web.onrender.com"
 $ADMIN_TOKEN = $env:PHOENIX_ZERO_ADMIN_TOKEN
 
+# Increase this to test higher ticket sizes (pricing is driven by lineItems.units).
+$UNITS = 100
+
 if (-not $ADMIN_TOKEN) {
   throw "Missing env PHOENIX_ZERO_ADMIN_TOKEN. Set: `$env:PHOENIX_ZERO_ADMIN_TOKEN = '...'"
 }
@@ -85,7 +88,7 @@ $checkoutBody = @{
   currency = "USD"
   providerHint = "crypto"
   lineItems = @(
-    @{ operation = "protect_report"; product = "protect_report"; units = 1 }
+    @{ operation = "protect_report"; product = "protect_report"; units = $UNITS }
   )
   proofMeta = @{
     agentId = $agentId
@@ -114,8 +117,9 @@ Write-Host ("proofId = " + $proofId)
 
 # 5) Fetch proof JSON
 $proof = Invoke-Json -Method "GET" -Url "$BASE/api/payment-proofs/$proofId" -Headers @{ "x-api-key" = $API_KEY; "Cache-Control"="no-store" } -BodyObj $null
-Write-Host ("proof.id = " + $proof.id)
-Write-Host ("proofMeta.taskType = " + $proof.proofMeta.taskType)
+$proofObj = $proof.proof
+Write-Host ("proof.id = " + [string]$proofObj.id)
+Write-Host ("proofMeta.taskType = " + [string]$proofObj.taskType)
 Write-Host ("verifyUrl = " + "$BASE/verify/$proofId")
 
 Start-Process "$BASE/verify/$proofId"
