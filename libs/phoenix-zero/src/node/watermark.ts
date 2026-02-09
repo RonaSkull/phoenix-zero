@@ -192,8 +192,14 @@ async function getFfmpegPath(): Promise<string> {
   const env = process.env.PHOENIX_ZERO_FFMPEG_PATH ?? process.env.FFMPEG_PATH;
   if (env && existsSync(env)) return env;
 
-  const mod = (await import('ffmpeg-static')) as unknown as { default?: unknown };
-  const maybe = (mod as { default?: unknown }).default ?? mod;
+  let maybe: unknown = undefined;
+  try {
+    const mod = (await import('ffmpeg-static')) as unknown as { default?: unknown };
+    maybe = (mod as { default?: unknown }).default ?? mod;
+  } catch {
+    maybe = undefined;
+  }
+
   if (typeof maybe === 'string' && existsSync(maybe)) return maybe;
 
   const bin = process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
@@ -210,7 +216,7 @@ async function getFfmpegPath(): Promise<string> {
 
   throw new Error(
     `FFmpeg binary not found. Set PHOENIX_ZERO_FFMPEG_PATH to an existing ffmpeg executable. Resolved ffmpeg-static path was: ${
-      typeof maybe === 'string' ? maybe : '[non-string]'
+      typeof maybe === 'string' ? maybe : '[unavailable]'
     }`
   );
 }
