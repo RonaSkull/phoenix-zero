@@ -14,6 +14,11 @@ function normalizeKey(x: unknown): string {
   return String(x || '').trim().toLowerCase();
 }
 
+function isSovereignTenant(tenant: any): boolean {
+  const ct = String(tenant?.clientType || '').trim().toLowerCase();
+  return ct === 'sovereign';
+}
+
 export async function GET(req: Request) {
   const startedAtMs = Date.now();
   try {
@@ -50,6 +55,40 @@ export async function GET(req: Request) {
 
     const tenant = auth.ctx.tenant;
     const tenantId = auth.ctx.tenantId;
+
+    const sovereign = {
+      enabled: isSovereignTenant(tenant),
+      reason: isSovereignTenant(tenant) ? null : 'CUSTOM_PRICING_REQUIRED',
+      commercialModel: {
+        kind: 'gmv_fee_with_minimum',
+        feeBps: 15,
+        minimumMonthlyUsd: 15000,
+        slaTarget: '99.95%'
+      },
+      operations: [
+        {
+          taskType: 'reconcile_psp',
+          description: 'Multi-acquirer / multi-PSP reconciliation (batch hashed input + verifiable proof).'
+        },
+        {
+          taskType: 'settle_crypto_fiat',
+          description: 'Onchain/offchain settlement binding (stablecoin rails + fiat settlement evidence).'
+        },
+        {
+          taskType: 'payout_mass',
+          description: 'Mass payouts with deterministic audit trail and public proof per confirmed batch.'
+        },
+        {
+          taskType: 'audit_bc_compliance',
+          description: 'Compliance-grade audit batch with verifiable proof and ledger traceability.'
+        }
+      ],
+      docs: {
+        overview: '/faq',
+        proofVerification: '/verify/<proofId>',
+        ledger: '/api/agents/{agentId}/ledger'
+      }
+    };
 
     const pricingProfile = await getPricingProfile(tenant.pricingProfile, tenant.currency || 'USD');
     const commissionProfile = await getCommissionProfile(tenant.commissionProfile);
@@ -190,6 +229,7 @@ export async function GET(req: Request) {
         },
         pricingProfileId: pricingProfile.id,
         operations: ops,
+        sovereign,
         multipliers: {
           clientType: pricingProfile.multiplierByClientType || {},
           sector: pricingProfile.multiplierBySector || {},

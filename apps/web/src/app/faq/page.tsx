@@ -48,6 +48,27 @@ export default function FAQPage() {
 
             <details>
               <summary style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.88)', fontWeight: 800 }}>
+                How does sovereign reconciliation work?
+              </summary>
+              <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, fontSize: 13 }}>
+                Sovereign reconciliation binds a confirmed payment to a specific reconciliation batch via cryptographic hashes.
+                You submit <code>taskInputHash</code> and <code>taskOutputHash</code> (the batch evidence), pay via PIX or crypto, and Phoenix ZerØ
+                publishes a public proof URL (<code>/verify/&lt;proofId&gt;</code>) plus an auditable ledger trail.
+              </div>
+            </details>
+
+            <details>
+              <summary style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.88)', fontWeight: 800 }}>
+                What’s the SLA for sovereign settlement?
+              </summary>
+              <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, fontSize: 13 }}>
+                We target 99.95% uptime. Enterprise contracts can define custom SLAs (including incident response, monitoring, and service credits).
+                Webhooks are idempotent and hardened against race conditions (see the public hardening suite).
+              </div>
+            </details>
+
+            <details>
+              <summary style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.88)', fontWeight: 800 }}>
                 What exactly can a third party verify?
               </summary>
               <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, fontSize: 13 }}>
