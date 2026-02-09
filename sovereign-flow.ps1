@@ -99,7 +99,10 @@ $checkoutBody = @{
 $checkout = Invoke-Json -Method "POST" -Url "$BASE/api/checkout/create" -Headers @{ "x-api-key" = $API_KEY } -BodyObj $checkoutBody
 if (-not $checkout.ok) { throw ("checkout/create failed: " + ($checkout | ConvertTo-Json -Depth 30)) }
 
-$paymentId = $checkout.intent.id
+$paymentId = [string]$checkout.paymentId
+if (-not $paymentId) {
+  throw ("checkout/create did not return paymentId: " + ($checkout | ConvertTo-Json -Depth 30))
+}
 Write-Host ("paymentId = " + $paymentId)
 
 # 4) Admin fallback-paid
