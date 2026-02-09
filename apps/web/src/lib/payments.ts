@@ -819,17 +819,20 @@ export async function createPaymentIntent(params: {
     if (!computed.ok) return computed;
 
     const proofTaskType = String(params.proofMeta?.taskType || '').trim();
+    const tenantClientType = String((tenant as any)?.clientType || '').trim().toLowerCase();
     if (proofTaskType) {
-      const ops = (computed.normalizedLineItems || [])
-        .map((li) => String((li as any)?.operation || '').trim())
-        .filter(Boolean);
-      const uniqueOps = Array.from(new Set(ops));
-      if (uniqueOps.length !== 1) {
-        return { ok: false, reason: 'proofMeta.taskType requires a single operation across lineItems' };
-      }
-      const expectedTaskType = uniqueOps[0] || '';
-      if (expectedTaskType && proofTaskType !== expectedTaskType) {
-        return { ok: false, reason: 'proofMeta.taskType must match lineItems.operation' };
+      if (tenantClientType !== 'sovereign') {
+        const ops = (computed.normalizedLineItems || [])
+          .map((li) => String((li as any)?.operation || '').trim())
+          .filter(Boolean);
+        const uniqueOps = Array.from(new Set(ops));
+        if (uniqueOps.length !== 1) {
+          return { ok: false, reason: 'proofMeta.taskType requires a single operation across lineItems' };
+        }
+        const expectedTaskType = uniqueOps[0] || '';
+        if (expectedTaskType && proofTaskType !== expectedTaskType) {
+          return { ok: false, reason: 'proofMeta.taskType must match lineItems.operation' };
+        }
       }
     }
 
