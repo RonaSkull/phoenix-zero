@@ -49,11 +49,13 @@
     "test:robust:video": "tsx ./scripts/phoenix-zero-video-wm-reencode.ts",
     "test:social:flows": "playwright test e2e/social-flows.spec.ts --headed"
   },
+  "optionalDependencies": {
+    "ffmpeg-static": "^5.2.0",
+    "ffprobe-static": "^3.1.0"
+  },
   "devDependencies": {
     "@types/node": "^20.11.10",
     "@playwright/test": "^1.41.2",
-    "ffmpeg-static": "^5.2.0",
-    "ffprobe-static": "^3.1.0",
     "sphincs": "^3.0.0",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3"
