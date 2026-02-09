@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { headers } from 'next/headers';
 import type { CSSProperties } from 'react';
 
 import { getPaymentProofById } from '../../../lib/payment-proofs';
@@ -61,6 +62,14 @@ function cardStyle(): CSSProperties {
 export default async function VerifyProofPage(props: { params: { proofId: string } }) {
   const proofId = String(props?.params?.proofId || '').trim();
   if (!proofId) notFound();
+
+  const h = await headers();
+  const forwardedProto = String(h.get('x-forwarded-proto') || '').trim();
+  const forwardedHost = String(h.get('x-forwarded-host') || '').trim();
+  const host = forwardedHost || String(h.get('host') || '').trim();
+  const proto = forwardedProto || 'https';
+  const origin = host ? `${proto}://${host}` : '';
+  const verifyUrl = origin ? `${origin}/verify/${encodeURIComponent(proofId)}` : '';
 
   const raw = await getPaymentProofById(proofId);
   if (!raw) {
@@ -200,7 +209,7 @@ export default async function VerifyProofPage(props: { params: { proofId: string
             >
               Open
             </a>
-            <VerifyActionsClient proofId={proof.proofId} />
+            <VerifyActionsClient proofId={proof.proofId} url={verifyUrl} />
             <a
               href={`/api/guarantee-proofs/${encodeURIComponent(proof.proofId)}`}
               style={{

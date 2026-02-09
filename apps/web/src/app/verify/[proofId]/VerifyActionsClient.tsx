@@ -2,13 +2,15 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
-export function VerifyActionsClient(props: { proofId: string }) {
+export function VerifyActionsClient(props: { proofId: string; url?: string }) {
   const proofId = String(props.proofId || '').trim();
+  const urlProp = String(props.url || '').trim();
   const url = useMemo(() => {
+    if (urlProp) return urlProp;
     if (!proofId) return '';
     if (typeof window === 'undefined') return '';
     return `${window.location.origin}/verify/${encodeURIComponent(proofId)}`;
-  }, [proofId]);
+  }, [proofId, urlProp]);
 
   const [copied, setCopied] = useState(false);
 
