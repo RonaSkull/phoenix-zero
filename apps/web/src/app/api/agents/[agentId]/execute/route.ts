@@ -65,6 +65,18 @@ function sha256Hex(input: string): string {
   return createHash('sha256').update(input, 'utf8').digest('hex');
 }
 
+function isSovereignTaskType(taskType: string): boolean {
+  const t = String(taskType || '').trim().toLowerCase();
+  if (!t) return false;
+  const sovereign = new Set(['reconcile_psp', 'settle_crypto_fiat', 'payout_mass', 'audit_bc_compliance']);
+  if (sovereign.has(t)) return true;
+  if (t.startsWith('reconcile_')) return true;
+  if (t.startsWith('settle_')) return true;
+  if (t.startsWith('payout_')) return true;
+  if (t.startsWith('audit_')) return true;
+  return false;
+}
+
 function sovereignFailurePolicy(): 'on_success' | 'always' | 'refund' {
   const raw = String(process.env.PHOENIX_ZERO_SOVEREIGN_FAILURE_POLICY || '').trim().toLowerCase();
   if (raw === 'always') return 'always';
@@ -182,6 +194,20 @@ export async function POST(req: Request, ctx: { params: { agentId: string } }) {
 
   if (!taskId || !taskType) {
     return Response.json({ ok: false, reason: 'Missing taskId or taskType' }, { status: 400, headers: jsonUtf8Headers() });
+  }
+
+  if (isSovereignTaskType(taskType)) {
+    const tenantClientType = String((auth.ctx.tenant as any)?.clientType || '').trim().toLowerCase();
+    if (tenantClientType !== 'sovereign') {
+      return Response.json(
+        {
+          ok: false,
+          reasonCode: 'SOVEREIGN_CONTRACT_REQUIRED',
+          reason: 'SOVEREIGN_CONTRACT_REQUIRED'
+        },
+        { status: 403, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
+      );
+    }
   }
 
   const enforceRegistry = envBool('PHOENIX_ZERO_AGENT_REGISTRY_ENFORCE_EXECUTE');

@@ -36,6 +36,18 @@ function getMetaAll(html: string, attr: 'property' | 'name', key: string): strin
   return Array.from(new Set(out));
 }
 
+function isSovereignOperation(operation: string): boolean {
+  const op = String(operation || '').trim().toLowerCase();
+  if (!op) return false;
+  const sovereign = new Set(['reconcile_psp', 'settle_crypto_fiat', 'payout_mass', 'audit_bc_compliance']);
+  if (sovereign.has(op)) return true;
+  if (op.startsWith('reconcile_')) return true;
+  if (op.startsWith('settle_')) return true;
+  if (op.startsWith('payout_')) return true;
+  if (op.startsWith('audit_')) return true;
+  return false;
+}
+
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
@@ -239,6 +251,18 @@ export async function POST(req: Request) {
       return Response.json(
         { ok: false, compatible: false, reasonCode: 'MISSING_FIELDS', message: 'Missing operation', missingFields: ['operation'] },
         { status: 400, headers: { 'Cache-Control': 'no-store' } }
+      );
+    }
+
+    if (isSovereignOperation(operation)) {
+      return Response.json(
+        {
+          ok: true,
+          compatible: false,
+          reasonCode: 'CUSTOM_PRICING_REQUIRED',
+          message: 'Sovereign operations require an enterprise contract.'
+        },
+        { status: 200, headers: { 'Cache-Control': 'no-store' } }
       );
     }
 
