@@ -229,3 +229,25 @@ export async function listSemanticEventsPage(params: {
   const nextCursor = hasMore && oldest ? oldest.eventId : null;
   return { events: page, nextCursor };
 }
+
+export async function listSemanticEventsAll(params?: {
+  tenantId?: string;
+  limit?: number;
+}): Promise<SemanticLedgerEvent[]> {
+  const tenantId = String(params?.tenantId || '').trim() || undefined;
+  const limit = clampInt(Number(params?.limit ?? 5000), 1, 100_000);
+
+  const db = await loadDb();
+  const all: SemanticLedgerEvent[] = [];
+  for (const arr of Object.values(db.eventsByAgentKey || {})) {
+    if (!Array.isArray(arr)) continue;
+    for (const ev of arr) {
+      if (!ev || typeof ev !== 'object') continue;
+      if (tenantId && String((ev as any).tenantId || '').trim() !== tenantId) continue;
+      all.push(ev as SemanticLedgerEvent);
+    }
+  }
+
+  all.sort((a, b) => String(b.ts || '').localeCompare(String(a.ts || '')));
+  return all.slice(0, limit);
+}

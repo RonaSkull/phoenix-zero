@@ -1024,6 +1024,24 @@ export async function getPaymentIntentById(id: string): Promise<PaymentIntent | 
   return db.intents[key] || null;
 }
 
+export async function listPaymentIntents(params?: {
+  tenantId?: string;
+  status?: PaymentStatus;
+  limit?: number;
+}): Promise<PaymentIntent[]> {
+  const tenantId = String(params?.tenantId || '').trim() || undefined;
+  const statusRaw = String(params?.status || '').trim().toLowerCase();
+  const status: PaymentStatus | undefined = statusRaw === 'paid' || statusRaw === 'pending' || statusRaw === 'failed' ? (statusRaw as PaymentStatus) : undefined;
+  const limit = Math.max(1, Math.min(5000, Math.trunc(Number(params?.limit ?? 500))));
+
+  const db = await loadDb();
+  let intents = Object.values(db.intents || {}).filter(Boolean) as PaymentIntent[];
+  if (tenantId) intents = intents.filter((i) => i.tenantId === tenantId);
+  if (status) intents = intents.filter((i) => i.status === status);
+  intents.sort((a, b) => String(b.updatedAt || b.createdAt).localeCompare(String(a.updatedAt || a.createdAt)));
+  return intents.slice(0, limit);
+}
+
 export async function revalidatePaymentIntentFromProvider(params: {
   paymentId: string;
 }): Promise<{ ok: true; intent: PaymentIntent } | { ok: false; reason: string }> {
