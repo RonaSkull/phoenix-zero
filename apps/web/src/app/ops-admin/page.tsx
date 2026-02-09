@@ -33,6 +33,8 @@ export default function OpsAdminPage() {
 
   const [selectedTenantId, setSelectedTenantId] = useState('');
   const [tenantRaw, setTenantRaw] = useState('');
+  const [tenantQuery, setTenantQuery] = useState('');
+  const [tenantTableLimit, setTenantTableLimit] = useState(40);
 
   const summary = useMemo(() => {
     try {
@@ -42,6 +44,20 @@ export default function OpsAdminPage() {
       return null;
     }
   }, [summaryRaw]);
+
+  const tenantDetails = useMemo(() => {
+    try {
+      if (!tenantRaw.trim()) return null;
+      return JSON.parse(tenantRaw);
+    } catch {
+      return null;
+    }
+  }, [tenantRaw]);
+
+  const tenantInfo = tenantDetails?.tenant || null;
+  const tenantMetrics = tenantDetails?.metrics || null;
+  const tenantTopErrors = Array.isArray(tenantDetails?.topErrors) ? tenantDetails.topErrors : [];
+  const tenantRecentEvents = Array.isArray(tenantDetails?.recentEvents) ? tenantDetails.recentEvents : [];
 
   useEffect(() => {
     try {
@@ -115,6 +131,29 @@ export default function OpsAdminPage() {
 
   const tenants = Array.isArray(summary?.tenants) ? summary.tenants : [];
 
+  const filteredTenants = useMemo(() => {
+    const q = tenantQuery.trim().toLowerCase();
+    const list = tenants.slice();
+    if (!q) return list;
+    return list.filter((t: any) => {
+      const id = String(t?.tenantId || '').toLowerCase();
+      const name = String(t?.name || '').toLowerCase();
+      const ct = String(t?.clientType || '').toLowerCase();
+      return id.includes(q) || name.includes(q) || ct.includes(q);
+    });
+  }, [tenantQuery, tenants]);
+
+  const visibleTenants = filteredTenants.slice(0, Math.max(1, Math.min(500, tenantTableLimit)));
+
+  const summaryTotals = useMemo(() => {
+    const totalTenants = tenants.length;
+    const totalExecutions = tenants.reduce((acc: number, t: any) => acc + Number(t?.executions || 0), 0);
+    const totalUnitsConsumed = tenants.reduce((acc: number, t: any) => acc + Number(t?.unitsConsumed || 0), 0);
+    const totalPaymentsPaid = tenants.reduce((acc: number, t: any) => acc + Number(t?.paymentsPaid || 0), 0);
+    const totalPaymentsCreated = tenants.reduce((acc: number, t: any) => acc + Number(t?.paymentsCreated || 0), 0);
+    return { totalTenants, totalExecutions, totalUnitsConsumed, totalPaymentsPaid, totalPaymentsCreated };
+  }, [tenants]);
+
   return (
     <main className="pz-shell pz-shell--mono pz-shell--scroll">
       <div className="pz-grid" />
@@ -163,24 +202,56 @@ export default function OpsAdminPage() {
                 {busy ? 'Carregando…' : 'Atualizar'}
               </button>
             </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 10 }}>
+              <div className="pz-card--subtle" style={{ padding: 10, borderRadius: 12 }}>
+                <div style={{ color: '#8FA0BF', fontSize: 12 }}>tenants</div>
+                <div style={{ fontWeight: 900, fontSize: 18 }}>{summaryTotals.totalTenants}</div>
+              </div>
+              <div className="pz-card--subtle" style={{ padding: 10, borderRadius: 12 }}>
+                <div style={{ color: '#8FA0BF', fontSize: 12 }}>execuções</div>
+                <div style={{ fontWeight: 900, fontSize: 18 }}>{summaryTotals.totalExecutions}</div>
+              </div>
+              <div className="pz-card--subtle" style={{ padding: 10, borderRadius: 12 }}>
+                <div style={{ color: '#8FA0BF', fontSize: 12 }}>units consumidas</div>
+                <div style={{ fontWeight: 900, fontSize: 18 }}>{summaryTotals.totalUnitsConsumed}</div>
+              </div>
+              <div className="pz-card--subtle" style={{ padding: 10, borderRadius: 12 }}>
+                <div style={{ color: '#8FA0BF', fontSize: 12 }}>pagamentos (paid)</div>
+                <div style={{ fontWeight: 900, fontSize: 18 }}>{summaryTotals.totalPaymentsPaid}</div>
+              </div>
+              <div className="pz-card--subtle" style={{ padding: 10, borderRadius: 12 }}>
+                <div style={{ color: '#8FA0BF', fontSize: 12 }}>pagamentos (created)</div>
+                <div style={{ fontWeight: 900, fontSize: 18 }}>{summaryTotals.totalPaymentsCreated}</div>
+              </div>
+            </div>
           </div>
 
           <div className="pz-card--subtle" style={{ display: 'grid', gap: 10 }}>
             <div className="pz-field-label">Tenants (resumo)</div>
 
-            <div className="pz-field">
-              <label className="pz-field-label">tenant (drill-down)</label>
-              <select className="pz-input" value={selectedTenantId} onChange={(e) => setSelectedTenantId(e.target.value)}>
-                {(tenants || []).map((t: any) => {
-                  const id = String(t?.tenantId || '').trim();
-                  const name = String(t?.name || '').trim();
-                  return (
-                    <option key={id} value={id}>
-                      {name ? `${name} (${id})` : id}
-                    </option>
-                  );
-                })}
-              </select>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 160px 160px', gap: 12 }}>
+              <div className="pz-field">
+                <label className="pz-field-label">buscar tenant</label>
+                <input
+                  className="pz-input"
+                  value={tenantQuery}
+                  onChange={(e) => setTenantQuery(e.target.value)}
+                  placeholder="tenantId, nome, clientType…"
+                />
+              </div>
+              <div className="pz-field">
+                <label className="pz-field-label">linhas</label>
+                <input
+                  className="pz-input"
+                  value={String(tenantTableLimit)}
+                  onChange={(e) => setTenantTableLimit(Number(e.target.value || '40'))}
+                  placeholder="40"
+                />
+              </div>
+              <div className="pz-field" style={{ display: 'grid', alignContent: 'end' }}>
+                <div style={{ color: '#8FA0BF', fontSize: 12 }}>{visibleTenants.length}/{filteredTenants.length} (filtrado)</div>
+              </div>
             </div>
 
             <div style={{ overflowX: 'auto' }}>
@@ -195,27 +266,173 @@ export default function OpsAdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(tenants || []).map((t: any) => (
-                    <tr key={String(t.tenantId)} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                      <td style={{ padding: '8px 6px', whiteSpace: 'nowrap' }}>{String(t.tenantId)}</td>
-                      <td style={{ padding: '8px 6px' }}>{String(t.clientType || '')}</td>
-                      <td style={{ padding: '8px 6px' }}>{Number(t.executions || 0)}</td>
-                      <td style={{ padding: '8px 6px' }}>{Number(t.unitsConsumed || 0)}</td>
-                      <td style={{ padding: '8px 6px' }}>
-                        {Number(t.paymentsPaid || 0)}/{Number(t.paymentsCreated || 0)}
-                      </td>
-                    </tr>
-                  ))}
+                  {(visibleTenants || []).map((t: any) => {
+                    const id = String(t.tenantId || '').trim();
+                    const selected = selectedTenantId && id === selectedTenantId;
+                    return (
+                      <tr
+                        key={id}
+                        onClick={() => id && setSelectedTenantId(id)}
+                        style={{
+                          borderBottom: '1px solid rgba(255,255,255,0.06)',
+                          cursor: 'pointer',
+                          background: selected ? 'rgba(0,255,200,0.08)' : 'transparent'
+                        }}
+                      >
+                        <td style={{ padding: '8px 6px', whiteSpace: 'nowrap' }}>{id}</td>
+                        <td style={{ padding: '8px 6px' }}>{String(t.clientType || '')}</td>
+                        <td style={{ padding: '8px 6px' }}>{Number(t.executions || 0)}</td>
+                        <td style={{ padding: '8px 6px' }}>{Number(t.unitsConsumed || 0)}</td>
+                        <td style={{ padding: '8px 6px' }}>
+                          {Number(t.paymentsPaid || 0)}/{Number(t.paymentsCreated || 0)}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
-            <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{summaryRaw || '(sem saida ainda)'}</pre>
+            <details style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 10 }}>
+              <summary style={{ cursor: 'pointer', color: '#8FA0BF', fontSize: 13 }}>Raw JSON (summary)</summary>
+              <pre
+                style={{
+                  margin: 0,
+                  marginTop: 10,
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  maxHeight: 280,
+                  overflow: 'auto'
+                }}
+              >
+                {summaryRaw || '(sem saida ainda)'}
+              </pre>
+            </details>
           </div>
 
           <div className="pz-card--subtle" style={{ display: 'grid', gap: 10 }}>
             <div className="pz-field-label">Tenant drill-down</div>
-            <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{tenantRaw || '(sem saida ainda)'}</pre>
+            {tenantInfo ? (
+              <div style={{ display: 'grid', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                  <div className="pz-card--subtle" style={{ padding: 10, borderRadius: 12 }}>
+                    <div style={{ color: '#8FA0BF', fontSize: 12 }}>tenant</div>
+                    <div style={{ fontWeight: 900, fontSize: 14, wordBreak: 'break-word' }}>{String(tenantInfo.tenantId || '')}</div>
+                    <div style={{ color: '#8FA0BF', fontSize: 12 }}>{String(tenantInfo.name || '')}</div>
+                  </div>
+                  <div className="pz-card--subtle" style={{ padding: 10, borderRadius: 12 }}>
+                    <div style={{ color: '#8FA0BF', fontSize: 12 }}>status / tipo</div>
+                    <div style={{ fontWeight: 900, fontSize: 16 }}>{String(tenantInfo.status || '')}</div>
+                    <div style={{ color: '#8FA0BF', fontSize: 12 }}>{String(tenantInfo.clientType || '')}</div>
+                  </div>
+                  <div className="pz-card--subtle" style={{ padding: 10, borderRadius: 12 }}>
+                    <div style={{ color: '#8FA0BF', fontSize: 12 }}>país / moeda</div>
+                    <div style={{ fontWeight: 900, fontSize: 16 }}>{String(tenantInfo.country || '')}</div>
+                    <div style={{ color: '#8FA0BF', fontSize: 12 }}>{String(tenantInfo.currency || '')}</div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 10 }}>
+                  <div className="pz-card--subtle" style={{ padding: 10, borderRadius: 12 }}>
+                    <div style={{ color: '#8FA0BF', fontSize: 12 }}>payments created</div>
+                    <div style={{ fontWeight: 900, fontSize: 18 }}>{Number(tenantMetrics?.paymentsCreated || 0)}</div>
+                  </div>
+                  <div className="pz-card--subtle" style={{ padding: 10, borderRadius: 12 }}>
+                    <div style={{ color: '#8FA0BF', fontSize: 12 }}>payments paid</div>
+                    <div style={{ fontWeight: 900, fontSize: 18 }}>{Number(tenantMetrics?.paymentsPaid || 0)}</div>
+                  </div>
+                  <div className="pz-card--subtle" style={{ padding: 10, borderRadius: 12 }}>
+                    <div style={{ color: '#8FA0BF', fontSize: 12 }}>units purchased</div>
+                    <div style={{ fontWeight: 900, fontSize: 18 }}>{Number(tenantMetrics?.unitsPurchased || 0)}</div>
+                  </div>
+                  <div className="pz-card--subtle" style={{ padding: 10, borderRadius: 12 }}>
+                    <div style={{ color: '#8FA0BF', fontSize: 12 }}>units consumed</div>
+                    <div style={{ fontWeight: 900, fontSize: 18 }}>{Number(tenantMetrics?.unitsConsumed || 0)}</div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 10 }}>
+                  <div className="pz-card--subtle" style={{ padding: 10, borderRadius: 12 }}>
+                    <div className="pz-field-label" style={{ marginBottom: 6 }}>Top erros (reason)</div>
+                    {tenantTopErrors.length ? (
+                      <div style={{ display: 'grid', gap: 6 }}>
+                        {tenantTopErrors.slice(0, 10).map((e: any) => (
+                          <div key={String(e.reason)} style={{ display: 'flex', gap: 8, justifyContent: 'space-between' }}>
+                            <div style={{ color: '#E7ECF5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(e.reason)}</div>
+                            <div style={{ color: '#8FA0BF' }}>{Number(e.count || 0)}</div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ color: '#8FA0BF', fontSize: 13 }}>(sem erros no período)</div>
+                    )}
+                  </div>
+
+                  <div className="pz-card--subtle" style={{ padding: 10, borderRadius: 12 }}>
+                    <div className="pz-field-label" style={{ marginBottom: 6 }}>Eventos recentes</div>
+                    <div style={{ overflow: 'auto', maxHeight: 260 }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
+                            <th style={{ padding: '6px 4px', whiteSpace: 'nowrap' }}>ts</th>
+                            <th style={{ padding: '6px 4px' }}>action</th>
+                            <th style={{ padding: '6px 4px' }}>ok</th>
+                            <th style={{ padding: '6px 4px' }}>reason</th>
+                            <th style={{ padding: '6px 4px' }}>agent</th>
+                            <th style={{ padding: '6px 4px' }}>taskId</th>
+                            <th style={{ padding: '6px 4px' }}>taskType</th>
+                            <th style={{ padding: '6px 4px' }}>proof</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {tenantRecentEvents.slice(0, 50).map((ev: any) => {
+                            const proofId = String(ev?.proofId || '').trim();
+                            return (
+                              <tr key={String(ev?.eventId || Math.random())} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                                <td style={{ padding: '6px 4px', whiteSpace: 'nowrap', color: '#8FA0BF' }}>{String(ev?.ts || '').slice(0, 19)}</td>
+                                <td style={{ padding: '6px 4px' }}>{String(ev?.action || '')}</td>
+                                <td style={{ padding: '6px 4px', color: ev?.ok === false ? '#FFB4B4' : '#BFFFEF' }}>{String(ev?.ok)}</td>
+                                <td style={{ padding: '6px 4px', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(ev?.reason || '')}</td>
+                                <td style={{ padding: '6px 4px', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(ev?.agentId || '')}</td>
+                                <td style={{ padding: '6px 4px', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(ev?.taskId || '')}</td>
+                                <td style={{ padding: '6px 4px', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(ev?.taskType || '')}</td>
+                                <td style={{ padding: '6px 4px' }}>
+                                  {proofId ? (
+                                    <a className="pz-link" href={`/verify/${encodeURIComponent(proofId)}`} target="_blank" rel="noreferrer">
+                                      abrir
+                                    </a>
+                                  ) : (
+                                    ''
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ color: '#8FA0BF', fontSize: 13 }}>(selecione um tenant na tabela acima)</div>
+            )}
+
+            <details style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 10 }} open>
+              <summary style={{ cursor: 'pointer', color: '#8FA0BF', fontSize: 13 }}>Raw JSON (tenant)</summary>
+              <pre
+                style={{
+                  margin: 0,
+                  marginTop: 10,
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  maxHeight: 320,
+                  overflow: 'auto'
+                }}
+              >
+                {tenantRaw || '(sem saida ainda)'}
+              </pre>
+            </details>
           </div>
         </div>
       </div>
