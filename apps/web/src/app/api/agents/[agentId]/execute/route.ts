@@ -65,6 +65,10 @@ function sha256Hex(input: string): string {
   return createHash('sha256').update(input, 'utf8').digest('hex');
 }
 
+function isNonEmptyString(v: unknown): v is string {
+  return typeof v === 'string' && v.trim().length > 0;
+}
+
 function isSovereignTaskType(taskType: string): boolean {
   const t = String(taskType || '').trim().toLowerCase();
   if (!t) return false;
@@ -175,8 +179,10 @@ export async function POST(req: Request, ctx: { params: { agentId: string } }) {
       body = null;
     }
 
-    const taskId = String(body?.taskId || '').trim();
-    const taskType = String(body?.taskType || '').trim();
+    const rawTaskId = (body as any)?.taskId;
+    const rawTaskType = (body as any)?.taskType;
+    const taskId = isNonEmptyString(rawTaskId) ? rawTaskId.trim() : '';
+    const taskType = isNonEmptyString(rawTaskType) ? rawTaskType.trim() : '';
     const requireSignature = body?.requireSignature === true;
     const simulateFailure = body?.simulateFailure === true;
 
@@ -184,6 +190,8 @@ export async function POST(req: Request, ctx: { params: { agentId: string } }) {
 
     const agentExecuteSignatureB64Url = String(body?.agentEd25519SignatureB64Url || '').trim() || undefined;
     const agentExecuteIssuedAt = String(body?.agentExecuteIssuedAt || '').trim() || undefined;
+
+    const semanticEnabled = envBool('PHOENIX_ZERO_SEMANTIC_LEDGER_ENABLED');
 
   if (simulateFailure && process.env.NODE_ENV === 'production' && !envBool('PHOENIX_ZERO_ALLOW_SIMULATED_FAILURE')) {
     return Response.json(
@@ -193,7 +201,28 @@ export async function POST(req: Request, ctx: { params: { agentId: string } }) {
   }
 
   if (!taskId || !taskType) {
-    return Response.json({ ok: false, reason: 'Missing taskId or taskType' }, { status: 400, headers: jsonUtf8Headers() });
+    const meta = {
+      taskIdType: typeof rawTaskId,
+      taskTypeType: typeof rawTaskType,
+      taskIdPreview: String(rawTaskId ?? '').slice(0, 80),
+      taskTypePreview: String(rawTaskType ?? '').slice(0, 80)
+    };
+    if (semanticEnabled) {
+      await appendSemanticEvent({
+        tenantId: auth.ctx.tenantId,
+        agentId,
+        action: 'execute',
+        ok: false,
+        reason: 'INVALID_TASK_FIELDS',
+        requireSignature,
+        meta
+      }).catch(() => {
+      });
+    }
+    return Response.json(
+      { ok: false, reason: 'INVALID_TASK_FIELDS', meta },
+      { status: 400, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
+    );
   }
 
   if (isSovereignTaskType(taskType)) {
@@ -214,7 +243,7 @@ export async function POST(req: Request, ctx: { params: { agentId: string } }) {
   const capEnforce = envBool('PHOENIX_ZERO_AGENT_REGISTRY_ENFORCE_CAPABILITIES');
   const identityStrict = envBool('PHOENIX_ZERO_AGENT_IDENTITY_STRICT') || envBool('PHOENIX_ZERO_AGENT_IDENTITY_ENFORCE_SIGNATURE_ON_EXECUTE');
   const governanceEnforce = envBool('PHOENIX_ZERO_AGENT_GOVERNANCE_ENFORCE_EXECUTE');
-  const semanticEnabled = envBool('PHOENIX_ZERO_SEMANTIC_LEDGER_ENABLED');
+  
 
   const shouldLoadAgent = enforceRegistry || capEnforce || identityStrict || governanceEnforce;
   const agent = shouldLoadAgent ? await getAgentRecord({ tenantId: auth.ctx.tenantId, agentId }) : null;
@@ -415,6 +444,8 @@ export async function POST(req: Request, ctx: { params: { agentId: string } }) {
   const sovereignEnforce = sovereignEntitlementEnforced();
   const sovereignDebug = sovereignEntitlementDebugEnabled();
 
+  const isSovereignTask = isSovereignTaskType(taskType);
+
   let sovereignContext:
     | null
     | {
@@ -425,7 +456,7 @@ export async function POST(req: Request, ctx: { params: { agentId: string } }) {
         usage?: { day: string; month: string; dailyExecutions: number; monthlyExecutions: number };
       } = null;
 
-  if (sovereignEnforce) {
+  if (sovereignEnforce && isSovereignTask) {
     const entitlement = await validateExecutionEntitlement({
       tenantId: auth.ctx.tenantId,
       agentId,

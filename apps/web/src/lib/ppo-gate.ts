@@ -7,6 +7,19 @@ type GateReason =
   | 'INVALID_SIGNATURE'
   | 'INSUFFICIENT_UNITS';
 
+type PpoGateDebug = {
+  proofsSeen: number;
+  paidConfirmedSeen: number;
+  candidates: Array<{
+    id: string;
+    taskId: string;
+    taskType: string;
+    totalUnits: number;
+    usedUnits: number;
+    remainingUnits: number;
+  }>;
+};
+
 export type PpoGateDecision = {
   ok: true;
   allowed: boolean;
@@ -16,6 +29,7 @@ export type PpoGateDecision = {
   taskType?: string;
   proofId?: string;
   proof?: PaymentProof;
+  debug?: PpoGateDebug;
 };
 
 function selectMatchingPaidProof(params: {
@@ -35,6 +49,38 @@ function selectMatchingPaidProof(params: {
 function parseBool(v: unknown): boolean {
   const s = String(v ?? '').trim().toLowerCase();
   return s === '1' || s === 'true' || s === 'yes' || s === 'y';
+}
+
+function debugEnabled(): boolean {
+  return parseBool(process.env.PHOENIX_ZERO_PPO_DEBUG);
+}
+
+function buildDebug(proofs: PaymentProof[]): PpoGateDebug {
+  const list = Array.isArray(proofs) ? proofs : [];
+  const candidates = list
+    .filter((p) => p && (p as any)?.id && (p as any)?.status === 'paid_confirmed')
+    .slice(0, 25)
+    .map((p: any) => {
+      const totalUnits = Math.max(0, Math.trunc(Number(p?.totalUnits ?? 0)));
+      const usedUnits = Math.max(0, Math.trunc(Number(p?.usedUnits ?? 0)));
+      const remainingUnits = Math.max(0, totalUnits - usedUnits);
+      return {
+        id: String(p.id || ''),
+        taskId: String(p?.taskId || ''),
+        taskType: String(p?.taskType || ''),
+        totalUnits,
+        usedUnits,
+        remainingUnits
+      };
+    });
+
+  const paidConfirmedSeen = list.reduce((acc, p: any) => acc + (p?.status === 'paid_confirmed' ? 1 : 0), 0);
+
+  return {
+    proofsSeen: list.length,
+    paidConfirmedSeen,
+    candidates
+  };
 }
 
 function failurePolicy(): 'on_success' | 'always' | 'refund' {
@@ -68,7 +114,8 @@ export async function checkPpoGate(params: {
       reason: taskId || taskType ? 'NO_MATCHING_PPO' : 'NO_PPO',
       agentId,
       taskId,
-      taskType
+      taskType,
+      ...(debugEnabled() ? { debug: buildDebug(proofs) } : {})
     };
   }
 
@@ -128,7 +175,8 @@ export async function checkPpoGate(params: {
       taskId,
       taskType,
       proofId: proof.id,
-      proof
+      proof,
+      ...(debugEnabled() ? { debug: buildDebug(proofs) } : {})
     };
   }
 

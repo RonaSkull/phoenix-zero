@@ -34,7 +34,8 @@ export default function OpsAdminPage() {
   const [selectedTenantId, setSelectedTenantId] = useState('');
   const [tenantRaw, setTenantRaw] = useState('');
   const [tenantQuery, setTenantQuery] = useState('');
-  const [tenantTableLimit, setTenantTableLimit] = useState(40);
+  const [tenantPageSize, setTenantPageSize] = useState(40);
+  const [tenantPage, setTenantPage] = useState(0);
 
   const summary = useMemo(() => {
     try {
@@ -143,7 +144,26 @@ export default function OpsAdminPage() {
     });
   }, [tenantQuery, tenants]);
 
-  const visibleTenants = filteredTenants.slice(0, Math.max(1, Math.min(500, tenantTableLimit)));
+  const clampedPageSize = Math.max(1, Math.min(500, Math.trunc(Number(tenantPageSize || 40))));
+  const maxTenantPages = useMemo(() => {
+    return Math.max(1, Math.ceil(filteredTenants.length / clampedPageSize));
+  }, [clampedPageSize, filteredTenants.length]);
+
+  const visibleTenantPage = Math.min(Math.max(0, tenantPage), maxTenantPages - 1);
+  const visibleTenants = filteredTenants.slice(visibleTenantPage * clampedPageSize, visibleTenantPage * clampedPageSize + clampedPageSize);
+
+  useEffect(() => {
+    setTenantPage(0);
+  }, [tenantQuery, tenantPageSize]);
+
+  const formatTs = useCallback((ts: any) => {
+    const raw = String(ts || '').trim();
+    if (!raw) return '';
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return raw;
+    const iso = d.toISOString().replace('T', ' ').slice(0, 19);
+    return iso;
+  }, []);
 
   const summaryTotals = useMemo(() => {
     const totalTenants = tenants.length;
@@ -241,17 +261,53 @@ export default function OpsAdminPage() {
                 />
               </div>
               <div className="pz-field">
-                <label className="pz-field-label">linhas</label>
+                <label className="pz-field-label">page size</label>
                 <input
                   className="pz-input"
-                  value={String(tenantTableLimit)}
-                  onChange={(e) => setTenantTableLimit(Number(e.target.value || '40'))}
+                  value={String(tenantPageSize)}
+                  onChange={(e) => setTenantPageSize(Number(e.target.value || '40'))}
                   placeholder="40"
                 />
               </div>
               <div className="pz-field" style={{ display: 'grid', alignContent: 'end' }}>
-                <div style={{ color: '#8FA0BF', fontSize: 12 }}>{visibleTenants.length}/{filteredTenants.length} (filtrado)</div>
+                <div style={{ color: '#8FA0BF', fontSize: 12 }}>
+                  {visibleTenants.length}/{filteredTenants.length} (filtrado)
+                </div>
+                <div style={{ color: '#8FA0BF', fontSize: 12 }}>page {visibleTenantPage + 1}/{maxTenantPages}</div>
               </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => setTenantPage((p) => Math.max(0, p - 1))}
+                disabled={visibleTenantPage <= 0}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: 12,
+                  border: '1px solid rgba(255,255,255,0.18)',
+                  background: 'rgba(255,255,255,0.06)',
+                  color: '#E7ECF5',
+                  cursor: visibleTenantPage <= 0 ? 'not-allowed' : 'pointer'
+                }}
+              >
+                Prev
+              </button>
+              <button
+                type="button"
+                onClick={() => setTenantPage((p) => Math.min(maxTenantPages - 1, p + 1))}
+                disabled={visibleTenantPage >= maxTenantPages - 1}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: 12,
+                  border: '1px solid rgba(255,255,255,0.18)',
+                  background: 'rgba(255,255,255,0.06)',
+                  color: '#E7ECF5',
+                  cursor: visibleTenantPage >= maxTenantPages - 1 ? 'not-allowed' : 'pointer'
+                }}
+              >
+                Next
+              </button>
             </div>
 
             <div style={{ overflowX: 'auto' }}>
@@ -263,12 +319,15 @@ export default function OpsAdminPage() {
                     <th style={{ padding: '8px 6px' }}>exec</th>
                     <th style={{ padding: '8px 6px' }}>units(cons)</th>
                     <th style={{ padding: '8px 6px' }}>payments(paid/created)</th>
+                    <th style={{ padding: '8px 6px' }}>errors</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(visibleTenants || []).map((t: any) => {
                     const id = String(t.tenantId || '').trim();
                     const selected = selectedTenantId && id === selectedTenantId;
+                    const errorsByReason = t?.errorsByReason && typeof t.errorsByReason === 'object' ? t.errorsByReason : null;
+                    const errorCount = errorsByReason ? Object.values(errorsByReason).reduce((acc: number, n: any) => acc + Number(n || 0), 0) : 0;
                     return (
                       <tr
                         key={id}
@@ -286,6 +345,7 @@ export default function OpsAdminPage() {
                         <td style={{ padding: '8px 6px' }}>
                           {Number(t.paymentsPaid || 0)}/{Number(t.paymentsCreated || 0)}
                         </td>
+                        <td style={{ padding: '8px 6px', color: errorCount > 0 ? '#FFB4B4' : '#8FA0BF' }}>{errorCount}</td>
                       </tr>
                     );
                   })}
@@ -389,7 +449,7 @@ export default function OpsAdminPage() {
                             const proofId = String(ev?.proofId || '').trim();
                             return (
                               <tr key={String(ev?.eventId || Math.random())} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                                <td style={{ padding: '6px 4px', whiteSpace: 'nowrap', color: '#8FA0BF' }}>{String(ev?.ts || '').slice(0, 19)}</td>
+                                <td style={{ padding: '6px 4px', whiteSpace: 'nowrap', color: '#8FA0BF' }}>{formatTs(ev?.ts)}</td>
                                 <td style={{ padding: '6px 4px' }}>{String(ev?.action || '')}</td>
                                 <td style={{ padding: '6px 4px', color: ev?.ok === false ? '#FFB4B4' : '#BFFFEF' }}>{String(ev?.ok)}</td>
                                 <td style={{ padding: '6px 4px', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(ev?.reason || '')}</td>
