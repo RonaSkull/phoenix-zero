@@ -21,30 +21,38 @@ $DemoConfigs = @{
         Amount = 500
         Description = "Compliance proof for crypto exchanges"
         OverlayTemplate = "exchange-overlay.html"
+        EnterprisePrice = "Starting at $35,000/month"
+        ROIMetric = "SEC-compliant audit trails in seconds"
     }
     "ai-marketplace" = @{
         Title = "Autonomous Agent Economies"
-        TaskType = "agent_executable_payment_gating"
-        Operation = "agent_executable_payment_gating"
+        TaskType = "agent_compute"
+        Operation = "agent_compute"
         Amount = 10
         Description = "Agent-to-agent payments without intermediaries"
         OverlayTemplate = "ai-marketplace-overlay.html"
+        EnterprisePrice = "Starting at $15,000/month"
+        ROIMetric = "Zero-touch autonomous transactions"
     }
     "gaming" = @{
         Title = "Fraud-Proof Tournament Payouts"
-        TaskType = "payout_integrity_anti_replay"
-        Operation = "payout_integrity_anti_replay"
+        TaskType = "payout_mass"
+        Operation = "payout_mass"
         Amount = 100
         Description = "Verifiable esports tournament payouts"
         OverlayTemplate = "gaming-overlay.html"
+        EnterprisePrice = "Starting at $20,000/month"
+        ROIMetric = "100% transparent payout verification"
     }
     "banking" = @{
-        Title = "BC/Febraban Reconciliation in 1 Click"
-        TaskType = "crypto_reconciliation_export"
-        Operation = "crypto_reconciliation_export"
+        Title = "Global Regulatory Reconciliation"
+        TaskType = "reconcile_psp"
+        Operation = "reconcile_psp"
         Amount = 50
-        Description = "Automated banking reconciliation"
+        Description = "Automated compliance reconciliation for financial institutions"
         OverlayTemplate = "banking-overlay.html"
+        EnterprisePrice = "Starting at $25,000/month"
+        ROIMetric = "90% reduction in compliance costs"
     }
 }
 
@@ -217,7 +225,7 @@ $(switch ($DemoType) {
     "banking" { @"
             <div class="point">Reconciliation in minutes, not days</div>
             <div class="point">90% operational cost reduction</div>
-            <div class="point">BC/Febraban-ready reports</div>
+            <div class="point">Global regulatory compliance ready</div>
 "@ }
 })
         </div>
@@ -456,10 +464,49 @@ try {
     Write-Host "   Report: $reportPath"
     Write-Host "   Overlay: $overlayFile"
     Write-Host ""
-    Write-Host "==> Next Steps:" -ForegroundColor Magenta
-    Write-Host "   1. Copy the verify URL to your prospect"
-    Write-Host "   2. They can verify without any setup"
-    Write-Host "   3. Use overlay file for video production"
+    Write-Host ""
+    Write-Host "==> ENTERPRISE PRICING & ROI" -ForegroundColor Cyan -BackgroundColor Black
+    Write-Host ""
+    Write-Host "   This Demo: FREE (simulated payment for evaluation)" -ForegroundColor Green
+    Write-Host "   Production: $($config.EnterprisePrice)" -ForegroundColor Yellow
+    Write-Host "   ROI: $($config.ROIMetric)" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "   Volume Pricing Available:" -ForegroundColor White
+    Write-Host "   - 1M+ transactions/month: Custom enterprise rates" -ForegroundColor Gray
+    Write-Host "   - Multi-region deployment: Contact for SLA terms" -ForegroundColor Gray
+    Write-Host "   - Dedicated infrastructure: Available for $100K+/year contracts" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "==> PRODUCTION ONBOARDING" -ForegroundColor Cyan -BackgroundColor Black
+    Write-Host ""
+    Write-Host "   Step 1: Schedule Technical Call" -ForegroundColor Yellow
+    Write-Host "   - 30-minute architecture review with our engineering team" -ForegroundColor Gray
+    Write-Host "   - Custom integration planning for your stack" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "   Step 2: Production Credentials" -ForegroundColor Yellow
+    Write-Host "   - Real crypto payment processing (PIX, BTC, ETH, USDC)" -ForegroundColor Gray
+    Write-Host "   - Enterprise SLA: 99.95% uptime guarantee" -ForegroundColor Gray
+    Write-Host "   - 24/7 technical support with <15 min response" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "   Step 3: Deploy to Production" -ForegroundColor Yellow
+    Write-Host "   - Same APIs you see in this demo" -ForegroundColor Gray
+    Write-Host "   - No code changes required" -ForegroundColor Gray
+    Write-Host "   - Live in production within 48 hours" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "==> CONTACT SALES" -ForegroundColor Cyan -BackgroundColor Black
+    Write-Host ""
+    Write-Host "   Email: partnerships@phoenix-zero.com" -ForegroundColor Yellow
+    Write-Host "   Phone: +1 (555) PHOENIX-ZERO" -ForegroundColor Yellow
+    Write-Host "   Calendly: https://calendly.com/phoenix-zero-enterprise" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "   What to prepare for the call:" -ForegroundColor White
+    Write-Host "   - Expected monthly transaction volume" -ForegroundColor Gray
+    Write-Host "   - Preferred settlement currencies" -ForegroundColor Gray
+    Write-Host "   - Compliance requirements (SEC, GDPR, etc.)" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "==> NEXT STEPS" -ForegroundColor Magenta
+    Write-Host "   1. Share verify URL with decision makers" -ForegroundColor White
+    Write-Host "   2. Review enterprise pricing above" -ForegroundColor White
+    Write-Host "   3. Book technical call to discuss production deployment" -ForegroundColor White
     Write-Host ""
 
     # Output for CI/CD integration

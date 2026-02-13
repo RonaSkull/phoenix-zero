@@ -11,6 +11,8 @@ const DEMO_CONFIGS = {
     operation: 'reconcile_psp', // Must match taskType for sovereign
     amount: 500,
     agentPrefix: 'demo_exchange',
+    enterprisePrice: 'Starting at $35,000/month',
+    roiMetric: 'SEC-compliant audit trails in seconds',
   },
   'ai-marketplace': {
     title: 'Autonomous Agent Economies',
@@ -18,6 +20,8 @@ const DEMO_CONFIGS = {
     operation: 'agent_compute', // Must match taskType for sovereign
     amount: 10,
     agentPrefix: 'demo_ai_marketplace',
+    enterprisePrice: 'Starting at $15,000/month',
+    roiMetric: 'Zero-touch autonomous transactions',
   },
   gaming: {
     title: 'Fraud-Proof Tournament Payouts',
@@ -25,13 +29,17 @@ const DEMO_CONFIGS = {
     operation: 'payout_mass', // Must match taskType for sovereign
     amount: 100,
     agentPrefix: 'demo_gaming',
+    enterprisePrice: 'Starting at $20,000/month',
+    roiMetric: '100% transparent payout verification',
   },
   banking: {
-    title: 'BC/Febraban Reconciliation',
+    title: 'Global Regulatory Reconciliation',
     taskType: 'reconcile_psp',
     operation: 'reconcile_psp', // Must match taskType for sovereign
     amount: 50,
     agentPrefix: 'demo_banking',
+    enterprisePrice: 'Starting at $25,000/month',
+    roiMetric: '90% reduction in compliance costs',
   },
 };
 
@@ -237,7 +245,7 @@ export async function POST(request: NextRequest) {
     const execution = await executeResponse.json();
     const proofId = execution.proofId;
 
-    // Return success response
+    // Return success response with enterprise information
     return Response.json({
       success: true,
       demoType,
@@ -249,6 +257,37 @@ export async function POST(request: NextRequest) {
       verifyUrl: `${baseUrl}/verify/${proofId}`,
       publicProofUrl: `${baseUrl}/api/guarantee-proofs/${proofId}`,
       timestamp: new Date().toISOString(),
+      // Enterprise pricing and ROI information
+      enterprise: {
+        pricing: config.enterprisePrice,
+        roi: config.roiMetric,
+        demoMode: 'Simulated payment for evaluation',
+        productionFeatures: [
+          'Real crypto payment processing (PIX, BTC, ETH, USDC)',
+          'Enterprise SLA: 99.95% uptime guarantee',
+          '24/7 technical support with <15 min response',
+          'Same APIs as demo - no code changes required',
+          'Live in production within 48 hours',
+        ],
+        volumePricing: {
+          highVolume: '1M+ transactions/month: Custom enterprise rates',
+          multiRegion: 'Multi-region deployment: Contact for SLA terms',
+          dedicated: 'Dedicated infrastructure: Available for $100K+/year contracts',
+        },
+      },
+      nextSteps: {
+        technicalCall: '30-minute architecture review with engineering team',
+        contact: {
+          email: 'partnerships@phoenix-zero.com',
+          phone: '+1 (555) PHOENIX-ZERO',
+          calendly: 'https://calendly.com/phoenix-zero-enterprise',
+        },
+        prepareForCall: [
+          'Expected monthly transaction volume',
+          'Preferred settlement currencies',
+          'Compliance requirements (SEC, GDPR, etc.)',
+        ],
+      },
     });
 
   } catch (error) {

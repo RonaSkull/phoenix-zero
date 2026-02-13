@@ -1,0 +1,92 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: transparent; }
+        .overlay-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            border-left: 4px solid #00ff88;
+            max-width: 400px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        .header-overlay h1 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+            color: #00ff88;
+            font-weight: 700;
+        }
+        .header-overlay p {
+            margin: 0;
+            font-size: 14px;
+            color: #aaa;
+        }
+        .key-points {
+            margin-top: 20px;
+        }
+        .point {
+            display: flex;
+            align-items: center;
+            margin: 12px 0;
+            font-size: 15px;
+        }
+        .point::before {
+            content: "âœ“";
+            color: #00ff88;
+            font-weight: bold;
+            margin-right: 12px;
+            font-size: 18px;
+        }
+        .metrics {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #333;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .metric {
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #00ff88;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay-container">
+        <div class="header-overlay">
+            <h1>Fraud-Proof Tournament Payouts</h1>
+            <p>Verifiable esports tournament payouts</p>
+        </div>
+        <div class="key-points">
+            <div class="point">Public payout proofs</div>
+            <div class="point">Eliminates manipulation suspicion</div>
+            <div class="point">Total community trust</div>
+        </div>
+        <div class="metrics">
+            <div class="metric">
+                <div class="metric-value">100</div>
+                <div class="metric-label">Demo Units</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value">&lt;60s</div>
+                <div class="metric-label">To Complete</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
