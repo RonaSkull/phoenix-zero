@@ -1,34 +1,30 @@
 # Phoenix Zero — ENTERPRISE SALES DEMOS (FINAL, ENGLISH)
 
-## 🎯 Purpose
+**Purpose**: Enable sales engineers to demonstrate Phoenix Zero Sovereign PPE to enterprise prospects with zero setup friction and maximum impact.
 
-Enable sales engineers to demonstrate Phoenix Zero Sovereign PPE to enterprise prospects with zero setup friction and maximum impact.
+**Prerequisites**:
+- PowerShell 5.1+ or PowerShell Core
+- `PHOENIX_ZERO_BASE_URL` configured (default: https://phoenix-zero-web.onrender.com)
+- `PHOENIX_ZERO_ADMIN_TOKEN` for simulation mode
 
 ---
 
 ## 🏦 DEMO 1: CRYPTO EXCHANGES — "Regulatory Proof in 60 Seconds"
 
 ### The Problem
-
-"Your exchange spends days generating compliance reports for regulators. One audit failure can cost millions."
+"Your exchange spends $250k–$1M/year on manual compliance audits. One SEC failure can cost $10M+ in fines."
 
 ### The Solution
+"Every crypto payment generates a cryptographically verifiable proof that regulators can verify in 10 seconds — no trust required."
 
-"Every crypto payment automatically generates a cryptographically verifiable proof that any regulator can verify in 10 seconds — no trust required."
-
-### Real Exchange Simulation
-
+### Demo Script
 ```powershell
-# Simulate Binance compliance team testing
 $env:PHOENIX_ZERO_E2E_MODE = "simulate"
 $env:PHOENIX_ZERO_ADMIN_TOKEN = "your_admin_token"
-
-# Run sovereign demo with exchange-specific data
 .\sovereign-test-complete.ps1 -TaskType "reconcile_psp" -Operation "crypto_settlement_assurance"
 ```
 
 ### Expected Output
-
 ```
 ✅ Compliance Proof Generated
 ✅ Payment: $500,000 USD
@@ -37,38 +33,28 @@ $env:PHOENIX_ZERO_ADMIN_TOKEN = "your_admin_token"
 ✅ Regulator can verify without your infrastructure
 ```
 
-### Chief Compliance Officer Reaction
-
-"This eliminates our entire manual audit process. We can prove settlement to SEC instantly. Approved."
+### Decision Maker Reaction
+*"This eliminates our $500k/year manual audit process. We can prove settlement to SEC instantly. Approved for production."*
 
 ---
 
 ## 🤖 DEMO 2: AI MARKETPLACES — "Autonomous Agent Economies"
 
 ### The Problem
-
 "Your AI marketplace has 10,000 agents, but they can't trust each other for payments. You're the bottleneck."
 
 ### The Solution
-
 "Agents pay agents directly with cryptographically verifiable proofs. No intermediaries. No trust required."
 
-### Real Marketplace Simulation
-
+### Demo Script
 ```powershell
-# Simulate LangChain marketplace
 $env:PHOENIX_ZERO_E2E_MODE = "simulate"
-
-# Two autonomous agents transacting
 $analyst_agent = "langchain_analyst_001"
 $executor_agent = "langchain_executor_001"
-
-# Analyst pays executor for task completion
 .\sovereign-test-complete.ps1 -Payer $analyst_agent -Payee $executor_agent -Amount 10 -TaskType "agent_executable_payment_gating"
 ```
 
 ### Expected Output
-
 ```
 🤖 Autonomous Agents Operating
 ✅ analyst_agent_001 paid executor_agent_001 $10
@@ -77,29 +63,22 @@ $executor_agent = "langchain_executor_001"
 ✅ Proof: ppo_AGENT_ECONOMY_001
 ```
 
-### CTO of AI Marketplace Reaction
-
-"This is the first truly sovereign infrastructure for agent economies. We can scale to millions of agents without becoming the payment bottleneck. Let's integrate."
+### Decision Maker Reaction
+*"This is the first truly sovereign infrastructure for agent economies. We can scale to millions of agents without becoming the payment bottleneck. Let's integrate."*
 
 ---
 
 ## 🎮 DEMO 3: GAMING/ESPORTS — "Fraud-Proof Tournament Payouts"
 
 ### The Problem
-
 "Your $100k esports tournament faces player complaints about payout manipulation. Trust is everything."
 
 ### The Solution
-
 "Every payout generates a public proof showing exactly who won and how much they received. Players can verify themselves."
 
-### Real Gaming Platform Simulation
-
+### Demo Script
 ```powershell
-# Simulate Twitch esports tournament
 $env:PHOENIX_ZERO_E2E_MODE = "simulate"
-
-# Tournament results with public proofs
 $tournament_results = @{
     "1st_place" = @{ player = "player_xxx"; amount = 50000 }
     "2nd_place" = @{ player = "player_yyy"; amount = 30000 }  

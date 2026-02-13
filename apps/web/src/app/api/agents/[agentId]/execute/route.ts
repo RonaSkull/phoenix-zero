@@ -621,6 +621,7 @@ export async function POST(req: Request, ctx: { params: { agentId: string } }) {
         agentId,
         taskId,
         taskType,
+        proofId: gate.proofId,
         result: out,
         ...(sovereignContext && (sovereignEnforce || sovereignDebug) ? { sovereign: sovereignContext } : {})
       },

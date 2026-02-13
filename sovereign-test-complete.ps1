@@ -20,6 +20,24 @@ if ([string]::IsNullOrWhiteSpace($AGENT_ID)) {
     $AGENT_ID = "a_test_1"
 }
 
+$MODE = [string]$env:PHOENIX_ZERO_E2E_MODE
+if ([string]::IsNullOrWhiteSpace($MODE)) { $MODE = [string]$env:PZ_E2E_MODE }
+if ([string]::IsNullOrWhiteSpace($MODE)) { $MODE = 'wait' }
+$MODE = $MODE.Trim().ToLowerInvariant()
+
+$TIMEOUT_SECONDS_RAW = [string]$env:PHOENIX_ZERO_E2E_TIMEOUT_SECONDS
+if ([string]::IsNullOrWhiteSpace($TIMEOUT_SECONDS_RAW)) { $TIMEOUT_SECONDS_RAW = [string]$env:PZ_E2E_TIMEOUT_SECONDS }
+$TIMEOUT_SECONDS = 1800
+if (-not [string]::IsNullOrWhiteSpace($TIMEOUT_SECONDS_RAW)) {
+    $n = 0
+    if ([int]::TryParse($TIMEOUT_SECONDS_RAW, [ref]$n)) {
+        if ($n -gt 5) { $TIMEOUT_SECONDS = $n }
+    }
+}
+
+$ADMIN_TOKEN = [string]$env:PHOENIX_ZERO_ADMIN_TOKEN
+if ([string]::IsNullOrWhiteSpace($ADMIN_TOKEN)) { $ADMIN_TOKEN = [string]$env:PZ_ADMIN_TOKEN }
+
 function Ensure-ApiKey([string]$base) {
     if (-not [string]::IsNullOrWhiteSpace($script:API_KEY)) { return }
 
@@ -59,15 +77,32 @@ function Get-CheckoutStatus([string]$base, [hashtable]$headers, [string]$payment
     Invoke-RestMethod -Method GET -Uri $u -Headers $headers
 }
 
-function Wait-UntilPaid([string]$base, [hashtable]$headers, [string]$paymentId, [int]$timeoutSeconds = 900) {
+function Admin-FallbackPaid([string]$base, [string]$adminToken, [string]$paymentId) {
+    if ([string]::IsNullOrWhiteSpace($adminToken)) {
+        throw 'Missing PHOENIX_ZERO_ADMIN_TOKEN for simulate mode'
+    }
+    $u = ('{0}/api/admin/fallback-paid' -f $base)
+    $h = @{ 'x-admin-token' = $adminToken }
+    $bodyObj = @{ paymentId = $paymentId }
+    $body = $bodyObj | ConvertTo-Json -Depth 10
+    Invoke-RestMethod -Method POST -Uri $u -Headers $h -ContentType 'application/json' -Body $body
+}
+
+function Wait-UntilPaid([string]$base, [hashtable]$headers, [string]$paymentId, [int]$timeoutSeconds = 900, [string]$checkoutUrl = '') {
     $deadline = (Get-Date).AddSeconds([Math]::Max(5, $timeoutSeconds))
     $last = $null
+    $i = 0
     while ((Get-Date) -lt $deadline) {
         $last = Get-CheckoutStatus -base $base -headers $headers -paymentId $paymentId
         $st = [string]$last.status
         Write-Host "Status: $st" -ForegroundColor DarkGray
         if ($st -eq 'paid') { return $last }
         if ($st -eq 'failed') { throw "Payment failed: $($last | ConvertTo-Json -Depth 20)" }
+        $i = $i + 1
+        if ($checkoutUrl -and ($i % 12 -eq 0)) {
+            Write-Host (('Invoice: {0}' -f $checkoutUrl)) -ForegroundColor Yellow
+            Write-Host 'Para cancelar: Ctrl+C' -ForegroundColor DarkYellow
+        }
         Start-Sleep -Seconds 5
     }
     throw "Timeout waiting for paid. Last status: $($last | ConvertTo-Json -Depth 20)"
@@ -90,25 +125,25 @@ function Post-Execute([string]$base, [hashtable]$headers, [string]$agentId, [str
     Invoke-RestMethod -Method POST -Uri $u -Headers $headers -ContentType "application/json" -Body $body
 }
 
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "1. VALIDANDO API KEY (/api/pricing)" -ForegroundColor Cyan
-Write-Host "========================================"
+Write-Host '========================================' -ForegroundColor Cyan
+Write-Host '1. VALIDANDO API KEY (/api/pricing)' -ForegroundColor Cyan
+Write-Host '========================================'
 try {
     $pricing = Invoke-RestMethod -Method GET -Uri ('{0}/api/pricing' -f $BASE) -Headers $hSov
-    Write-Host "OK: API Key valida!" -ForegroundColor Green
+    Write-Host 'OK: API Key valida!' -ForegroundColor Green
     Write-Host (('   Tenant: {0}' -f $pricing.tenantId))
     Write-Host (('   Sovereign: {0}' -f $pricing.sovereign.enabled))
     Write-Host (('   Crypto Enabled: {0}' -f $pricing.sovereign.cryptoProvider))
 } catch {
-    Write-Host "ERROR: ERRO AO VALIDAR API KEY:" -ForegroundColor Red
+    Write-Host 'ERROR: ERRO AO VALIDAR API KEY:' -ForegroundColor Red
     Write-Host $_.Exception.Message
     exit 1
 }
 
-Write-Host ""
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "2. CRIANDO CHECKOUT CRYPTO" -ForegroundColor Cyan
-Write-Host "========================================"
+Write-Host ''
+Write-Host '========================================' -ForegroundColor Cyan
+Write-Host '2. CRIANDO CHECKOUT CRYPTO' -ForegroundColor Cyan
+Write-Host '========================================'
 
 # Config do checkout
 $OP         = "time_anchor_get"
@@ -152,36 +187,57 @@ $checkoutBody = $checkoutBodyObj | ConvertTo-Json -Depth 30
 try {
     $resp = Invoke-RestMethod -Method POST -Uri ('{0}/api/checkout/create' -f $BASE) -Headers $hSov -ContentType "application/json" -Body $checkoutBody
     
-    Write-Host ""
-    Write-Host "OK: CHECKOUT CRIADO!" -ForegroundColor Green
-    Write-Host ""
+    Write-Host ''
+    Write-Host 'OK: CHECKOUT CRIADO!' -ForegroundColor Green
+    Write-Host ''
     Write-Host (('   paymentId: {0}' -f $resp.paymentId))
     Write-Host (('   checkoutUrl: {0}' -f $resp.checkoutUrl))
     Write-Host (('   payCurrency: {0}' -f $resp.payCurrency))
     Write-Host (('   payAmount: {0}' -f $resp.payAmount))
     Write-Host (('   status: {0}' -f $resp.status))
-    Write-Host ""
-    Write-Host "========================================" -ForegroundColor Yellow
-    Write-Host "PRÓXIMO PASSO:" -ForegroundColor Yellow
+    Write-Host ''
+    Write-Host '========================================' -ForegroundColor Yellow
+    Write-Host 'PRÓXIMO PASSO:' -ForegroundColor Yellow
     Write-Host (('Abra no browser: {0}' -f $resp.checkoutUrl))
     Write-Host "E clique em 'Next step' para pagar"
-    Write-Host "========================================"
+    Write-Host '========================================'
     
     $PAYMENT_ID = [string]$resp.paymentId
+    $CHECKOUT_URL = [string]$resp.checkoutUrl
     if (-not $PAYMENT_ID) { throw "Missing paymentId in response" }
 
-    Write-Host ""
-    Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host "3. AGUARDANDO STATUS=PAID" -ForegroundColor Cyan
-    Write-Host "========================================"
-    Write-Host "Quando terminar o pagamento na UI, o webhook deve confirmar e o status vira paid." -ForegroundColor DarkYellow
-    $paid = Wait-UntilPaid -base $BASE -headers $hSov -paymentId $PAYMENT_ID -timeoutSeconds 1800
-    Write-Host "OK: Pago!" -ForegroundColor Green
+    if ($MODE -eq 'invoice') {
+        Write-Host ''
+        Write-Host 'MODE=invoice -> gerou invoice e saiu.' -ForegroundColor Cyan
+        Write-Host (('paymentId: {0}' -f $PAYMENT_ID))
+        Write-Host (('checkoutUrl: {0}' -f $CHECKOUT_URL))
+        exit 0
+    }
 
-    Write-Host ""
-    Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host "4. BUSCANDO PPO (Payment Proof Object)" -ForegroundColor Cyan
-    Write-Host "========================================"
+    Write-Host ''
+    Write-Host '========================================' -ForegroundColor Cyan
+    Write-Host '3. AGUARDANDO STATUS=PAID' -ForegroundColor Cyan
+    Write-Host '========================================'
+    Write-Host 'Quando terminar o pagamento na UI, o webhook deve confirmar e o status vira paid.' -ForegroundColor DarkYellow
+
+    if ($MODE -eq 'simulate') {
+        Write-Host ''
+        Write-Host 'MODE=simulate -> tentando admin fallback-paid se continuar pending.' -ForegroundColor Cyan
+        Start-Sleep -Seconds 3
+        $cur = Get-CheckoutStatus -base $BASE -headers $hSov -paymentId $PAYMENT_ID
+        if ([string]$cur.status -eq 'pending') {
+            $fb = Admin-FallbackPaid -base $BASE -adminToken $ADMIN_TOKEN -paymentId $PAYMENT_ID
+            Write-Host (('fallback-paid ok: {0}' -f ($fb | ConvertTo-Json -Depth 10))) -ForegroundColor DarkGray
+        }
+    }
+
+    $paid = Wait-UntilPaid -base $BASE -headers $hSov -paymentId $PAYMENT_ID -timeoutSeconds $TIMEOUT_SECONDS -checkoutUrl $CHECKOUT_URL
+    Write-Host 'OK: Pago!' -ForegroundColor Green
+
+    Write-Host ''
+    Write-Host '========================================' -ForegroundColor Cyan
+    Write-Host '4. BUSCANDO PPO (Payment Proof Object)' -ForegroundColor Cyan
+    Write-Host '========================================'
     $proofsResp = Get-AgentProofs -base $BASE -headers $hSov -agentId $AGENT_ID -limit 50
     if (-not $proofsResp.ok) { throw "agents proofs not ok: $($proofsResp | ConvertTo-Json -Depth 20)" }
     $proof = $null
@@ -197,24 +253,24 @@ try {
     $PROOF_ID = [string]$proof.id
     Write-Host (('OK: PPO encontrado: {0}' -f $PROOF_ID)) -ForegroundColor Green
 
-    Write-Host ""
-    Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host "5. GATE + EXECUTE" -ForegroundColor Cyan
-    Write-Host "========================================"
+    Write-Host ''
+    Write-Host '========================================' -ForegroundColor Cyan
+    Write-Host '5. GATE + EXECUTE' -ForegroundColor Cyan
+    Write-Host '========================================'
     $gate = Get-Gate -base $BASE -headers $hSov -agentId $AGENT_ID -taskId $TASK_ID -taskType $TASK_TYPE
     Write-Host ("Gate allowed: " + $gate.allowed + " (reason: " + $gate.reason + ")")
     if (-not $gate.allowed) { throw "Gate blocked: $($gate | ConvertTo-Json -Depth 20)" }
     $exec = Post-Execute -base $BASE -headers $hSov -agentId $AGENT_ID -taskId $TASK_ID -taskType $TASK_TYPE
-    Write-Host "Execute response:" -ForegroundColor DarkGray
+    Write-Host 'Execute response:' -ForegroundColor DarkGray
     $exec | ConvertTo-Json -Depth 50
 
-    Write-Host ""
-    Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host "6. VERIFICAÇÃO PÚBLICA" -ForegroundColor Cyan
-    Write-Host "========================================"
+    Write-Host ''
+    Write-Host '========================================' -ForegroundColor Cyan
+    Write-Host '6. VERIFICAÇÃO PÚBLICA' -ForegroundColor Cyan
+    Write-Host '========================================'
     $pub = Invoke-RestMethod -Method GET -Uri ('{0}/api/guarantee-proofs/{1}' -f $BASE, $PROOF_ID)
     if (-not $pub.ok) { throw "guarantee-proof not ok: $($pub | ConvertTo-Json -Depth 20)" }
-    Write-Host "OK: Public proof ok" -ForegroundColor Green
+    Write-Host 'OK: Public proof ok' -ForegroundColor Green
     Write-Host (('Verify page: {0}/verify/{1}' -f $BASE, $PROOF_ID)) -ForegroundColor Yellow
     Write-Host (('Guarantee JSON: {0}/api/guarantee-proofs/{1}' -f $BASE, $PROOF_ID)) -ForegroundColor Yellow
 

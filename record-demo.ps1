@@ -276,6 +276,44 @@ try {
     $env:PHOENIX_ZERO_TENANT_ID = $tenantRes.tenant.tenantId
     Write-Host "   [OK] Sovereign tenant provisioned: $($tenantRes.tenant.tenantId)" -ForegroundColor Green
 
+    # 1b. Provision sovereign contract (required for sovereign task types during /execute)
+    Write-Host "   -> Provisioning sovereign contract (admin)..." -ForegroundColor Blue
+    $nowIso = (Get-Date).ToString("o")
+    $unixSeconds = [int64]([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())
+    $contractId = "sc_$($env:PHOENIX_ZERO_TENANT_ID)_$($agentId)_$unixSeconds"
+    $execClassId = "standard"
+    $contractPayload = @{
+        contract = @{
+            contractId = $contractId
+            tenantId = $env:PHOENIX_ZERO_TENANT_ID
+            agentId = $agentId
+            status = "active"
+            createdAt = $nowIso
+            updatedAt = $nowIso
+            effectiveAt = $nowIso
+            defaultExecutionClassId = $execClassId
+            executionClasses = @(
+                @{
+                    classId = $execClassId
+                    currency = "USD"
+                    pricePerExecutionCents = 100
+                    allowedTaskTypes = @($effectiveTaskType)
+                    maxDailyExecutions = 100000
+                    maxMonthlyExecutions = 1000000
+                }
+            )
+            meta = @{
+                demoType = $DemoType
+                demoTaskType = $effectiveTaskType
+            }
+        }
+    }
+    $contractRes = Invoke-JsonPost "$BaseUrl/api/admin/sovereign-contracts" @{ "x-admin-token" = $env:PHOENIX_ZERO_ADMIN_TOKEN; "Content-Type" = "application/json" } $contractPayload
+    if (-not $contractRes.ok) {
+        throw "Failed to provision sovereign contract"
+    }
+    Write-Host "   [OK] Sovereign contract active: $($contractRes.contract.contractId)" -ForegroundColor Green
+
     # 2. Create checkout
     Write-Host "   [CARD] Creating checkout..." -ForegroundColor Blue
     Write-Host "   DEBUG: Agent ID = $agentId" -ForegroundColor Gray
@@ -356,13 +394,29 @@ try {
         taskOutputHash = "sha256:demo_output_$taskId"
     } | ConvertTo-Json
 
-    $execution = Invoke-RestMethod -Uri "$BaseUrl/api/agents/$agentId/execute" `
-      -Method POST `
-      -Headers @{
-        "x-api-key" = $env:PHOENIX_ZERO_SOVEREIGN_TEST_API_KEY
-        "Content-Type" = "application/json"
-      } `
-      -Body $executeBody
+    try {
+        $execution = Invoke-RestMethod -Uri "$BaseUrl/api/agents/$agentId/execute" `
+          -Method POST `
+          -Headers @{
+            "x-api-key" = $env:PHOENIX_ZERO_SOVEREIGN_TEST_API_KEY
+            "Content-Type" = "application/json"
+          } `
+          -Body $executeBody
+    } catch {
+        Write-Host "   [X] Execute failed!" -ForegroundColor Red
+        Write-Host "   Status: $($_.Exception.Response.StatusCode)" -ForegroundColor Red
+
+        $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+        $reader.BaseStream.Position = 0
+        $reader.DiscardBufferedData()
+        $errorBody = $reader.ReadToEnd()
+        if ($errorBody) {
+            Write-Host "   Error response:" -ForegroundColor Red
+            Write-Host "   $errorBody" -ForegroundColor Red
+        }
+
+        throw
+    }
 
     $proofId = $execution.proofId
     Write-Host "   [OK] Task executed, Proof: $proofId" -ForegroundColor Green
