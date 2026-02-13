@@ -2,9 +2,45 @@
 $ErrorActionPreference = 'Stop'
 
 # 1. Configurações obrigatórias
-$BASE       = "https://phoenix-zero-web.onrender.com"
-$API_KEY    = "pz_o0Lsgzn0eMUHjYkI-Hce5Gk9jmrIsX5BZNwx5P0sUJY"  # sua key soberign
-$AGENT_ID   = "a_test_1"
+$BASE = [string]$env:PHOENIX_ZERO_BASE_URL
+if ([string]::IsNullOrWhiteSpace($BASE)) {
+    $BASE = "https://phoenix-zero-web.onrender.com"
+}
+
+$API_KEY = [string]$env:PHOENIX_ZERO_SOVEREIGN_TEST_API_KEY
+if ([string]::IsNullOrWhiteSpace($API_KEY)) {
+    $API_KEY = [string]$env:PZ_API_KEY
+}
+if ([string]::IsNullOrWhiteSpace($API_KEY)) {
+    $API_KEY = ""
+}
+
+$AGENT_ID = [string]$env:PHOENIX_ZERO_SOVEREIGN_AGENT_ID
+if ([string]::IsNullOrWhiteSpace($AGENT_ID)) {
+    $AGENT_ID = "a_test_1"
+}
+
+function Ensure-ApiKey([string]$base) {
+    if (-not [string]::IsNullOrWhiteSpace($script:API_KEY)) { return }
+
+    Write-Host "" 
+    Write-Host "========================================" -ForegroundColor Cyan
+    Write-Host "0. AUTO-PROVISION (public agent-signup)" -ForegroundColor Cyan
+    Write-Host "========================================" -ForegroundColor Cyan
+
+    $signupBodyObj = @{ acceptsTermsVersion = 'v1'; acceptsFixedPricing = $true; name = 'sovereign_e2e_auto' }
+    $signupBody = $signupBodyObj | ConvertTo-Json -Depth 10
+    $u = ('{0}/api/public/agent-signup' -f $base)
+
+    $resp = Invoke-RestMethod -Method POST -Uri $u -ContentType 'application/json' -Body $signupBody
+    if (-not $resp -or -not $resp.ok -or -not $resp.tenant -or -not $resp.tenant.apiKey) {
+        throw "Auto-provision failed: $($resp | ConvertTo-Json -Depth 20)"
+    }
+    $script:API_KEY = [string]$resp.tenant.apiKey
+    Write-Host (('OK: provisioned tenantId={0}' -f [string]$resp.tenant.tenantId)) -ForegroundColor Green
+}
+
+Ensure-ApiKey -base $BASE
 
 # Headers
 $hSov = @{
@@ -77,7 +113,7 @@ Write-Host "========================================"
 # Config do checkout
 $OP         = "time_anchor_get"
 $UNITS      = 2000  # $20.00
-$TASK_TYPE  = "reconcile_psp"
+$TASK_TYPE  = $OP
 $TASK_ID    = "sv_" + (Get-Date).ToString("yyyyMMdd_HHmmss")
 
 Write-Host (('   Operation: {0}' -f $OP))
@@ -183,15 +219,19 @@ try {
     Write-Host (('Guarantee JSON: {0}/api/guarantee-proofs/{1}' -f $BASE, $PROOF_ID)) -ForegroundColor Yellow
 
 } catch {
-    Write-Host ""
-    Write-Host "ERROR: ERRO AO CRIAR CHECKOUT:" -ForegroundColor Red
-    if ($_.Exception.Response) {
-        $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
-        $reader.BaseStream.Position = 0
-        $reader.DiscardBufferedData()
-        $body = $reader.ReadToEnd()
-        Write-Host (('   Status: {0}' -f $_.Exception.Response.StatusCode))
-        Write-Host (('   Body: {0}' -f $body))
+    Write-Host ''
+    Write-Host 'ERROR: ERRO AO CRIAR CHECKOUT' -ForegroundColor Red
+    if ($_.Exception -and $_.Exception.Response) {
+        try {
+            $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+            $reader.BaseStream.Position = 0
+            $reader.DiscardBufferedData()
+            $body = $reader.ReadToEnd()
+            Write-Host (('   Status: {0}' -f $_.Exception.Response.StatusCode))
+            Write-Host (('   Body: {0}' -f $body))
+        } catch {
+            Write-Host $_.Exception.Message
+        }
     } else {
         Write-Host $_.Exception.Message
     }
