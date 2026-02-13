@@ -113,12 +113,16 @@ The Sovereign PPE platform is **production-ready** for enterprise clients requir
 
 ## 8. ENTERPRISE SALES DEMO CHECKLIST
 
-| Demo | Purpose | Script Ready |
-|------|---------|--------------|
-| **Demo A: Self-Signup Flow** | Show zero-friction agent onboarding | `sovereign-test-complete.ps1 MODE=invoice` |
-| **Demo B: End-to-End Payment** | Show complete PPE lifecycle | `sovereign-test-complete.ps1 MODE=simulate` |
-| **Demo C: Proof Verification** | Show client-side verifiability | Public proof endpoint + verify page |
-| **Demo D: Enterprise Contract** | Show sovereign contract enablement | Admin API walkthrough |
+| Demo | Vertical | Purpose | Expected Revenue |
+|------|----------|---------|------------------|
+| **Demo 1** | 🏦 Crypto Exchanges | Regulatory proof in 60 seconds | $25k–100k/month |
+| **Demo 2** | 🤖 AI Marketplaces | Autonomous agent economies | $10k–50k/month |
+| **Demo 3** | 🎮 Gaming/Esports | Fraud-proof tournament payouts | $15k–75k/month |
+| **Demo 4** | 💼 Digital Banks | BC/Febraban reconciliation | $20k–75k/month |
+
+**Script**: `sovereign-test-complete.ps1` with vertical-specific `taskType` parameter
+
+**Full documentation**: `docs/enterprise-demos.md`
 
 ---
 
