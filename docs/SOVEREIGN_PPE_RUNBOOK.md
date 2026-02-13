@@ -175,13 +175,79 @@ Polling:
 
 ---
 
-## 9) Testes automatizados (repo)
+## 10) Script E2E automatizado (`sovereign-test-complete.ps1`)
 
-O repo possui hardening/integration tests em `agentic-stress-test.ts`.
+Script PowerShell que executa **E2E completo** do fluxo Sovereign, com 3 modos de operação:
 
-Novos níveis adicionados:
-- `L2S`: Sovereign crypto PPE determinístico (webhook NowPayments injetado)
-- `L2N`: Non-sovereign enforcement (taskType deve casar com operation)
+### Modos disponíveis (`MODE`)
+
+| Modo | Descrição | Quando usar |
+|------|-----------|-------------|
+| `invoice` | Gera checkout e sai | Quer pagar manualmente na UI depois |
+| `wait` | Gera checkout e fica polling até `paid` | Vai pagar na UI e esperar webhook confirmar |
+| `simulate` | Gera checkout e auto-confirma via admin | Roda 100% automatizado (sem depender de webhook) |
+
+### Variáveis de ambiente
+
+```powershell
+# Obrigatórias
+$env:PHOENIX_ZERO_BASE_URL = "https://phoenix-zero-web.onrender.com"
+
+# Opcionais (script auto-provisiona se ausente)
+$env:PHOENIX_ZERO_SOVEREIGN_TEST_API_KEY = "pz_test_..."  # ou deixe vazio para auto-criar
+$env:PHOENIX_ZERO_SOVEREIGN_AGENT_ID = "agt_..."          # ou deixe vazio para auto-criar
+
+# Necessário apenas para MODE=simulate
+$env:PHOENIX_ZERO_ADMIN_TOKEN = "..."
+
+# Configuração
+$env:PHOENIX_ZERO_E2E_MODE = "wait"          # invoice | wait | simulate
+$env:PHOENIX_ZERO_E2E_TIMEOUT_SECONDS = "300" # timeout para wait/simulate
+```
+
+### Execução
+
+```powershell
+# Modo invoice: só gera e mostra URL
+$env:PHOENIX_ZERO_E2E_MODE = "invoice"
+.\sovereign-test-complete.ps1
+
+# Modo wait: gera e aguarda pagamento (abra a URL e pague)
+$env:PHOENIX_ZERO_E2E_MODE = "wait"
+$env:PHOENIX_ZERO_E2E_TIMEOUT_SECONDS = "600"
+.\sovereign-test-complete.ps1
+
+# Modo simulate: 100% automático (precisa admin token)
+$env:PHOENIX_ZERO_E2E_MODE = "simulate"
+$env:PHOENIX_ZERO_ADMIN_TOKEN = "seu_token_aqui"
+.\sovereign-test-complete.ps1
+```
+
+### Auto-provisionamento
+
+Se `PHOENIX_ZERO_SOVEREIGN_TEST_API_KEY` não estiver setado:
+1. Script chama `POST /api/public/agent-signup`
+2. Cria tenant sovereign automaticamente
+3. Usa a API key retornada para o resto do fluxo
+
+**Persistência**: o script loga a API key criada — copie e reuse em runs futuros para manter o mesmo tenant.
+
+### Fluxo executado pelo script
+
+1. **Auto-provision** (se necessário): `agent-signup` → API key
+2. **Checkout**: `POST /api/checkout/create` com `proofMeta`
+3. **Invoice**: exibe `checkoutUrl`
+4. **Pagamento**:
+   - `invoice`: sai aqui
+   - `wait`: polling até `paid` (ou timeout)
+   - `simulate`: chama `POST /api/admin/fallback-paid` para marcar como pago
+5. **PPO**: recupera proof via `GET /api/agents/{agentId}/proofs`
+6. **Gate/Execute**: valida liberação e execução
+7. **Verify**: valida prova publicamente via `GET /api/guarantee-proofs/{proofId}`
+
+---
+
+## 11) Testes automatizados do repo (`agentic-stress-test.ts`)
 
 Execução (local/dev):
 
