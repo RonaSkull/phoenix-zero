@@ -190,7 +190,7 @@ $(switch ($DemoType) {
 $overlayHtml | Out-File -FilePath $overlayFile -Encoding UTF8
 
 # Start recording simulation
-Write-Host "▶️  Starting demo recording..." -ForegroundColor Green
+Write-Host "[REC] Starting demo recording..." -ForegroundColor Green
 Write-Host "   This will execute the actual demo flow on: $BaseUrl" -ForegroundColor Gray
 
 # Set environment for demo
@@ -200,7 +200,8 @@ $env:PHOENIX_ZERO_BASE_URL = $BaseUrl
 # Generate unique identifiers
 $agentId = "demo_$DemoType`_$(Get-Random -Maximum 9999)"
 $taskId = "demo_task_$(Get-Date -Format 'yyyyMMddHHmmss')"
-$effectiveTaskType = $config.Operation
+$billingOperation = $config.Operation
+$effectiveTaskType = $billingOperation
 
 Write-Host ""
 Write-Host "[MASK] Demo Configuration:" -ForegroundColor Cyan
@@ -228,6 +229,11 @@ try {
         $env:PHOENIX_ZERO_SOVEREIGN_TEST_API_KEY = $signup.tenant.apiKey
         $env:PHOENIX_ZERO_TENANT_ID = $signup.tenant.tenantId
         Write-Host "   [OK] Tenant provisioned: $($signup.tenant.tenantId)" -ForegroundColor Green
+
+        # Public self-signup tenants typically only support protect_* operations in pricing.
+        # Use a compatible billing operation while keeping demoType/title for the narrative.
+        $billingOperation = 'protect_video'
+        $effectiveTaskType = $billingOperation
     }
 
     # 2. Create checkout
@@ -240,7 +246,7 @@ try {
         currency = "USD"
         providerHint = "crypto"
         lineItems = @(@{ 
-            operation = $config.Operation
+            operation = $billingOperation
             units = $config.Amount 
         })
         proofMeta = @{
