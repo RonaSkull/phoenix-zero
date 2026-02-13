@@ -72,7 +72,7 @@ function isNonEmptyString(v: unknown): v is string {
 function isSovereignTaskType(taskType: string): boolean {
   const t = String(taskType || '').trim().toLowerCase();
   if (!t) return false;
-  const sovereign = new Set(['reconcile_psp', 'settle_crypto_fiat', 'payout_mass', 'audit_bc_compliance']);
+  const sovereign = new Set(['reconcile_psp', 'payout_mass', 'audit_bc_compliance']);
   if (sovereign.has(t)) return true;
   if (t.startsWith('reconcile_')) return true;
   if (t.startsWith('settle_')) return true;

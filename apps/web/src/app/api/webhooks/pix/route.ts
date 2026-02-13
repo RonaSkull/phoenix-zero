@@ -114,9 +114,13 @@ export async function POST(req: Request) {
   });
 
   if (!paymentId) {
+    if (eventId) {
+      await markWebhookEventProcessed({ provider: 'asaas', eventId }).catch(() => {});
+    }
     return Response.json(
       {
-        ok: false,
+        ok: true,
+        ignored: true,
         reason: 'Unknown payment (missing providerPaymentId mapping)',
         providerPaymentId,
         asaasPaymentId,
@@ -124,7 +128,7 @@ export async function POST(req: Request) {
         normalizedStatus: status,
         eventId
       },
-      { status: 404, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
+      { status: 200, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
     );
   }
 

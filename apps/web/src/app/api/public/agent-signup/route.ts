@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 
 import { computeClientRiskScore, fingerprintFromRequest } from '../../../../lib/agent-fingerprint';
 import { createTenant } from '../../../../lib/tenants';
@@ -69,6 +69,10 @@ export async function POST(req: Request) {
         intendedUse?: string;
         acceptsTermsVersion?: string;
         acceptsFixedPricing?: boolean;
+        isAutonomousClient?: boolean;
+        expectedExecutionRate?: string;
+        needsExecutionAuthorization?: boolean;
+        needsProofAutomation?: boolean;
         billingMode?: string;
         currency?: string;
         company?: string;
@@ -89,6 +93,15 @@ export async function POST(req: Request) {
   const intendedUse = String(body.intendedUse || '').trim();
   const acceptsTermsVersion = String(body.acceptsTermsVersion || '').trim();
   const acceptsFixedPricing = Boolean(body.acceptsFixedPricing);
+  const isAutonomousClient = typeof body.isAutonomousClient === 'boolean' ? body.isAutonomousClient : undefined;
+  const expectedExecutionRateRaw = String(body.expectedExecutionRate || '').trim().toLowerCase();
+  const expectedExecutionRate =
+    expectedExecutionRateRaw === 'low' || expectedExecutionRateRaw === 'medium' || expectedExecutionRateRaw === 'high'
+      ? (expectedExecutionRateRaw as 'low' | 'medium' | 'high')
+      : undefined;
+  const needsExecutionAuthorization =
+    typeof body.needsExecutionAuthorization === 'boolean' ? body.needsExecutionAuthorization : undefined;
+  const needsProofAutomation = typeof body.needsProofAutomation === 'boolean' ? body.needsProofAutomation : undefined;
   const billingMode = String(body.billingMode || '').trim();
   const currency = String(body.currency || 'USD').trim() || 'USD';
   const company = String(body.company || '').trim();
@@ -123,10 +136,6 @@ export async function POST(req: Request) {
   }
 
   const missingFields: string[] = [];
-  if (!name) missingFields.push('name');
-  if (!email) missingFields.push('email');
-  if (!agentType) missingFields.push('agentType');
-  if (!intendedUse) missingFields.push('intendedUse');
   if (!acceptsTermsVersion) missingFields.push('acceptsTermsVersion');
   if (!acceptsFixedPricing) missingFields.push('acceptsFixedPricing');
 
@@ -149,15 +158,23 @@ export async function POST(req: Request) {
     );
   }
 
+  const displayName = name || `agent_${randomBytes(4).toString('hex')}`;
+  const safeAgentType = agentType || 'autonomous_agent';
+  const safeIntendedUse = intendedUse || 'unspecified';
+
   try {
     const created = await createTenant({
-      name,
+      name: displayName,
       companyName: company || undefined,
       clientType: 'self_signup',
       sector: 'self_signup',
       country: country || 'unknown',
       walletAddress: walletAddress || undefined,
       kycStatus,
+      isAutonomousClient,
+      expectedExecutionRate,
+      needsExecutionAuthorization,
+      needsProofAutomation,
       currency,
       pricingProfile: 'default',
       commissionProfile: 'default',
@@ -173,12 +190,16 @@ export async function POST(req: Request) {
 
     console.log('[PUBLIC_SIGNUP] created', {
       tenantId: created.tenant.tenantId,
-      name,
-      emailHash4: sha256Hex(email.toLowerCase()).slice(0, 4),
-      agentType: agentType.slice(0, 64),
-      intendedUse: intendedUse.slice(0, 120),
+      name: displayName,
+      emailHash4: email ? sha256Hex(email.toLowerCase()).slice(0, 4) : null,
+      agentType: safeAgentType.slice(0, 64),
+      intendedUse: safeIntendedUse.slice(0, 120),
       acceptsTermsVersion: acceptsTermsVersion.slice(0, 32),
       acceptsFixedPricing,
+      isAutonomousClient,
+      expectedExecutionRate,
+      needsExecutionAuthorization,
+      needsProofAutomation,
       agentScore: fp.agentScore,
       riskScore: clientRiskScore,
       fpHash4: fp.fp ? sha256Hex(fp.fp).slice(0, 4) : null,
@@ -192,6 +213,12 @@ export async function POST(req: Request) {
           tenantId: created.tenant.tenantId,
           apiKey: created.apiKey,
           profile: created.tenant.pricingProfile,
+          routing: {
+            isAutonomousClient: created.tenant.isAutonomousClient ?? null,
+            expectedExecutionRate: created.tenant.expectedExecutionRate ?? null,
+            needsExecutionAuthorization: created.tenant.needsExecutionAuthorization ?? null,
+            needsProofAutomation: created.tenant.needsProofAutomation ?? null
+          },
           limits: {
             maxCheckoutsPerDay:
               clientRiskScore >= 80

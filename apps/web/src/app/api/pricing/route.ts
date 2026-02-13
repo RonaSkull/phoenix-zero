@@ -71,10 +71,6 @@ export async function GET(req: Request) {
           description: 'Multi-acquirer / multi-PSP reconciliation (batch hashed input + verifiable proof).'
         },
         {
-          taskType: 'settle_crypto_fiat',
-          description: 'Onchain/offchain settlement binding (stablecoin rails + fiat settlement evidence).'
-        },
-        {
           taskType: 'payout_mass',
           description: 'Mass payouts with deterministic audit trail and public proof per confirmed batch.'
         },

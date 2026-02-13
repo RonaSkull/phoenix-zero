@@ -19,6 +19,10 @@ export type TenantRecord = {
   country: string;
   walletAddress?: string;
   kycStatus?: KycStatus;
+  isAutonomousClient?: boolean;
+  expectedExecutionRate?: 'low' | 'medium' | 'high';
+  needsExecutionAuthorization?: boolean;
+  needsProofAutomation?: boolean;
   currency: string;
   pricingProfile: string;
   commissionProfile: string;
@@ -264,6 +268,10 @@ export async function createTenant(params: {
   country: string;
   walletAddress?: string;
   kycStatus?: KycStatus;
+  isAutonomousClient?: boolean;
+  expectedExecutionRate?: 'low' | 'medium' | 'high';
+  needsExecutionAuthorization?: boolean;
+  needsProofAutomation?: boolean;
   currency: string;
   pricingProfile: string;
   commissionProfile: string;
@@ -289,6 +297,11 @@ export async function createTenant(params: {
       country: params.country,
       walletAddress: params.walletAddress ? String(params.walletAddress || '').trim() || undefined : undefined,
       kycStatus: params.kycStatus,
+      isAutonomousClient: typeof params.isAutonomousClient === 'boolean' ? params.isAutonomousClient : undefined,
+      expectedExecutionRate: params.expectedExecutionRate,
+      needsExecutionAuthorization:
+        typeof params.needsExecutionAuthorization === 'boolean' ? params.needsExecutionAuthorization : undefined,
+      needsProofAutomation: typeof params.needsProofAutomation === 'boolean' ? params.needsProofAutomation : undefined,
       currency: params.currency,
       pricingProfile: params.pricingProfile,
       commissionProfile: params.commissionProfile,

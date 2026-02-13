@@ -39,7 +39,7 @@ function getMetaAll(html: string, attr: 'property' | 'name', key: string): strin
 function isSovereignOperation(operation: string): boolean {
   const op = String(operation || '').trim().toLowerCase();
   if (!op) return false;
-  const sovereign = new Set(['reconcile_psp', 'settle_crypto_fiat', 'payout_mass', 'audit_bc_compliance']);
+  const sovereign = new Set(['reconcile_psp', 'payout_mass', 'audit_bc_compliance']);
   if (sovereign.has(op)) return true;
   if (op.startsWith('reconcile_')) return true;
   if (op.startsWith('settle_')) return true;

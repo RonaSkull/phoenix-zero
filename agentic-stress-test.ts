@@ -41,9 +41,30 @@ function requireEnv(name: string): string {
   return v;
 }
 
+function optionalEnv(name: string): string | null {
+  const v = env(name);
+  return v ? v : null;
+}
+
 function withAdminHeader(adminToken: string): Record<string, string> {
   if (!adminToken) return {};
   return { 'x-admin-token': adminToken };
+}
+
+async function adminUpsertSovereignContract(params: {
+  baseUrl: string;
+  adminToken: string;
+  contract: any;
+}): Promise<HttpRes> {
+  const url = new URL('/api/admin/sovereign-contracts', params.baseUrl).toString();
+  return httpJson(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      ...withAdminHeader(params.adminToken)
+    },
+    body: JSON.stringify({ contract: params.contract })
+  });
 }
 
 async function httpJson<T = any>(url: string, init: RequestInit): Promise<HttpRes<T>> {
@@ -275,6 +296,10 @@ async function createTenant(params: {
   baseUrl: string;
   adminToken: string;
   name: string;
+  clientType?: string;
+  sector?: string;
+  country?: string;
+  currency?: string;
 }): Promise<TenantCreds> {
   const adminToken = String(params.adminToken || '').trim();
 
@@ -288,10 +313,10 @@ async function createTenant(params: {
       },
       body: JSON.stringify({
         name: params.name,
-        clientType: 'creator',
-        sector: 'media',
-        country: 'BR',
-        currency: 'BRL',
+        clientType: params.clientType || 'creator',
+        sector: params.sector || 'media',
+        country: params.country || 'BR',
+        currency: params.currency || 'BRL',
         pricingProfile: 'default',
         commissionProfile: 'default',
         taxProfile: 'default'
@@ -379,6 +404,12 @@ async function checkoutCreate(params: {
   currency?: string;
 }> {
   const url = new URL('/api/checkout/create', params.baseUrl).toString();
+  const proofMeta = params.proofMeta
+    ? {
+        ...params.proofMeta,
+        taskId: String(params.proofMeta.taskId || '').trim() || `task_${Date.now()}`
+      }
+    : undefined;
   const res = await httpJson(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json; charset=utf-8', 'x-api-key': params.apiKey },
@@ -388,7 +419,7 @@ async function checkoutCreate(params: {
       pricingProfileId: params.pricingProfileId,
       pricingVersionId: params.pricingVersionId,
       lineItems: params.lineItems,
-      proofMeta: params.proofMeta
+      proofMeta
     })
   });
   assert(res.status === 200, `checkout/create failed (${res.status}): ${res.text}`);
@@ -411,6 +442,22 @@ async function checkoutStatus(params: { baseUrl: string; apiKey: string; payment
   assert(res.status === 200, `checkout/status failed (${res.status}): ${res.text}`);
   assert(res.json && (res.json as any).ok === true, `checkout/status not ok: ${res.text}`);
   return res.json;
+}
+
+async function listAgentProofs(params: { baseUrl: string; apiKey: string; agentId: string; limit?: number }): Promise<any> {
+  const u = new URL(`/api/agents/${encodeURIComponent(params.agentId)}/proofs`, params.baseUrl);
+  if (typeof params.limit === 'number' && Number.isFinite(params.limit)) {
+    u.searchParams.set('limit', String(Math.max(1, Math.trunc(params.limit))));
+  }
+  const res = await httpJson(u.toString(), { method: 'GET', headers: { 'x-api-key': params.apiKey } });
+  assert(res.status === 200, `agents proofs failed (${res.status}): ${res.text}`);
+  assert(res.json && (res.json as any).ok === true, `agents proofs not ok: ${res.text}`);
+  return res.json;
+}
+
+async function fetchGuaranteeProof(params: { baseUrl: string; proofId: string }): Promise<HttpRes> {
+  const u = new URL(`/api/guarantee-proofs/${encodeURIComponent(params.proofId)}`, params.baseUrl);
+  return httpJson(u.toString(), { method: 'GET' });
 }
 
 async function liveStreamList(params: { baseUrl: string; apiKey: string }): Promise<HttpRes> {
@@ -811,6 +858,9 @@ async function main() {
   const asaasSecret = env('ASAAS_WEBHOOK_SECRET');
   const nowIpnSecret = env('NOWPAYMENTS_IPN_SECRET');
 
+  const predefinedSovereignApiKey = optionalEnv('PHOENIX_ZERO_SOVEREIGN_TEST_API_KEY');
+  const predefinedNonSovereignApiKey = optionalEnv('PHOENIX_ZERO_NON_SOVEREIGN_TEST_API_KEY');
+
   const proofMeta = {
     agentId: 'agent://agentic-stress-test-v1',
     taskType: 'protect_video',
@@ -988,6 +1038,150 @@ async function main() {
 
     const st1 = await checkoutStatus({ baseUrl, apiKey: t.apiKey, paymentId: created.paymentId });
     assert(String(st1.status) === 'paid', `expected paid, got ${st1.status}`);
+    });
+  }
+
+  // Level 2S — Sovereign PPE crypto end-to-end (deterministic, webhook-injected)
+  if (shouldRun('L2S')) {
+    await run('L2S: sovereign crypto PPE (checkout -> nowpayments webhook -> PPO -> gate -> execute -> public verify)', async () => {
+      if (realMode) {
+        skip('real mode does not inject webhooks for deterministic sovereign PPE tests');
+      }
+
+      const t = predefinedSovereignApiKey
+        ? { tenantId: 't_predefined_sovereign', apiKey: predefinedSovereignApiKey, sessionToken: '' }
+        : !adminToken
+          ? skip(
+              'missing PHOENIX_ZERO_ADMIN_TOKEN. Set PHOENIX_ZERO_SOVEREIGN_TEST_API_KEY to run L2S against a pre-provisioned sovereign tenant.'
+            )
+          : await createTenant({
+              baseUrl,
+              adminToken,
+              name: `stress-l2s-${Date.now()}`,
+              clientType: 'sovereign',
+              sector: 'sovereign',
+              country: 'US',
+              currency: 'USD'
+            });
+
+      const agentId = 'agent://agentic-sovereign-l2s';
+      const taskId = newTaskId();
+      const taskType = 'reconcile_psp';
+
+      if (!predefinedSovereignApiKey) {
+        const now = new Date().toISOString();
+        const contract = {
+          contractId: `sc_${Date.now()}`,
+          tenantId: t.tenantId,
+          agentId,
+          status: 'active',
+          createdAt: now,
+          updatedAt: now,
+          defaultExecutionClassId: 'default',
+          executionClasses: [
+            {
+              classId: 'default',
+              currency: 'USD',
+              pricePerExecutionCents: 1,
+              allowedTaskTypes: [taskType]
+            }
+          ]
+        };
+        const up = await adminUpsertSovereignContract({ baseUrl, adminToken, contract });
+        assert(up.status === 200, `failed to upsert sovereign contract (${up.status}): ${up.text}`);
+        assert((up.json as any)?.ok === true, `sovereign contract upsert not ok: ${up.text}`);
+      }
+
+      const created = await checkoutCreate({
+        baseUrl,
+        apiKey: t.apiKey,
+        providerHint: 'crypto',
+        currency: 'USD',
+        proofMeta: {
+          agentId,
+          taskId,
+          taskType,
+          taskInputHash: `sha256:l2s_in_${Date.now()}`,
+          taskOutputHash: `sha256:l2s_out_${Date.now()}`
+        },
+        lineItems: [{ operation: 'time_anchor_get', units: 2000 }]
+      });
+
+      const st0 = await checkoutStatus({ baseUrl, apiKey: t.apiKey, paymentId: created.paymentId });
+      const providerPaymentId = String(st0.providerPaymentId || '').trim();
+      assert(providerPaymentId, 'missing providerPaymentId');
+
+      const wh = await nowPaymentsWebhook({
+        baseUrl,
+        providerPaymentId,
+        ipnSecret: nowIpnSecret || undefined,
+        eventId: `evt_${created.paymentId}_l2s_1`,
+        paymentStatus: 'finished'
+      });
+
+      if (wh.status === 401) {
+        skip('NowPayments webhook got 401 (server likely requires NOWPAYMENTS_IPN_SECRET, but it is not set here)');
+      }
+      assert(wh.status === 200, `nowpayments webhook failed (${wh.status}): ${wh.text}`);
+
+      const st1 = await checkoutStatus({ baseUrl, apiKey: t.apiKey, paymentId: created.paymentId });
+      assert(String(st1.status) === 'paid', `expected paid, got ${st1.status}`);
+
+      const proofs = await listAgentProofs({ baseUrl, apiKey: t.apiKey, agentId, limit: 20 });
+      const list = ((proofs as any).proofs || []) as any[];
+      const p = list.find((x) => String(x?.taskId || '') === taskId && String(x?.taskType || '') === taskType) || list[0];
+      assert(p?.id, `expected PPO with id, got: ${JSON.stringify(proofs)}`);
+
+      const gateUrl = new URL(`/api/agents/${encodeURIComponent(agentId)}/gate`, baseUrl);
+      gateUrl.searchParams.set('taskId', taskId);
+      gateUrl.searchParams.set('taskType', taskType);
+      const gateRes = await httpJson(gateUrl.toString(), { method: 'GET', headers: { 'x-api-key': t.apiKey } });
+      assert(gateRes.status === 200, `gate failed (${gateRes.status}): ${gateRes.text}`);
+      assert((gateRes.json as any)?.allowed === true, `expected allowed=true, got: ${gateRes.text}`);
+
+      const execUrl = new URL(`/api/agents/${encodeURIComponent(agentId)}/execute`, baseUrl);
+      const execRes = await httpJson(execUrl.toString(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8', 'x-api-key': t.apiKey },
+        body: JSON.stringify({ taskId, taskType, input: { hello: 'world' } })
+      });
+      assert(execRes.status === 200, `execute failed (${execRes.status}): ${execRes.text}`);
+      assert((execRes.json as any)?.executed === true, `expected executed=true, got: ${execRes.text}`);
+
+      const pub = await fetchGuaranteeProof({ baseUrl, proofId: String(p.id) });
+      assert(pub.status === 200, `guarantee-proof failed (${pub.status}): ${pub.text}`);
+      assert((pub.json as any)?.ok === true, `expected ok=true from guarantee-proof, got: ${pub.text}`);
+      assert(String((pub.json as any)?.proof?.proofId || '') === String(p.id), `proofId mismatch: ${pub.text}`);
+    });
+  }
+
+  // Level 2N — Non-sovereign enforcement: proofMeta.taskType must match lineItems.operation
+  if (shouldRun('L2N')) {
+    await run('L2N: non-sovereign blocks mismatched proofMeta.taskType vs lineItems.operation', async () => {
+      const t = predefinedNonSovereignApiKey
+        ? { tenantId: 't_predefined_non_sovereign', apiKey: predefinedNonSovereignApiKey, sessionToken: '' }
+        : await createTenant({ baseUrl, adminToken, name: `stress-l2n-${Date.now()}` });
+
+      const raw = await checkoutCreateRaw({
+        baseUrl,
+        apiKey: t.apiKey,
+        body: {
+          providerHint: 'crypto',
+          currency: 'USD',
+          lineItems: [{ operation: 'protect_video', units: 1, durationSeconds: 1 }],
+          proofMeta: {
+            agentId: 'agent://agentic-l2n',
+            taskId: newTaskId(),
+            taskType: 'reconcile_psp',
+            taskInputHash: 'sha256:l2n_in',
+            taskOutputHash: 'sha256:l2n_out'
+          }
+        }
+      });
+
+      assert(raw.status === 400, `expected 400, got ${raw.status}: ${raw.text}`);
+      const reason = String((raw.json as any)?.reason || (raw.json as any)?.message || raw.text || '');
+      assert(/tasktype/i.test(reason) || /proofmeta/i.test(reason) || /match/i.test(reason), `unexpected reason: ${raw.text}`);
     });
   }
 

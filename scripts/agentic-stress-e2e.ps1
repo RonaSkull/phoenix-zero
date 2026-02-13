@@ -37,6 +37,39 @@ function Stop-ProcessTree([int]$ProcessId) {
 
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
 
+function Import-DotEnvFile([string]$Path) {
+  if (-not (Test-Path -LiteralPath $Path)) { return }
+  $lines = Get-Content -LiteralPath $Path -ErrorAction Stop
+  foreach ($line in $lines) {
+    $s = [string]$line
+    if ([string]::IsNullOrWhiteSpace($s)) { continue }
+    $t = $s.Trim()
+    if ($t.StartsWith('#')) { continue }
+    $idx = $t.IndexOf('=')
+    if ($idx -lt 1) { continue }
+    $k = $t.Substring(0, $idx).Trim()
+    $v = $t.Substring($idx + 1)
+    if ([string]::IsNullOrWhiteSpace($k)) { continue }
+    $v = [string]$v
+    $v = $v.Trim()
+    if (($v.StartsWith('"') -and $v.EndsWith('"')) -or ($v.StartsWith("'") -and $v.EndsWith("'"))) {
+      if ($v.Length -ge 2) { $v = $v.Substring(1, $v.Length - 2) }
+    }
+    Set-Item -Path ("env:" + $k) -Value $v
+  }
+}
+
+function Import-EnvFile([string]$Path) {
+  if ([string]::IsNullOrWhiteSpace($Path)) { return }
+  if (-not (Test-Path -LiteralPath $Path)) { return }
+  $ext = [System.IO.Path]::GetExtension($Path).ToLowerInvariant()
+  if ($ext -eq '.ps1') {
+    . $Path
+    return
+  }
+  Import-DotEnvFile -Path $Path
+}
+
 if ([string]::IsNullOrWhiteSpace($BaseUrl) -or $BaseUrl -eq 'http://localhost:3000') {
   if (-not [string]::IsNullOrWhiteSpace($env:PHOENIX_ZERO_BASE_URL)) {
     $BaseUrl = $env:PHOENIX_ZERO_BASE_URL
@@ -56,8 +89,13 @@ function Test-IsRemoteBaseUrl([string]$Url) {
   return -not ($u -match '^https?://(localhost|127\.0\.0\.1|\[::1\])([:/]|$)')
 }
 
-if ($EnvFile -and (Test-Path -LiteralPath $EnvFile)) {
-  . $EnvFile
+if ($EnvFile) {
+  Import-EnvFile -Path $EnvFile
+} else {
+  $defaultLocal = (Join-Path $RepoRoot '.env.local')
+  if (Test-Path -LiteralPath $defaultLocal) {
+    Import-DotEnvFile -Path $defaultLocal
+  }
 }
 
 $isRemote = Test-IsRemoteBaseUrl -Url $BaseUrl
@@ -132,13 +170,15 @@ if ($isRemote) {
 
 Push-Location $RepoRoot
 try {
+  if (-not [string]::IsNullOrWhiteSpace($OnlyLevels)) {
+    $env:AGENTIC_STRESS_ONLY = $OnlyLevels
+  }
   if ($Mode -eq 'deterministic') {
     & npm run test:agentic
   } elseif ($Mode -eq 'real:pix') {
     $env:AGENTIC_STRESS_REAL = '1'
     $env:AGENTIC_STRESS_REAL_PROVIDER = 'pix'
     if (-not [string]::IsNullOrWhiteSpace($OnlyLevels)) {
-      $env:AGENTIC_STRESS_ONLY = $OnlyLevels
     } else {
       $env:AGENTIC_STRESS_ONLY = 'L5,L11'
     }
@@ -147,7 +187,6 @@ try {
     $env:AGENTIC_STRESS_REAL = '1'
     $env:AGENTIC_STRESS_REAL_PROVIDER = 'crypto'
     if (-not [string]::IsNullOrWhiteSpace($OnlyLevels)) {
-      $env:AGENTIC_STRESS_ONLY = $OnlyLevels
     } else {
       $env:AGENTIC_STRESS_ONLY = 'L5,L11'
     }
