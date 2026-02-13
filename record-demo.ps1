@@ -17,7 +17,7 @@ $DemoConfigs = @{
     "exchange" = @{
         Title = "Regulatory Proof in 60 Seconds"
         TaskType = "reconcile_psp"
-        Operation = "crypto_settlement_assurance"
+        Operation = "reconcile_psp"
         Amount = 500
         Description = "Compliance proof for crypto exchanges"
         OverlayTemplate = "exchange-overlay.html"
@@ -25,7 +25,7 @@ $DemoConfigs = @{
     "ai-marketplace" = @{
         Title = "Autonomous Agent Economies"
         TaskType = "agent_executable_payment_gating"
-        Operation = "agent_compute"
+        Operation = "agent_executable_payment_gating"
         Amount = 10
         Description = "Agent-to-agent payments without intermediaries"
         OverlayTemplate = "ai-marketplace-overlay.html"
@@ -33,7 +33,7 @@ $DemoConfigs = @{
     "gaming" = @{
         Title = "Fraud-Proof Tournament Payouts"
         TaskType = "payout_integrity_anti_replay"
-        Operation = "tournament_payout"
+        Operation = "payout_integrity_anti_replay"
         Amount = 100
         Description = "Verifiable esports tournament payouts"
         OverlayTemplate = "gaming-overlay.html"
@@ -41,7 +41,7 @@ $DemoConfigs = @{
     "banking" = @{
         Title = "BC/Febraban Reconciliation in 1 Click"
         TaskType = "crypto_reconciliation_export"
-        Operation = "pix_payment"
+        Operation = "crypto_reconciliation_export"
         Amount = 50
         Description = "Automated banking reconciliation"
         OverlayTemplate = "banking-overlay.html"
@@ -60,6 +60,55 @@ Write-Host ""
 if (-not $env:PHOENIX_ZERO_ADMIN_TOKEN) {
     Write-Error "[X] PHOENIX_ZERO_ADMIN_TOKEN not set. Required for simulation mode."
     exit 1
+}
+
+function Invoke-JsonPost($uri, $headers, $bodyObject) {
+    return Invoke-RestMethod -Uri $uri -Method POST -Headers $headers -Body ($bodyObject | ConvertTo-Json -Depth 10)
+}
+
+function Ensure-SovereignDemoPricingProfile($baseUrl, $adminToken) {
+    $profileId = "sovereign-demo"
+    $now = (Get-Date).ToString("o")
+
+    $ops = @{}
+    foreach ($k in $DemoConfigs.Keys) {
+        $op = [string]$DemoConfigs[$k].Operation
+        if ($op -and (-not $ops.ContainsKey($op))) {
+            $ops[$op] = 100
+        }
+    }
+
+    $profile = @{
+        id = $profileId
+        createdAt = $now
+        updatedAt = $now
+        currency = "USD"
+        basePriceCentsByOp = $ops
+        multiplierByClientType = @{ sovereign = 1; unknown = 1 }
+        multiplierBySector = @{ fintech = 1; unknown = 1 }
+        multiplierByCountry = @{ us = 1; unknown = 1 }
+    }
+
+    $headers = @{ "x-admin-token" = $adminToken; "Content-Type" = "application/json" }
+    Invoke-JsonPost "$baseUrl/api/admin/pricing-profiles" $headers $profile | Out-Null
+    return $profileId
+}
+
+function Provision-SovereignTenant($baseUrl, $adminToken, $pricingProfileId, $demoType) {
+    $headers = @{ "x-admin-token" = $adminToken; "Content-Type" = "application/json" }
+    $body = @{
+        name = "sovereign_demo_$demoType_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
+        clientType = "sovereign"
+        sector = "fintech"
+        country = "US"
+        currency = "USD"
+        pricingProfile = $pricingProfileId
+        commissionProfile = "default"
+        taxProfile = "default"
+        sessionTtlSeconds = 3600
+        next = "/pricing-admin"
+    }
+    return Invoke-JsonPost "$baseUrl/api/admin/tenants" $headers $body
 }
 
 # Ensure output directory exists
@@ -201,7 +250,7 @@ $env:PHOENIX_ZERO_BASE_URL = $BaseUrl
 $agentId = "demo_$DemoType`_$(Get-Random -Maximum 9999)"
 $taskId = "demo_task_$(Get-Date -Format 'yyyyMMddHHmmss')"
 $billingOperation = $config.Operation
-$effectiveTaskType = $billingOperation
+$effectiveTaskType = $config.TaskType
 
 Write-Host ""
 Write-Host "[MASK] Demo Configuration:" -ForegroundColor Cyan
@@ -214,27 +263,18 @@ Write-Host ""
 Write-Host "[CLOCK] Executing demo flow (this is a real execution)..." -ForegroundColor Yellow
 
 try {
-    # 1. Auto-provision tenant if needed
-    if (-not $env:PHOENIX_ZERO_SOVEREIGN_TEST_API_KEY) {
-        Write-Host "   -> Auto-provisioning tenant..." -ForegroundColor Blue
-        $signup = Invoke-RestMethod -Uri "$BaseUrl/api/public/agent-signup" `
-          -Method POST `
-          -Headers @{ "Content-Type" = "application/json" } `
-          -Body (@{ 
-            agentType = "autonomous"
-            acceptsTermsVersion = "1.0"
-            acceptsFixedPricing = $true
-          } | ConvertTo-Json)
-        
-        $env:PHOENIX_ZERO_SOVEREIGN_TEST_API_KEY = $signup.tenant.apiKey
-        $env:PHOENIX_ZERO_TENANT_ID = $signup.tenant.tenantId
-        Write-Host "   [OK] Tenant provisioned: $($signup.tenant.tenantId)" -ForegroundColor Green
+    # 1. Provision a REAL sovereign tenant + pricing profile (enterprise-real demo)
+    Write-Host "   -> Provisioning sovereign pricing + tenant (admin)..." -ForegroundColor Blue
+    $pricingProfileId = Ensure-SovereignDemoPricingProfile $BaseUrl $env:PHOENIX_ZERO_ADMIN_TOKEN
+    $tenantRes = Provision-SovereignTenant $BaseUrl $env:PHOENIX_ZERO_ADMIN_TOKEN $pricingProfileId $DemoType
 
-        # Public self-signup tenants typically only support protect_* operations in pricing.
-        # Use a compatible billing operation while keeping demoType/title for the narrative.
-        $billingOperation = 'protect_video'
-        $effectiveTaskType = $billingOperation
+    if (-not $tenantRes.ok) {
+        throw "Failed to provision sovereign tenant"
     }
+
+    $env:PHOENIX_ZERO_SOVEREIGN_TEST_API_KEY = $tenantRes.apiKey
+    $env:PHOENIX_ZERO_TENANT_ID = $tenantRes.tenant.tenantId
+    Write-Host "   [OK] Sovereign tenant provisioned: $($tenantRes.tenant.tenantId)" -ForegroundColor Green
 
     # 2. Create checkout
     Write-Host "   [CARD] Creating checkout..." -ForegroundColor Blue
