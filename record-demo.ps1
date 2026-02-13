@@ -50,7 +50,7 @@ $DemoConfigs = @{
 
 $config = $DemoConfigs[$DemoType]
 
-Write-Host "🎬 Phoenix Zero Demo Recorder" -ForegroundColor Cyan
+Write-Host "[FILM] Phoenix Zero Demo Recorder" -ForegroundColor Cyan
 Write-Host "================================" -ForegroundColor Cyan
 Write-Host "Demo Type: $($config.Title)" -ForegroundColor Yellow
 Write-Host "Output: $OutputPath" -ForegroundColor White
@@ -58,7 +58,7 @@ Write-Host ""
 
 # Validate environment
 if (-not $env:PHOENIX_ZERO_ADMIN_TOKEN) {
-    Write-Error "❌ PHOENIX_ZERO_ADMIN_TOKEN not set. Required for simulation mode."
+    Write-Error "[X] PHOENIX_ZERO_ADMIN_TOKEN not set. Required for simulation mode."
     exit 1
 }
 
@@ -72,7 +72,7 @@ $outputFile = Join-Path $OutputPath "$DemoType-demo-$timestamp.mp4"
 $overlayFile = Join-Path $OutputPath "$DemoType-overlay.html"
 
 # Generate overlay HTML
-Write-Host "🎨 Generating overlay template..." -ForegroundColor Blue
+Write-Host "[PAINT] Generating overlay template..." -ForegroundColor Blue
 $overlayHtml = @"
 <!DOCTYPE html>
 <html>
@@ -200,32 +200,42 @@ $env:PHOENIX_ZERO_BASE_URL = $BaseUrl
 # Generate unique identifiers
 $agentId = "demo_$DemoType`_$(Get-Random -Maximum 9999)"
 $taskId = "demo_task_$(Get-Date -Format 'yyyyMMddHHmmss')"
+$effectiveTaskType = $config.Operation
 
 Write-Host ""
-Write-Host "🎭 Demo Configuration:" -ForegroundColor Cyan
+Write-Host "[MASK] Demo Configuration:" -ForegroundColor Cyan
 Write-Host "   Agent ID: $agentId"
 Write-Host "   Task ID: $taskId"
-Write-Host "   Task Type: $($config.TaskType)"
+Write-Host "   Task Type: $effectiveTaskType"
 Write-Host ""
 
 # Execute the demo flow
-Write-Host "⏳ Executing demo flow (this is a real execution)..." -ForegroundColor Yellow
+Write-Host "[CLOCK] Executing demo flow (this is a real execution)..." -ForegroundColor Yellow
 
 try {
     # 1. Auto-provision tenant if needed
     if (-not $env:PHOENIX_ZERO_SOVEREIGN_TEST_API_KEY) {
-        Write-Host "   🔄 Auto-provisioning tenant..." -ForegroundColor Blue
+        Write-Host "   -> Auto-provisioning tenant..." -ForegroundColor Blue
         $signup = Invoke-RestMethod -Uri "$BaseUrl/api/public/agent-signup" `
           -Method POST `
           -Headers @{ "Content-Type" = "application/json" } `
-          -Body (@{ agentType = "autonomous"; routingHint = $DemoType } | ConvertTo-Json)
+          -Body (@{ 
+            agentType = "autonomous"
+            acceptsTermsVersion = "1.0"
+            acceptsFixedPricing = $true
+          } | ConvertTo-Json)
         
-        $env:PHOENIX_ZERO_SOVEREIGN_TEST_API_KEY = $signup.apiKey
-        Write-Host "   ✅ Tenant provisioned: $($signup.tenantId)" -ForegroundColor Green
+        $env:PHOENIX_ZERO_SOVEREIGN_TEST_API_KEY = $signup.tenant.apiKey
+        $env:PHOENIX_ZERO_TENANT_ID = $signup.tenant.tenantId
+        Write-Host "   [OK] Tenant provisioned: $($signup.tenant.tenantId)" -ForegroundColor Green
     }
 
     # 2. Create checkout
-    Write-Host "   💳 Creating checkout..." -ForegroundColor Blue
+    Write-Host "   [CARD] Creating checkout..." -ForegroundColor Blue
+    Write-Host "   DEBUG: Agent ID = $agentId" -ForegroundColor Gray
+    Write-Host "   DEBUG: Task ID = $taskId" -ForegroundColor Gray
+    Write-Host "   DEBUG: Task Type = $effectiveTaskType" -ForegroundColor Gray
+    
     $checkoutBody = @{
         currency = "USD"
         providerHint = "crypto"
@@ -236,26 +246,46 @@ try {
         proofMeta = @{
             agentId = $agentId
             taskId = $taskId
-            taskType = $config.TaskType
+            taskType = $effectiveTaskType
             taskInputHash = "sha256:demo_input_$taskId"
             taskOutputHash = "sha256:demo_output_$taskId"
             demoType = $DemoType
         }
     } | ConvertTo-Json -Depth 4
+    
+    Write-Host "   DEBUG: Request body:" -ForegroundColor Gray
+    Write-Host "   $checkoutBody" -ForegroundColor Gray
 
-    $checkout = Invoke-RestMethod -Uri "$BaseUrl/api/checkout/create" `
-      -Method POST `
-      -Headers @{
-        "x-api-key" = $env:PHOENIX_ZERO_SOVEREIGN_TEST_API_KEY
-        "Content-Type" = "application/json"
-      } `
-      -Body $checkoutBody
+    try {
+        $checkout = Invoke-RestMethod -Uri "$BaseUrl/api/checkout/create" `
+          -Method POST `
+          -Headers @{
+            "x-api-key" = $env:PHOENIX_ZERO_SOVEREIGN_TEST_API_KEY
+            "Content-Type" = "application/json"
+          } `
+          -Body $checkoutBody
+    } catch {
+        Write-Host "   [X] Checkout failed!" -ForegroundColor Red
+        Write-Host "   Status: $($_.Exception.Response.StatusCode)" -ForegroundColor Red
+        
+        # Try to read error response body
+        $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+        $reader.BaseStream.Position = 0
+        $reader.DiscardBufferedData()
+        $errorBody = $reader.ReadToEnd()
+        if ($errorBody) {
+            Write-Host "   Error response:" -ForegroundColor Red
+            Write-Host "   $errorBody" -ForegroundColor Red
+        }
+        
+        throw
+    }
 
-    Write-Host "   ✅ Checkout created: $($checkout.paymentId)" -ForegroundColor Green
+    Write-Host "   [OK] Checkout created: $($checkout.paymentId)" -ForegroundColor Green
     $paymentId = $checkout.paymentId
 
     # 3. Simulate payment
-    Write-Host "   💰 Simulating payment..." -ForegroundColor Blue
+    Write-Host "   [$] Simulating payment..." -ForegroundColor Blue
     $fallbackBody = @{
         paymentId = $paymentId
         tenantId = $env:PHOENIX_ZERO_TENANT_ID
@@ -269,13 +299,13 @@ try {
       } `
       -Body $fallbackBody | Out-Null
 
-    Write-Host "   ✅ Payment confirmed" -ForegroundColor Green
+    Write-Host "   [OK] Payment confirmed" -ForegroundColor Green
 
     # 4. Execute task
-    Write-Host "   ⚡ Executing task..." -ForegroundColor Blue
+    Write-Host "   [BOLT] Executing task..." -ForegroundColor Blue
     $executeBody = @{
         taskId = $taskId
-        taskType = $config.TaskType
+        taskType = $effectiveTaskType
         taskInputHash = "sha256:demo_input_$taskId"
         taskOutputHash = "sha256:demo_output_$taskId"
     } | ConvertTo-Json
@@ -289,7 +319,7 @@ try {
       -Body $executeBody
 
     $proofId = $execution.proofId
-    Write-Host "   ✅ Task executed, Proof: $proofId" -ForegroundColor Green
+    Write-Host "   [OK] Task executed, Proof: $proofId" -ForegroundColor Green
 
     # 5. Generate demo report
     $demoReport = @{
@@ -311,22 +341,22 @@ try {
     $demoReport | ConvertTo-Json -Depth 4 | Out-File -FilePath $reportPath
 
     Write-Host ""
-    Write-Host "✅ DEMO RECORDING COMPLETE!" -ForegroundColor Green -BackgroundColor Black
+    Write-Host "==> DEMO RECORDING COMPLETE!" -ForegroundColor Green -BackgroundColor Black
     Write-Host ""
-    Write-Host "📊 Demo Summary:" -ForegroundColor Cyan
+    Write-Host "(*) Demo Summary:" -ForegroundColor Cyan
     Write-Host "   Title: $($config.Title)"
     Write-Host "   Payment ID: $paymentId"
     Write-Host "   Proof ID: $proofId"
     Write-Host ""
-    Write-Host "🔗 Share these URLs:" -ForegroundColor Yellow
+    Write-Host "[LINK] Share these URLs:" -ForegroundColor Yellow
     Write-Host "   Verify Page: $($demoReport.verifyUrl)"
     Write-Host "   Public Proof: $($demoReport.publicProofUrl)"
     Write-Host ""
-    Write-Host "📁 Generated Files:" -ForegroundColor White
+    Write-Host "[FILES] Generated Files:" -ForegroundColor White
     Write-Host "   Report: $reportPath"
     Write-Host "   Overlay: $overlayFile"
     Write-Host ""
-    Write-Host "💡 Next Steps:" -ForegroundColor Magenta
+    Write-Host "==> Next Steps:" -ForegroundColor Magenta
     Write-Host "   1. Copy the verify URL to your prospect"
     Write-Host "   2. They can verify without any setup"
     Write-Host "   3. Use overlay file for video production"
@@ -336,6 +366,6 @@ try {
     return $demoReport
 
 } catch {
-    Write-Error "❌ Demo failed: $_"
+    Write-Error "[X] Demo failed: $_"
     exit 1
 }
