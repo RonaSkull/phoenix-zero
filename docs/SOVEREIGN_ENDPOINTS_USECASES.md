@@ -79,7 +79,8 @@ If you later decide to extend with additional machine-native use cases, they sho
 
 - `GET /api/pricing`
   - Purpose: discovery of pricing + operations + sovereign info.
-  - Notes: contains a `sovereign` section; currently includes some placeholder sovereign taskTypes.
+  - Notes: contains a `sovereign` section; in the public catalog tenant it currently returns `enabled:false` with `reason:CUSTOM_PRICING_REQUIRED`.
+  - Notes: the sovereign `operations` list is informational and may include placeholder taskTypes (e.g. `payout_mass`) that require a contract.
 
 - `GET /api/compatibility` and `POST /api/compatibility`
   - Purpose: machine-readable “can I do this?” checks.
@@ -161,7 +162,7 @@ Body:
   "proofMeta": {
     "agentId": "a_test_1",
     "taskId": "sv_20260213_080000",
-    "taskType": "reconcile_psp",
+    "taskType": "time_anchor_get",
     "taskInputHash": "sha256:...",
     "taskOutputHash": "sha256:..."
   }
@@ -330,6 +331,11 @@ To fully support the commercial packaging for reconciliation and enterprise ops,
 
 ## Notes about current code mismatches
 
-- `/api/pricing` currently lists sovereign operations including `settle_crypto_fiat` and `payout_mass`. If the sovereign product is crypto-only today, these descriptions should be updated to avoid promising fiat.
+- `/api/pricing` may list some sovereign operations for informational purposes (e.g. `payout_mass`). These should be treated as **contract-only** and not as self-serve features.
 - `/api/compatibility` treats taskTypes prefixed with `settle_` as sovereign. Ensure naming matches real product promises.
+
+## Production verification (current deployment)
+
+- Render health endpoint: `GET https://phoenix-zero-web.onrender.com/api/health`
+- Deployed commit validated for the webhook hardening behavior (PIX unknown mapping fails safely): `5f968c234b72c63f211e64ba1701402b153be465`
 

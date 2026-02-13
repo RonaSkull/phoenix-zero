@@ -23,8 +23,9 @@ Este runbook é o passo-a-passo definitivo para **testar e operar** o fluxo **SO
   - `taskId`
   - `taskType`
 - **Sem pagamento**: `checkout/status` fica `pending` e `gate/execute` devem bloquear. Isso é correto.
-- **SOVEREIGN**: `proofMeta.taskType` **não precisa** casar com `lineItems.operation` (essa regra rígida é para non-sovereign).
-- **Non-sovereign**: `proofMeta.taskType` **deve** casar com `lineItems.operation` (senão `400`).
+- **Regra `taskType` vs `operation`**:
+  - para manter compatibilidade e previsibilidade, use `proofMeta.taskType == lineItems[0].operation` (principalmente em fluxos self-serve).
+  - o backend pode aplicar regras adicionais para non-sovereign e/ou sovereign dependendo do enforcement e do contrato.
 - **Webhook**:
   - produção exige assinatura `x-nowpayments-sig` (HMAC SHA-512 do body com `NOWPAYMENTS_IPN_SECRET`)
   - sem webhook correto, fica `pending` “para sempre”
@@ -196,3 +197,9 @@ Para rodar somente esses níveis:
 $env:AGENTIC_STRESS_ONLY="L2S,L2N"
 npm run test:agentic
 ```
+
+### Verificação em produção (Render)
+
+- `GET https://phoenix-zero-web.onrender.com/api/health`
+  - commit: `5f968c234b72c63f211e64ba1701402b153be465`
+- `L4` (PIX webhook unknown mapping fails safely) passou contra Render via `scripts/agentic-stress-e2e.ps1`.
