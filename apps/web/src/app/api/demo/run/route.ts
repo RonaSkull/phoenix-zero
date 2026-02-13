@@ -3,35 +3,35 @@ import { NextRequest } from 'next/server';
 
 export const runtime = 'nodejs';
 
-// Demo configurations for each vertical
+// Demo configurations for each vertical - operation matches taskType for sovereign flow
 const DEMO_CONFIGS = {
   exchange: {
     title: 'Regulatory Proof in 60 Seconds',
     taskType: 'reconcile_psp',
-    operation: 'crypto_settlement_assurance',
+    operation: 'reconcile_psp', // Must match taskType for sovereign
     amount: 500,
-    agentPrefix: 'exchange_demo',
+    agentPrefix: 'demo_exchange',
   },
   'ai-marketplace': {
     title: 'Autonomous Agent Economies',
-    taskType: 'agent_executable_payment_gating',
-    operation: 'agent_compute',
+    taskType: 'agent_compute',
+    operation: 'agent_compute', // Must match taskType for sovereign
     amount: 10,
-    agentPrefix: 'ai_agent_demo',
+    agentPrefix: 'demo_ai_marketplace',
   },
   gaming: {
     title: 'Fraud-Proof Tournament Payouts',
-    taskType: 'payout_integrity_anti_replay',
-    operation: 'tournament_payout',
+    taskType: 'payout_mass',
+    operation: 'payout_mass', // Must match taskType for sovereign
     amount: 100,
-    agentPrefix: 'gaming_demo',
+    agentPrefix: 'demo_gaming',
   },
   banking: {
     title: 'BC/Febraban Reconciliation',
-    taskType: 'crypto_reconciliation_export',
-    operation: 'pix_payment',
+    taskType: 'reconcile_psp',
+    operation: 'reconcile_psp', // Must match taskType for sovereign
     amount: 50,
-    agentPrefix: 'banking_demo',
+    agentPrefix: 'demo_banking',
   },
 };
 
@@ -61,28 +61,108 @@ export async function POST(request: NextRequest) {
 
     // Generate unique identifiers
     const timestamp = Date.now();
-    const agentId = `${config.agentPrefix}_${timestamp}`;
-    const taskId = `demo_task_${timestamp}`;
+    const agentId = `${config.agentPrefix}_${Math.floor(Math.random() * 10000)}`;
+    const taskId = `demo_task_${new Date().toISOString().replace(/[:.]/g, '').slice(0, 15)}`;
+    const pricingProfileId = `sovereign_demo_${demoType}_${timestamp}`;
 
-    // Step 1: Auto-provision tenant via agent-signup
-    const signupResponse = await fetch(`${baseUrl}/api/public/agent-signup`, {
+    // Step 1: Create sovereign pricing profile
+    const pricingBody = {
+      pricingProfileId,
+      name: `Sovereign Demo ${demoType}`,
+      description: `Auto-created pricing profile for ${demoType} demo`,
+      basePriceCentsByOp: {
+        [config.operation]: 5, // Cheap rate for demos
+      },
+    };
+
+    const pricingResponse = await fetch(`${baseUrl}/api/admin/pricing-profiles`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        agentType: 'autonomous',
-        routingHint: demoType,
-      }),
+      headers: {
+        'x-admin-token': adminToken,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(pricingBody),
     });
 
-    if (!signupResponse.ok) {
-      throw new Error(`Agent signup failed: ${signupResponse.status}`);
+    if (!pricingResponse.ok) {
+      throw new Error(`Pricing profile creation failed: ${pricingResponse.status}`);
     }
 
-    const signup = await signupResponse.json();
-    const apiKey = signup.apiKey;
-    const tenantId = signup.tenantId;
+    const pricing = await pricingResponse.json();
 
-    // Step 2: Create checkout
+    // Step 2: Provision sovereign tenant
+    const tenantBody = {
+      name: `Sovereign Demo ${demoType}`,
+      clientType: 'sovereign',
+      sector: demoType === 'exchange' ? 'financial_services' : 
+              demoType === 'ai-marketplace' ? 'technology' :
+              demoType === 'gaming' ? 'gaming_esports' : 'financial_services',
+      country: 'BR',
+      currency: 'BRL',
+      pricingProfile: pricingProfileId,
+    };
+
+    const tenantResponse = await fetch(`${baseUrl}/api/admin/tenants`, {
+      method: 'POST',
+      headers: {
+        'x-admin-token': adminToken,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(tenantBody),
+    });
+
+    if (!tenantResponse.ok) {
+      throw new Error(`Tenant provisioning failed: ${tenantResponse.status}`);
+    }
+
+    const tenant = await tenantResponse.json();
+    const apiKey = tenant.apiKey;
+    const tenantId = tenant.tenant.tenantId;
+
+    // Step 3: Create sovereign contract
+    const contractId = `sc_${tenantId}_${agentId}_${Math.floor(Date.now() / 1000)}`;
+    const nowIso = new Date().toISOString();
+    const contractBody = {
+      contract: {
+        contractId,
+        tenantId,
+        agentId,
+        status: 'active',
+        createdAt: nowIso,
+        updatedAt: nowIso,
+        effectiveAt: nowIso,
+        defaultExecutionClassId: 'standard',
+        executionClasses: [
+          {
+            classId: 'standard',
+            currency: 'USD',
+            pricePerExecutionCents: 100,
+            allowedTaskTypes: [config.taskType],
+            maxDailyExecutions: 100000,
+            maxMonthlyExecutions: 1000000,
+          },
+        ],
+        meta: {
+          demoType,
+          demoTaskType: config.taskType,
+        },
+      },
+    };
+
+    const contractResponse = await fetch(`${baseUrl}/api/admin/sovereign-contracts`, {
+      method: 'POST',
+      headers: {
+        'x-admin-token': adminToken,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(contractBody),
+    });
+
+    if (!contractResponse.ok) {
+      throw new Error(`Sovereign contract creation failed: ${contractResponse.status}`);
+    }
+
+    // Step 4: Create checkout
     const checkoutBody = {
       currency: 'USD',
       providerHint: 'crypto',
@@ -113,7 +193,7 @@ export async function POST(request: NextRequest) {
     const checkout = await checkoutResponse.json();
     const paymentId = checkout.paymentId;
 
-    // Step 3: Simulate payment via fallback-paid
+    // Step 5: Simulate payment via fallback-paid
     const fallbackResponse = await fetch(`${baseUrl}/api/admin/fallback-paid`, {
       method: 'POST',
       headers: {
@@ -133,7 +213,7 @@ export async function POST(request: NextRequest) {
       throw new Error(`Payment simulation failed: ${fallbackResponse.status}`);
     }
 
-    // Step 4: Execute task
+    // Step 6: Execute task
     const executeBody = {
       taskId,
       taskType: config.taskType,
