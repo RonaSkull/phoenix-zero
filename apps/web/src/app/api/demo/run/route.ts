@@ -11,8 +11,8 @@ const DEMO_CONFIGS = {
     operation: 'reconcile_psp', // Must match taskType for sovereign
     amount: 500,
     agentPrefix: 'demo_exchange',
-    enterprisePrice: 'Starting at $35,000/month',
-    roiMetric: 'SEC-compliant audit trails in seconds',
+    enterprisePrice: 'Starting at $15,000-$25,000/month',
+    roiMetric: 'Single cryptographic compliance proof per settlement',
   },
   'ai-marketplace': {
     title: 'Autonomous Agent Economies',
@@ -20,8 +20,8 @@ const DEMO_CONFIGS = {
     operation: 'agent_compute', // Must match taskType for sovereign
     amount: 10,
     agentPrefix: 'demo_ai_marketplace',
-    enterprisePrice: 'Starting at $15,000/month',
-    roiMetric: 'Zero-touch autonomous transactions',
+    enterprisePrice: 'Starting at $10,000-$15,000/month',
+    roiMetric: 'Crypto-native autonomous agent settlement with verifiable proof',
   },
   gaming: {
     title: 'Fraud-Proof Tournament Payouts',
@@ -29,8 +29,8 @@ const DEMO_CONFIGS = {
     operation: 'payout_mass', // Must match taskType for sovereign
     amount: 100,
     agentPrefix: 'demo_gaming',
-    enterprisePrice: 'Starting at $20,000/month',
-    roiMetric: '100% transparent payout verification',
+    enterprisePrice: 'Starting at $15,000-$20,000/month',
+    roiMetric: 'Publicly verifiable crypto payout proofs',
   },
   banking: {
     title: 'Global Regulatory Reconciliation',
@@ -38,8 +38,8 @@ const DEMO_CONFIGS = {
     operation: 'reconcile_psp', // Must match taskType for sovereign
     amount: 50,
     agentPrefix: 'demo_banking',
-    enterprisePrice: 'Starting at $25,000/month',
-    roiMetric: '90% reduction in compliance costs',
+    enterprisePrice: 'Starting at $20,000-$25,000/month',
+    roiMetric: 'Crypto settlement reconciliation with cryptographic audit trail',
   },
 };
 
@@ -261,9 +261,9 @@ export async function POST(request: NextRequest) {
       enterprise: {
         pricing: config.enterprisePrice,
         roi: config.roiMetric,
-        demoMode: 'Simulated payment for evaluation',
+        demoMode: 'Simulated crypto payment for evaluation',
         productionFeatures: [
-          'Real crypto payment processing (PIX, BTC, ETH, USDC)',
+          'Real crypto payment processing (BTC, ETH, USDC, USDT)',
           'Enterprise SLA: 99.95% uptime guarantee',
           '24/7 technical support with <15 min response',
           'Same APIs as demo - no code changes required',
@@ -271,8 +271,7 @@ export async function POST(request: NextRequest) {
         ],
         volumePricing: {
           highVolume: '1M+ transactions/month: Custom enterprise rates',
-          multiRegion: 'Multi-region deployment: Contact for SLA terms',
-          dedicated: 'Dedicated infrastructure: Available for $100K+/year contracts',
+          dedicated: 'Dedicated infrastructure: Available for enterprise agreements',
         },
       },
       nextSteps: {

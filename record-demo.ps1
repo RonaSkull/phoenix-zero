@@ -21,8 +21,8 @@ $DemoConfigs = @{
         Amount = 500
         Description = "Compliance proof for crypto exchanges"
         OverlayTemplate = "exchange-overlay.html"
-        EnterprisePrice = "Starting at $35,000/month"
-        ROIMetric = "SEC-compliant audit trails in seconds"
+        EnterprisePrice = "Starting at $15,000-$25,000/month"
+        ROIMetric = "Single cryptographic compliance proof per settlement"
     }
     "ai-marketplace" = @{
         Title = "Autonomous Agent Economies"
@@ -31,8 +31,8 @@ $DemoConfigs = @{
         Amount = 10
         Description = "Agent-to-agent payments without intermediaries"
         OverlayTemplate = "ai-marketplace-overlay.html"
-        EnterprisePrice = "Starting at $15,000/month"
-        ROIMetric = "Zero-touch autonomous transactions"
+        EnterprisePrice = "Starting at $10,000-$15,000/month"
+        ROIMetric = "Crypto-native autonomous agent settlement with verifiable proof"
     }
     "gaming" = @{
         Title = "Fraud-Proof Tournament Payouts"
@@ -41,8 +41,8 @@ $DemoConfigs = @{
         Amount = 100
         Description = "Verifiable esports tournament payouts"
         OverlayTemplate = "gaming-overlay.html"
-        EnterprisePrice = "Starting at $20,000/month"
-        ROIMetric = "100% transparent payout verification"
+        EnterprisePrice = "Starting at $15,000-$20,000/month"
+        ROIMetric = "Publicly verifiable crypto payout proofs"
     }
     "banking" = @{
         Title = "Global Regulatory Reconciliation"
@@ -51,8 +51,8 @@ $DemoConfigs = @{
         Amount = 50
         Description = "Automated compliance reconciliation for financial institutions"
         OverlayTemplate = "banking-overlay.html"
-        EnterprisePrice = "Starting at $25,000/month"
-        ROIMetric = "90% reduction in compliance costs"
+        EnterprisePrice = "Starting at $20,000-$25,000/month"
+        ROIMetric = "Crypto settlement reconciliation with cryptographic audit trail"
     }
 }
 
@@ -445,7 +445,7 @@ try {
         duration = $DurationSeconds
     }
 
-    $reportPath = Join-Path $OutputPath "$DemoType-report-$timestamp.json"
+    $reportPath = Join-Path $OutputPath "$DemoType-report.json"
     $demoReport | ConvertTo-Json -Depth 4 | Out-File -FilePath $reportPath
 
     Write-Host ""
@@ -473,8 +473,7 @@ try {
     Write-Host ""
     Write-Host "   Volume Pricing Available:" -ForegroundColor White
     Write-Host "   - 1M+ transactions/month: Custom enterprise rates" -ForegroundColor Gray
-    Write-Host "   - Multi-region deployment: Contact for SLA terms" -ForegroundColor Gray
-    Write-Host "   - Dedicated infrastructure: Available for $100K+/year contracts" -ForegroundColor Gray
+    Write-Host "   - Dedicated infrastructure: Available for enterprise agreements" -ForegroundColor Gray
     Write-Host ""
     Write-Host "==> PRODUCTION ONBOARDING" -ForegroundColor Cyan -BackgroundColor Black
     Write-Host ""
@@ -483,7 +482,7 @@ try {
     Write-Host "   - Custom integration planning for your stack" -ForegroundColor Gray
     Write-Host ""
     Write-Host "   Step 2: Production Credentials" -ForegroundColor Yellow
-    Write-Host "   - Real crypto payment processing (PIX, BTC, ETH, USDC)" -ForegroundColor Gray
+    Write-Host "   - Real crypto payment processing (BTC, ETH, USDC, USDT)" -ForegroundColor Gray
     Write-Host "   - Enterprise SLA: 99.95% uptime guarantee" -ForegroundColor Gray
     Write-Host "   - 24/7 technical support with <15 min response" -ForegroundColor Gray
     Write-Host ""

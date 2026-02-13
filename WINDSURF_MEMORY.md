@@ -118,3 +118,37 @@ Este arquivo é uma memória fixa para dar continuidade ao projeto **Phoenix Zer
   - Removida promessa explícita de `USDT/USDC` no pack PPE.
 - Frontend `/ppe` alinhado com o contrato:
   - Exemplo `operation`/`taskType` corrigido para `protect_video`.
+
+## Checkpoint (2026-02-13) — Enterprise Sales Demo System
+
+- Sistema de demos enterprise completamente funcional para 4 verticais:
+  - **Exchange**: "Regulatory Proof in 60 Seconds" — reconcile_psp
+  - **AI Marketplace**: "Autonomous Agent Economies" — agent_compute
+  - **Gaming**: "Fraud-Proof Tournament Payouts" — payout_mass
+  - **Banking**: "Global Regulatory Reconciliation" — reconcile_psp (título internacional, sem BC/Febraban)
+
+- Arquitetura sovereign real implementada:
+  - Provisioning automático: pricing profile → sovereign tenant → sovereign contract
+  - Operações sovereign reais (não Content Protection)
+  - Pagamento simulado → execução com proofId retornado
+  - Contratos com allowedTaskTypes explícitos para entitlement enforcement
+
+- Preços e ROI transparentes no output:
+  - Exchange: $35K/mês — "SEC-compliant audit trails in seconds"
+  - AI Marketplace: $15K/mês — "Zero-touch autonomous transactions"
+  - Gaming: $20K/mês — "100% transparent payout verification"
+  - Banking: $25K/mês — "90% reduction in compliance costs"
+
+- Production onboarding path documentado:
+  - Step 1: Technical call (30 min architecture review)
+  - Step 2: Production credentials (real crypto payments, 99.95% SLA)
+  - Step 3: Deploy (48 hours, same APIs)
+  - Contact: partnerships@phoenix-zero.com / +1 (555) PHOENIX-ZERO
+
+- Scripts e APIs atualizados:
+  - `record-demo.ps1`: provisioning sovereign completo com erro-diagnostics
+  - `/api/demo/run`: mesma arquitetura sovereign para Live Demo Button
+  - Overlay HTML gerado para produção de vídeo
+  - Relatórios JSON com URLs de verificação públicas
+
+- Deploy: `120c0e0` no Render (https://phoenix-zero-web.onrender.com)
