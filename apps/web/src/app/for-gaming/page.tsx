@@ -3,8 +3,8 @@ import { LiveDemoButton, RealDataDemoButton } from '@/components/demo';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Fraud-Proof Tournament Payouts | Phoenix Zero for Gaming',
-  description: 'Every payout generates a public proof showing exactly who won and how much they received. Upload your tournament data and see cryptographic verification.',
+  title: 'Cryptographic Proof for Every Tournament Payout | Phoenix Zero for Gaming',
+  description: 'Generate public verify URLs for tournament payouts with deterministic hashing and auditable batch summaries. Upload payout batches to produce proofs.',
 };
 
 export default function GamingLanding() {
@@ -36,17 +36,18 @@ export default function GamingLanding() {
           <div style={{ display: 'grid', gap: 8 }}>
             <div className="pz-kicker">For Gaming & Esports</div>
             <h1 style={{ margin: 0, fontSize: 'clamp(26px, 3.4vw, 44px)', lineHeight: 1.08, maxWidth: 860 }}>
-              Fraud-Proof Tournament Payouts
+              Cryptographic proof for every tournament payout.
             </h1>
             <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', fontSize: 15, lineHeight: 1.65, maxWidth: 920 }}>
-              Phoenix Zero Sovereign emits a public proof per crypto payout. Upload your tournament results and generate verifiable proof for every winner.
+              Phoenix Zero Sovereign generates a public proof per payout run.
+              Players, partners, and auditors verify independently at <code>/verify/&lt;proofId&gt;</code>.
             </p>
           </div>
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-            <LiveDemoButton demoType="gaming" buttonText="⚡ Quick Demo (Simulated)" />
+            <LiveDemoButton demoType="gaming" buttonText="⚡ Sandbox Run (End-to-end)" />
             <a href="#real-data" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none' }}>
-              🏆 Try with Tournament Data
+              Run with Real Data
             </a>
           </div>
 
@@ -58,16 +59,16 @@ export default function GamingLanding() {
                 <ul style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
                   <li>Players dispute results and payouts without independently verifiable evidence</li>
                   <li>Incident response becomes screenshots, logs, and trust-based arguments</li>
-                  <li>Partners and sponsors demand stronger integrity guarantees</li>
+                  <li>Partners and sponsors demand auditable, deterministic evidence</li>
                 </ul>
               </div>
 
               <div style={{ display: 'grid', gap: 8, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
                 <div className="pz-field-label">✓ Our Solution</div>
                 <ul style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
-                  <li>Upload tournament CSV/JSON → get cryptographic proof in 60s</li>
-                  <li>Each payout emits a public verify URL (no trust required)</li>
-                  <li>Players verify independently — complete payout transparency</li>
+                  <li>Submit a payout batch file → receive a proofId and verify URL</li>
+                  <li>Integrity: SHA-256 hash of your exact file content</li>
+                  <li>Verification is public — no admin access required</li>
                 </ul>
               </div>
             </div>
@@ -77,34 +78,48 @@ export default function GamingLanding() {
         {/* Real Data Demo Section */}
         <section id="real-data" className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 12 }}>
           <div style={{ display: 'grid', gap: 6 }}>
-            <div className="pz-field-label">🔥 Live Tournament Data Processing</div>
-            <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Upload Your Tournament Results</h2>
+            <div className="pz-field-label">Live processing</div>
+            <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Upload a payout batch file (CSV/JSON, max 10MB)</h2>
             <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', fontSize: 14, lineHeight: 1.65, maxWidth: 920 }}>
-              See how your actual tournament data transforms into cryptographic payout proofs. No mock data — your real winners and prizes hashed and verified.
+              You provide payout rows (batch ID, player IDs/wallets, placement, amounts, status). We hash the exact content and generate a proof.
             </p>
           </div>
 
           <div className="pz-split-live">
             <div style={{ display: 'grid', gap: 10, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
-              <div className="pz-field-label">🚀 Run with Real Tournament Data</div>
+              <div className="pz-field-label">Run</div>
               <RealDataDemoButton demoType="gaming" buttonText="Process My Tournament Data" />
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.62)', lineHeight: 1.55 }}>
+                Modes:
+                <br />
+                - Transaction mode (≤ 1,000 rows): proof per payout
+                <br />
+                - Batch mode (&gt; 1,000 rows): one proof per batch + summary
+              </div>
             </div>
 
             <div style={{ display: 'grid', gap: 8, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
-              <div className="pz-field-label">What Happens Next?</div>
+              <div className="pz-field-label">Technical flow</div>
               <ol style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75, fontSize: 13 }}>
-                <li>Your tournament CSV/JSON is hashed (SHA-256)</li>
-                <li>Sovereign checkout created for mass payout</li>
-                <li>Payment confirmed → payouts execute with proof</li>
-                <li>Public verify URLs generated — players verify wins</li>
+                <li>Data integrity: your file is hashed (SHA-256)</li>
+                <li>Payout run is created with your provided batch and payout IDs</li>
+                <li>Payment event is confirmed (sandbox run uses controlled confirmation)</li>
+                <li>We generate a proof and publish a verify URL</li>
               </ol>
+              <div style={{ marginTop: 10, fontSize: 12, color: 'rgba(255,255,255,0.62)', lineHeight: 1.55 }}>
+                Privacy:
+                <br />
+                - Prefer player IDs and payout IDs over personal data.
+                <br />
+                - Proof binds to hashes and batch IDs.
+              </div>
             </div>
           </div>
 
           {/* Sample Data Download */}
           <div style={{ marginTop: 2, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.78)', lineHeight: 1.65 }}>
-              <span style={{ opacity: 0.85 }}>💡</span> Don't have tournament data ready?{' '}
+              <span style={{ opacity: 0.85 }}>💡</span> Template and required fields:{' '}
               <a href="/templates/gaming_enterprise.csv" download className="pz-link" style={{ marginLeft: 6 }}>
                 Download enterprise tournament payout template
               </a>
@@ -138,11 +153,12 @@ export default function GamingLanding() {
 
         {/* Output Artifact */}
         <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
-          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>What You Get</h2>
+          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Outputs</h2>
           <div style={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
-            After you run the live demo, you receive:
+            After a successful run, you receive:
             <div style={{ marginTop: 10, display: 'grid', gap: 6 }}>
-              <div>- A <strong>proofId</strong> and a public <strong>verify URL</strong></div>
+              <div>- A <strong>proofId</strong> and a public <strong>verify URL</strong> at <code>/verify/&lt;proofId&gt;</code></div>
+              <div>- A <strong>SHA-256</strong> hash binding the proof to the exact input file content</div>
               <div>
                 - A JSON artifact saved at{' '}
                 <a className="pz-link" href="/demos/gaming-report.json" target="_blank" rel="noreferrer">
@@ -153,11 +169,27 @@ export default function GamingLanding() {
           </div>
         </section>
 
+        <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
+          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Enterprise pricing & scale</h2>
+          <div style={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
+            Volume-based tiers (indicative):
+            <div style={{ marginTop: 10, display: 'grid', gap: 6 }}>
+              <div>- Starter: <strong>$15,000/month</strong> (≤ 10,000 payouts/month)</div>
+              <div>- Growth: <strong>$25,000/month</strong> (≤ 100,000 payouts/month)</div>
+              <div>- Enterprise: custom (100,000+ payouts/month)</div>
+            </div>
+            <div style={{ marginTop: 10, fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>
+              Includes: 99.95% uptime SLA and evidence packaging suitable for disputes (proof URLs + deterministic hashing).
+            </div>
+          </div>
+        </section>
+
         {/* CTA */}
         <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
-          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Ready to Become a Trust Institution?</h2>
+          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Next step: technical validation</h2>
           <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', fontSize: 14, lineHeight: 1.65, maxWidth: 920 }}>
-            Bring one real payout flow. We validate the proof semantics end-to-end in a short technical call.
+            Bring one real payout flow and one sample file.
+            In a 30-minute call we validate: schema, proof semantics, and rollout plan.
           </p>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 2 }}>
             <Link href="/contact" className="pz-btn pz-btn-primary" style={{ textDecoration: 'none' }}>

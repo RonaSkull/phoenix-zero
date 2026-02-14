@@ -3,9 +3,9 @@ import { LiveDemoButton, RealDataDemoButton } from '@/components/demo';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Regulatory Proof in 60 Seconds | Phoenix Zero for Crypto Exchanges',
+  title: 'Cryptographic Proof for Every Settlement | Phoenix Zero for Crypto Exchanges',
   description:
-    'Every crypto settlement can emit a public, cryptographically verifiable proof. Regulators and counterparties can verify without trusting your infrastructure.',
+    'Generate a public, cryptographically verifiable proof for each settlement file. Third parties can verify independently via /verify/<proofId>.',
 };
 
 export default function ExchangeLanding() {
@@ -37,18 +37,18 @@ export default function ExchangeLanding() {
           <div style={{ display: 'grid', gap: 8 }}>
             <div className="pz-kicker">For Crypto Exchanges</div>
             <h1 style={{ margin: 0, fontSize: 'clamp(26px, 3.4vw, 44px)', lineHeight: 1.08, maxWidth: 860 }}>
-              Regulatory Proof in 60 Seconds
+              Cryptographic proof for every crypto settlement.
             </h1>
             <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', fontSize: 15, lineHeight: 1.65, maxWidth: 920 }}>
-              Phoenix Zero Sovereign is crypto-only infrastructure that generates a public proof per settlement. Upload your actual settlement data and
-              see cryptographic proof in seconds.
+              Phoenix Zero Sovereign generates a public proof per settlement run.
+              Third parties verify independently at <code>/verify/&lt;proofId&gt;</code>.
             </p>
           </div>
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-            <LiveDemoButton demoType="exchange" buttonText="⚡ Quick Demo (Simulated)" />
+            <LiveDemoButton demoType="exchange" buttonText="⚡ Sandbox Run (End-to-end)" />
             <a href="#real-data" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none' }}>
-              Try with Real Data
+              Run with Real Data
             </a>
           </div>
 
@@ -57,18 +57,18 @@ export default function ExchangeLanding() {
               <div style={{ display: 'grid', gap: 8, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
                 <div className="pz-field-label">❌ The Problem</div>
                 <ul style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
-                  <li>Settlement evidence lives in internal systems and screenshots</li>
-                  <li>Auditors and counterparties must trust your exports and logs</li>
-                  <li>Any mismatch becomes a high-cost, high-latency investigation</li>
+                  <li>Auditors must trust internal exports, logs, and screenshots</li>
+                  <li>Disputes turn into manual, high-latency investigations</li>
+                  <li>Counterparties cannot independently verify your settlement evidence</li>
                 </ul>
               </div>
 
               <div style={{ display: 'grid', gap: 8, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
                 <div className="pz-field-label">✓ Our Solution</div>
                 <ul style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
-                  <li>Upload your settlement CSV → get cryptographic proof in 60s</li>
-                  <li>Each settlement emits a public verify URL (no trust required)</li>
-                  <li>Regulators verify independently without accessing your systems</li>
+                  <li>Submit a settlement file → receive a proofId and verify URL</li>
+                  <li>Integrity: SHA-256 hash of your exact file content</li>
+                  <li>Verification is public — no access to your internal systems required</li>
                 </ul>
               </div>
             </div>
@@ -78,33 +78,47 @@ export default function ExchangeLanding() {
         {/* Real Data Demo Section */}
         <section id="real-data" className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 12 }}>
           <div style={{ display: 'grid', gap: 6 }}>
-            <div className="pz-field-label">🔥 Live Real Data Processing</div>
-            <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Upload Your Settlement Data</h2>
+            <div className="pz-field-label">Live processing</div>
+            <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Upload a settlement file (CSV/JSON, max 10MB)</h2>
             <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', fontSize: 14, lineHeight: 1.65, maxWidth: 920 }}>
-              See how your actual settlement CSV transforms into a cryptographic proof. No mock data — your real transactions hashed and verified.
+              You upload an enterprise settlement file. We hash the exact content and generate a cryptographic proof for verification.
             </p>
           </div>
 
           <div className="pz-split-live">
             <div style={{ display: 'grid', gap: 10, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
-              <div className="pz-field-label">🚀 Run with Real Data</div>
+              <div className="pz-field-label">Run</div>
               <RealDataDemoButton demoType="exchange" buttonText="Process My Settlement Data" />
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.62)', lineHeight: 1.55 }}>
+                Modes:
+                <br />
+                - Transaction mode (≤ 1,000 rows): proof per transaction
+                <br />
+                - Batch mode (&gt; 1,000 rows): one proof per batch + summary
+              </div>
             </div>
 
             <div style={{ display: 'grid', gap: 8, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
-              <div className="pz-field-label">What Happens Next?</div>
+              <div className="pz-field-label">Technical flow</div>
               <ol style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75, fontSize: 13 }}>
-                <li>Your CSV/JSON is hashed (SHA-256) for integrity</li>
-                <li>Sovereign checkout created for settlement execution</li>
-                <li>Payment confirmed → task executes with proof</li>
-                <li>Public verify URL generated — share with auditors</li>
+                <li>Data integrity: your file is hashed (SHA-256)</li>
+                <li>Settlement run is created with your provided fields</li>
+                <li>Payment event is confirmed (sandbox run uses controlled confirmation)</li>
+                <li>We generate a proof and publish a verify URL</li>
               </ol>
+              <div style={{ marginTop: 10, fontSize: 12, color: 'rgba(255,255,255,0.62)', lineHeight: 1.55 }}>
+                Privacy:
+                <br />
+                - We persist proof metadata.
+                <br />
+                - You can structure files so the proof binds to hashes and batch IDs, not PII.
+              </div>
             </div>
           </div>
 
           <div style={{ marginTop: 2, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.78)', lineHeight: 1.65 }}>
-              <span style={{ opacity: 0.85 }}>💡</span> Don't have data ready?{' '}
+              <span style={{ opacity: 0.85 }}>💡</span> Template and required fields:{' '}
               <a href="/templates/exchange_settlement_template.csv" download className="pz-link" style={{ marginLeft: 6 }}>
                 Download enterprise settlement template
               </a>
@@ -136,11 +150,12 @@ export default function ExchangeLanding() {
 
         {/* Output Artifact */}
         <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
-          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>What You Get</h2>
+          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Outputs</h2>
           <div style={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
-            After you run the live demo, you receive:
+            After a successful run, you receive:
             <div style={{ marginTop: 10, display: 'grid', gap: 6 }}>
-              <div>- A <strong>proofId</strong> and a public <strong>verify URL</strong></div>
+              <div>- A <strong>proofId</strong> and a public <strong>verify URL</strong> at <code>/verify/&lt;proofId&gt;</code></div>
+              <div>- A <strong>SHA-256</strong> hash binding the proof to the exact input file content</div>
               <div>
                 - A JSON artifact saved at{' '}
                 <a className="pz-link" href="/demos/exchange-report.json" target="_blank" rel="noreferrer">
@@ -151,11 +166,27 @@ export default function ExchangeLanding() {
           </div>
         </section>
 
+        <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
+          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Enterprise pricing & scale</h2>
+          <div style={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
+            Volume-based tiers (indicative):
+            <div style={{ marginTop: 10, display: 'grid', gap: 6 }}>
+              <div>- Starter: <strong>$15,000/month</strong> (≤ 10,000 settlements/month)</div>
+              <div>- Growth: <strong>$25,000/month</strong> (≤ 100,000 settlements/month)</div>
+              <div>- Enterprise: custom (100,000+ settlements/month)</div>
+            </div>
+            <div style={{ marginTop: 10, fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>
+              Includes: 99.95% uptime SLA, integration support, and compliance-ready evidence (proof URLs + deterministic hashing).
+            </div>
+          </div>
+        </section>
+
         {/* CTA */}
         <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
-          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Ready to Eliminate Manual Audits?</h2>
+          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Next step: technical validation</h2>
           <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', fontSize: 14, lineHeight: 1.65, maxWidth: 920 }}>
-            Bring one real settlement flow. We run a short technical call and validate the proof semantics end-to-end.
+            Bring one real settlement flow and one sample file.
+            In a 30-minute call we validate: input schema, proof semantics, and rollout plan.
           </p>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 2 }}>
             <Link href="/contact" className="pz-btn pz-btn-primary" style={{ textDecoration: 'none' }}>

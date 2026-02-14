@@ -3,8 +3,8 @@ import { DemoPlayer, LiveDemoButton, ProofCard, RealDataDemoButton } from '@/com
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'BC/Febraban Reconciliation in 1 Click | Phoenix Zero for Digital Banks',
-  description: 'Every transaction automatically generates BC/Febraban compliant audit trails. Upload your transaction batch and see cryptographic verification.',
+  title: 'Cryptographic Audit Trail for Every Transaction Batch | Phoenix Zero for Digital Banks',
+  description: 'Generate deterministic hashes and public verify URLs for reconciliation batches. Upload enterprise transaction batches to produce cryptographic audit trails.',
 };
 
 export default function BankingLanding() {
@@ -36,18 +36,18 @@ export default function BankingLanding() {
           <div style={{ display: 'grid', gap: 8 }}>
             <div className="pz-kicker">For Digital Banks</div>
             <h1 style={{ margin: 0, fontSize: 'clamp(26px, 3.4vw, 44px)', lineHeight: 1.08, maxWidth: 860 }}>
-              BC/Febraban Reconciliation in 1 Click
+              Cryptographic audit trail for every transaction batch.
             </h1>
             <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', fontSize: 15, lineHeight: 1.65, maxWidth: 920 }}>
-              Your digital bank spends <span style={{ color: 'rgba(255,255,255,0.92)', fontWeight: 800 }}>$500k/year</span> on manual reconciliation.
-              Upload your transaction batch and see cryptographic audit trails in seconds.
+              Submit a reconciliation batch file and receive a proofId + verify URL.
+              Auditors verify independently at <code>/verify/&lt;proofId&gt;</code>.
             </p>
           </div>
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-            <LiveDemoButton demoType="banking" buttonText="⚡ Quick Demo (Simulated)" />
+            <LiveDemoButton demoType="banking" buttonText="⚡ Sandbox Run (End-to-end)" />
             <a href="#real-data" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none' }}>
-              🏦 Try with Transaction Data
+              Run with Real Data
             </a>
           </div>
 
@@ -57,18 +57,18 @@ export default function BankingLanding() {
               <div style={{ display: 'grid', gap: 8, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
                 <div className="pz-field-label">❌ The Problem</div>
                 <ul style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
-                  <li>3 days per month reconciling PIX and crypto transactions</li>
-                  <li>Manual exports, spreadsheet juggling, error-prone submissions</li>
-                  <li>One mistake = regulatory headache and BC penalties</li>
+                  <li>Reconciliation depends on manual exports and trust in internal logs</li>
+                  <li>Exceptions are slow to triage and hard to prove externally</li>
+                  <li>Audit evidence is not independently verifiable</li>
                 </ul>
               </div>
 
               <div style={{ display: 'grid', gap: 8, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
                 <div className="pz-field-label">✓ Our Solution</div>
                 <ul style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
-                  <li>Upload transaction batch → get cryptographic audit trail in 60s</li>
-                  <li>Every transaction auto-generates BC/Febraban proof</li>
-                  <li>90% cost reduction, zero reconciliation errors</li>
+                  <li>Submit a batch file → receive a proofId and verify URL</li>
+                  <li>Integrity: SHA-256 hash of your exact file content</li>
+                  <li>Verification is public — no access to your bank systems required</li>
                 </ul>
               </div>
             </div>
@@ -78,34 +78,48 @@ export default function BankingLanding() {
         {/* Real Data Demo Section */}
         <section id="real-data" className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 12 }}>
           <div style={{ display: 'grid', gap: 6 }}>
-            <div className="pz-field-label">🔥 Live Transaction Batch Processing</div>
-            <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Upload Your Transaction Batch</h2>
+            <div className="pz-field-label">Live processing</div>
+            <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Upload a reconciliation batch file (CSV/JSON, max 10MB)</h2>
             <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', fontSize: 14, lineHeight: 1.65, maxWidth: 920 }}>
-              See how your actual transaction data transforms into BC/Febraban compliant audit trails. No mock data — your real transactions hashed and verified.
+              You provide transaction rows (batch ID, account IDs, amounts, status, audit IDs). We hash the exact content and generate a proof.
             </p>
           </div>
 
           <div className="pz-split-live">
             <div style={{ display: 'grid', gap: 10, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
-              <div className="pz-field-label">🚀 Run with Real Transaction Data</div>
+              <div className="pz-field-label">Run</div>
               <RealDataDemoButton demoType="banking" buttonText="Process My Transaction Batch" />
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.62)', lineHeight: 1.55 }}>
+                Modes:
+                <br />
+                - Transaction mode (≤ 1,000 rows): proof per transaction
+                <br />
+                - Batch mode (&gt; 1,000 rows): one proof per batch + summary
+              </div>
             </div>
 
             <div style={{ display: 'grid', gap: 8, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
-              <div className="pz-field-label">What Happens Next?</div>
+              <div className="pz-field-label">Technical flow</div>
               <ol style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75, fontSize: 13 }}>
-                <li>Your transaction CSV/JSON is hashed (SHA-256)</li>
-                <li>Sovereign checkout created for batch reconciliation</li>
-                <li>Payment confirmed → reconciliation executes with proof</li>
-                <li>BC/Febraban proof generated — auditors verify</li>
+                <li>Data integrity: your file is hashed (SHA-256)</li>
+                <li>Reconciliation run is created with your provided batch IDs</li>
+                <li>Payment event is confirmed (sandbox run uses controlled confirmation)</li>
+                <li>We generate a proof and publish a verify URL</li>
               </ol>
+              <div style={{ marginTop: 10, fontSize: 12, color: 'rgba(255,255,255,0.62)', lineHeight: 1.55 }}>
+                Privacy:
+                <br />
+                - Prefer account IDs and audit IDs over personal data.
+                <br />
+                - Proof binds to hashes and batch IDs.
+              </div>
             </div>
           </div>
 
           {/* Sample Data Download */}
           <div style={{ marginTop: 2, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.78)', lineHeight: 1.65 }}>
-              <span style={{ opacity: 0.85 }}>💡</span> Don't have transaction data ready?{' '}
+              <span style={{ opacity: 0.85 }}>💡</span> Template and required fields:{' '}
               <a href="/templates/banking_enterprise.csv" download className="pz-link" style={{ marginLeft: 6 }}>
                 Download enterprise reconciliation template
               </a>
@@ -137,11 +151,27 @@ export default function BankingLanding() {
           />
         </section>
 
+        <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
+          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Enterprise pricing & scale</h2>
+          <div style={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
+            Volume-based tiers (indicative):
+            <div style={{ marginTop: 10, display: 'grid', gap: 6 }}>
+              <div>- Starter: <strong>$15,000/month</strong> (≤ 10,000 batches/month)</div>
+              <div>- Growth: <strong>$25,000/month</strong> (≤ 100,000 batches/month)</div>
+              <div>- Enterprise: custom (100,000+ batches/month)</div>
+            </div>
+            <div style={{ marginTop: 10, fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>
+              Includes: 99.95% uptime SLA and evidence packaging suitable for audits (proof URLs + deterministic hashing).
+            </div>
+          </div>
+        </section>
+
         {/* CTA */}
         <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
-          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Ready for 90% Cost Reduction?</h2>
+          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Next step: technical validation</h2>
           <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', fontSize: 14, lineHeight: 1.65, maxWidth: 920 }}>
-            Join leading digital banks that turned 3-day reconciliation processes into single API calls.
+            Bring one reconciliation flow and one sample file.
+            In a 30-minute call we validate: schema, proof semantics, and rollout plan.
           </p>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 2 }}>
             <Link href="/contact" className="pz-btn pz-btn-primary" style={{ textDecoration: 'none' }}>
