@@ -16,32 +16,43 @@ This document defines the enterprise-grade CSV test suite for Phoenix Zero Sover
 
 ### 1. Crypto Exchange Settlement (`exchange_settlement_template.csv`)
 
-**Purpose:** Real-world crypto settlement data from exchanges like Binance/Coinbase
+**Purpose:** Real-world settlement batches used by exchanges (Binance/Coinbase/Kraken) and institutional ops teams.
 
-**Schema (10 fields):**
+**Schema (21 fields):**
 | Field | Type | Description |
 |-------|------|-------------|
-| `transaction_id` | string | Unique settlement transaction identifier |
-| `settlement_date` | ISO8601 | Settlement timestamp (UTC) |
-| `asset_type` | string | Crypto asset (BTC, ETH, USDC, USDT) |
-| `amount` | decimal | Settlement amount |
-| `fee` | decimal | Transaction fee |
-| `counterparty_wallet` | address | Counterparty blockchain address |
-| `blockchain_tx_hash` | hash | On-chain transaction hash |
-| `order_id` | string | Internal order reference |
+| `settlement_batch_id` | string | Batch identifier for hourly/daily settlement windows |
+| `transaction_id` | string | Internal settlement transaction identifier |
+| `blockchain` | enum | Chain/network (BTC, ETH, TRON, SOL, etc.) |
+| `asset` | string | Asset symbol (BTC, ETH, USDC, USDT) |
+| `amount` | decimal | Settlement amount in `asset` units |
+| `fee_usd` | decimal | Fee amount expressed in USD (maker/taker + internal) |
+| `gas_fee_native` | decimal | Network fee in native units (e.g., ETH, BTC) |
+| `tx_hash` | hash | On-chain transaction hash |
+| `block_number` | integer | Block number for finality tracking |
+| `block_timestamp` | ISO8601 | On-chain timestamp (UTC) |
+| `counterparty_wallet` | address | Counterparty wallet/address |
+| `counterparty_name` | string | Counterparty label (e.g., Prime broker / venue / internal desk) |
+| `kyc_status` | enum | VERIFIED/PENDING/FAILED |
+| `risk_rating` | enum | LOW/MEDIUM/HIGH |
+| `settlement_window` | string | Settlement window (T+0, T+1, etc.) |
+| `fx_rate_usd` | decimal | USD conversion reference rate at settlement time |
+| `order_id` | string | Internal order / trade matching ID |
 | `trade_type` | enum | buy/sell/transfer |
+| `regulatory_code` | string | Reporting/compliance code (e.g., Travel Rule) |
+| `audit_trail_id` | string | Internal audit trail reference |
 | `settlement_status` | enum | pending/settled/failed |
 
 **Sample Row:**
 ```csv
-tx_8f72a1b9,2026-02-14T15:30:00Z,USDC,50000.00,12.50,0x742d35...,0xabc123...,ord_9f8e7d6c,buy,settled
+batch_20260214_001,tx_8f72a1b9,ETH,USDC,50000.00,12.50,0.00250000,0xabc123...,18456789,2026-02-14T15:30:00Z,0x742d35...,Binance_KYC_Pass,VERIFIED,LOW,T+0,1.0000,ord_9f8e7d6c,buy,FATF_TR_001,audit_crypto_001,settled
 ```
 
 **Business Value:**
-- Blockchain verification via `blockchain_tx_hash`
-- Counterparty reconciliation via `counterparty_wallet`
-- Trade matching via `order_id`
-- Audit trails via `settlement_status`
+- **On-chain verification** via `tx_hash` + `block_number`
+- **Batch reconciliation** via `settlement_batch_id` (enterprise operations reality)
+- **Cost attribution** via `fee_usd` + `gas_fee_native`
+- **Compliance readiness** via `kyc_status`, `risk_rating`, `regulatory_code`, `audit_trail_id`
 
 ---
 

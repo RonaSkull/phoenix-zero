@@ -67,37 +67,70 @@ async function sha256HexFromBytes(bytes: Uint8Array): Promise<string> {
 }
 
 function parseCsvSummary(text: string): { rows: number; totalAmount?: number; currency?: string } {
-  const lines = text
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter(Boolean);
-  if (lines.length <= 1) return { rows: Math.max(0, lines.length - 1) };
+  const trimmed = text.trim();
+  if (!trimmed) return { rows: 0 };
 
-  const headerLine = lines[0] || '';
+  const firstNewline = trimmed.indexOf('\n');
+  const headerLineRaw = firstNewline >= 0 ? trimmed.slice(0, firstNewline) : trimmed;
+  const headerLine = headerLineRaw.replace(/\r$/, '');
   const header = headerLine.split(',').map((h) => h.trim().toLowerCase());
-  const amountIdx = header.findIndex((h) => h === 'amount' || h === 'value' || h === 'usd' || h === 'cents');
-  const currencyIdx = header.findIndex((h) => h === 'currency');
 
+  const amountFieldPriority = [
+    'amount_usd',
+    'notional_usd',
+    'cost_usd',
+    'prize_amount_usd',
+    'net_payout_usd',
+    'amount',
+    'value',
+    'usd',
+    'cents'
+  ];
+  const currencyFieldPriority = ['currency', 'asset', 'token_type', 'settlement_currency', 'currency_pair'];
+
+  const amountIdx = amountFieldPriority.map((f) => header.indexOf(f)).find((idx) => idx !== undefined && idx >= 0) ?? -1;
+  const currencyIdx = currencyFieldPriority.map((f) => header.indexOf(f)).find((idx) => idx !== undefined && idx >= 0) ?? -1;
+
+  let rows = 0;
   let sum = 0;
   let sawNumber = false;
   let currency: string | undefined;
 
-  for (let i = 1; i < lines.length; i++) {
-    const cols = (lines[i] || '').split(',').map((c) => c.trim());
-    const currencyVal = currencyIdx >= 0 && currencyIdx < cols.length ? cols[currencyIdx] : undefined;
-    if (currencyVal && !currency) currency = String(currencyVal).trim();
+  // Aggregate numeric amounts only on the first N rows to keep CPU bounded for huge files.
+  const maxAggRows = 5000;
 
-    const amountVal = amountIdx >= 0 && amountIdx < cols.length ? cols[amountIdx] : undefined;
-    if (amountVal) {
-      const n = Number(String(amountVal).replace(/[^0-9.+-]/g, ''));
-      if (Number.isFinite(n)) {
-        sum += n;
-        sawNumber = true;
+  if (firstNewline < 0) {
+    return { rows: 0 };
+  }
+
+  let pos = firstNewline + 1;
+  while (pos < trimmed.length) {
+    let next = trimmed.indexOf('\n', pos);
+    if (next < 0) next = trimmed.length;
+
+    const rawLine = trimmed.slice(pos, next).replace(/\r$/, '').trim();
+    pos = next + 1;
+
+    if (!rawLine) continue;
+    rows++;
+
+    if (rows <= maxAggRows) {
+      const cols = rawLine.split(',').map((c) => c.trim());
+      const currencyVal = currencyIdx >= 0 && currencyIdx < cols.length ? cols[currencyIdx] : undefined;
+      if (currencyVal && !currency) currency = String(currencyVal).trim();
+
+      const amountVal = amountIdx >= 0 && amountIdx < cols.length ? cols[amountIdx] : undefined;
+      if (amountVal) {
+        const n = Number(String(amountVal).replace(/[^0-9.+-]/g, ''));
+        if (Number.isFinite(n)) {
+          sum += n;
+          sawNumber = true;
+        }
       }
     }
   }
 
-  return { rows: Math.max(0, lines.length - 1), totalAmount: sawNumber ? sum : undefined, currency };
+  return { rows, totalAmount: sawNumber ? sum : undefined, currency };
 }
 
 function parseJsonSummary(obj: any): { entries?: number; totalAmount?: number; currency?: string } {
