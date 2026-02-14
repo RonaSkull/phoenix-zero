@@ -1,0 +1,4 @@
+execution_id,agent_id,task_type,compute_units,memory_gb,hours_executed,cost_usd,payment_status,proof_id,parent_task_id,resource_pool
+exec_a1b2c3d4,agent_langchain_analyzer_001,data_analysis,150,8,2.5,75.00,completed,ppo_xyz123,parent_task_001,gpu_pool_a
+exec_e5f6g7h8,agent_autogpt_executor_002,content_generation,200,16,3.0,120.00,completed,ppo_abc456,parent_task_002,gpu_pool_b
+exec_i9j0k1l2,agent_crewai_coordinator_003,coordination,50,4,1.0,25.00,completed,ppo_def789,parent_task_003,cpu_pool_c

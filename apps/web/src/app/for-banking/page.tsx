@@ -1,3 +1,5 @@
+"use client";
+
 // app/for-banking/page.tsx
 import { DemoPlayer, LiveDemoButton, ProofCard, RealDataDemoButton } from '@/components/demo';
 import Link from 'next/link';
@@ -145,20 +147,16 @@ export default function BankingLanding() {
           <div className="mt-8 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
             <p className="text-sm text-gray-400">
               <span className="text-cyan-400">💡</span> Don't have transaction data ready? 
-              <button 
-                onClick={() => {
-                  const sample = 'batch_id,amount,currency,type,date\nbatch_001,50000,USD,credit,2024-01-15\nbatch_002,25000,USD,debit,2024-01-15\nbatch_003,100000,USDC,settlement,2024-01-16';
-                  const blob = new Blob([sample], { type: 'text/csv' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = 'sample-transactions.csv';
-                  a.click();
-                }}
+              <a 
+                href="/templates/banking_reconciliation_template.csv"
+                download
                 className="ml-2 text-cyan-400 hover:text-cyan-300 underline cursor-pointer"
               >
-                Download sample CSV
-              </button>
+                Download enterprise reconciliation template
+              </a>
+            </p>
+            <p className="text-xs text-gray-500 mt-2">
+              Includes: reconciliation_id, account_id, transaction_date, transaction_type, amount_usd, currency_pair, exchange_rate, counterparty_name, reference_number, reconciliation_status, compliance_check, audit_trail_id
             </p>
           </div>
         </div>

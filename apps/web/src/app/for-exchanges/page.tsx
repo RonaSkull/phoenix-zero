@@ -1,3 +1,5 @@
+"use client";
+
 // app/for-exchanges/page.tsx
 import { LiveDemoButton, RealDataDemoButton } from '@/components/demo';
 import Link from 'next/link';
@@ -146,20 +148,16 @@ export default function ExchangeLanding() {
           <div className="mt-8 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
             <p className="text-sm text-gray-400">
               <span className="text-green-400">💡</span> Don't have data ready? 
-              <button 
-                onClick={() => {
-                  const sample = 'id,amount,currency,date\ntx1,1000,USDC,2024-01-15\ntx2,2500,USDC,2024-01-15\ntx3,5000,USDT,2024-01-16';
-                  const blob = new Blob([sample], { type: 'text/csv' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = 'sample-settlement.csv';
-                  a.click();
-                }}
+              <a 
+                href="/templates/exchange_settlement_template.csv"
+                download
                 className="ml-2 text-green-400 hover:text-green-300 underline cursor-pointer"
               >
-                Download sample CSV
-              </button>
+                Download enterprise settlement template
+              </a>
+            </p>
+            <p className="text-xs text-gray-500 mt-2">
+              Includes: transaction_id, settlement_date, asset_type, amount, fee, counterparty_wallet, blockchain_tx_hash, order_id, trade_type, settlement_status
             </p>
           </div>
         </div>

@@ -9,7 +9,8 @@ param(
     
     [string]$OutputPath = "./public/demos/",
     [int]$DurationSeconds = 120,
-    [string]$BaseUrl = "https://phoenix-zero-web.onrender.com"
+    [string]$BaseUrl = "https://phoenix-zero-web.onrender.com",
+    [string]$AdminToken = $env:PHOENIX_ZERO_ADMIN_TOKEN
 )
 
 # Demo configurations
@@ -65,8 +66,11 @@ Write-Host "Output: $OutputPath" -ForegroundColor White
 Write-Host ""
 
 # Validate environment
-if (-not $env:PHOENIX_ZERO_ADMIN_TOKEN) {
-    Write-Error "[X] PHOENIX_ZERO_ADMIN_TOKEN not set. Required for simulation mode."
+$AdminToken = [string]$AdminToken
+if ($null -eq $AdminToken) { $AdminToken = "" }
+$adminTokenTrimmed = $AdminToken.Trim()
+if (-not $adminTokenTrimmed) {
+    Write-Error "[X] Admin token missing. Provide -AdminToken or set PHOENIX_ZERO_ADMIN_TOKEN (must match the environment for BaseUrl)."
     exit 1
 }
 
@@ -300,8 +304,8 @@ Write-Host "[CLOCK] Executing demo flow (this is a real execution)..." -Foregrou
 try {
     # 1. Provision a REAL sovereign tenant + pricing profile (enterprise-real demo)
     Write-Host "   -> Provisioning sovereign pricing + tenant (admin)..." -ForegroundColor Blue
-    $pricingProfileId = Ensure-SovereignDemoPricingProfile $BaseUrl $env:PHOENIX_ZERO_ADMIN_TOKEN
-    $tenantRes = Provision-SovereignTenant $BaseUrl $env:PHOENIX_ZERO_ADMIN_TOKEN $pricingProfileId $DemoType
+    $pricingProfileId = Ensure-SovereignDemoPricingProfile $BaseUrl $adminTokenTrimmed
+    $tenantRes = Provision-SovereignTenant $BaseUrl $adminTokenTrimmed $pricingProfileId $DemoType
 
     if (-not $tenantRes.ok) {
         throw "Failed to provision sovereign tenant"
@@ -343,7 +347,7 @@ try {
             }
         }
     }
-    $contractRes = Invoke-JsonPost "$BaseUrl/api/admin/sovereign-contracts" @{ "x-admin-token" = $env:PHOENIX_ZERO_ADMIN_TOKEN; "Content-Type" = "application/json" } $contractPayload
+    $contractRes = Invoke-JsonPost "$BaseUrl/api/admin/sovereign-contracts" @{ "x-admin-token" = $adminTokenTrimmed; "Content-Type" = "application/json" } $contractPayload
     if (-not $contractRes.ok) {
         throw "Failed to provision sovereign contract"
     }
@@ -413,7 +417,7 @@ try {
     Invoke-RestMethod -Uri "$BaseUrl/api/admin/fallback-paid" `
       -Method POST `
       -Headers @{
-        "x-admin-token" = $env:PHOENIX_ZERO_ADMIN_TOKEN
+        "x-admin-token" = $adminTokenTrimmed
         "Content-Type" = "application/json"
       } `
       -Body $fallbackBody | Out-Null

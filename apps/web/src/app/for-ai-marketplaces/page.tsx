@@ -1,3 +1,5 @@
+"use client";
+
 // app/for-ai-marketplaces/page.tsx
 import { LiveDemoButton, RealDataDemoButton } from '@/components/demo';
 import Link from 'next/link';
@@ -146,25 +148,16 @@ export default function AIMarketplaceLanding() {
           <div className="mt-8 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
             <p className="text-sm text-gray-400">
               <span className="text-blue-400">💡</span> Don't have agent data ready? 
-              <button 
-                onClick={() => {
-                  const sample = JSON.stringify({
-                    transactions: [
-                      { id: 'agent_001', task: 'compute', amount: 10, currency: 'USDC', buyer: 'user_123' },
-                      { id: 'agent_002', task: 'inference', amount: 25, currency: 'USDC', buyer: 'user_456' }
-                    ]
-                  }, null, 2);
-                  const blob = new Blob([sample], { type: 'application/json' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = 'sample-agent-transactions.json';
-                  a.click();
-                }}
+              <a 
+                href="/templates/ai_marketplace_template.csv"
+                download
                 className="ml-2 text-blue-400 hover:text-blue-300 underline cursor-pointer"
               >
-                Download sample JSON
-              </button>
+                Download enterprise agent execution template
+              </a>
+            </p>
+            <p className="text-xs text-gray-500 mt-2">
+              Includes: execution_id, agent_id, task_type, compute_units, memory_gb, hours_executed, cost_usd, payment_status, proof_id, parent_task_id, resource_pool
             </p>
           </div>
         </div>

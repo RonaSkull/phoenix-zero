@@ -1,3 +1,5 @@
+"use client";
+
 // app/for-gaming/page.tsx
 import { LiveDemoButton, RealDataDemoButton } from '@/components/demo';
 import Link from 'next/link';
@@ -145,20 +147,16 @@ export default function GamingLanding() {
           <div className="mt-8 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
             <p className="text-sm text-gray-400">
               <span className="text-purple-400">💡</span> Don't have tournament data ready? 
-              <button 
-                onClick={() => {
-                  const sample = 'player_id,prize,currency,rank\nplayer1,1000,USDC,1\nplayer2,500,USDC,2\nplayer3,250,USDC,3\nplayer4,100,USDC,4';
-                  const blob = new Blob([sample], { type: 'text/csv' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = 'sample-tournament-results.csv';
-                  a.click();
-                }}
+              <a 
+                href="/templates/gaming_tournament_template.csv"
+                download
                 className="ml-2 text-purple-400 hover:text-purple-300 underline cursor-pointer"
               >
-                Download sample CSV
-              </button>
+                Download enterprise tournament payout template
+              </a>
+            </p>
+            <p className="text-xs text-gray-500 mt-2">
+              Includes: payout_id, player_id, player_wallet, tournament_id, placement, prize_amount_usd, token_type, payout_status, verification_proof, platform_fee_usd, net_payout_usd
             </p>
           </div>
         </div>

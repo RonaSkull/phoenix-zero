@@ -1,0 +1,4 @@
+reconciliation_id,account_id,transaction_date,transaction_type,amount_usd,currency_pair,exchange_rate,counterparty_name,reference_number,reconciliation_status,compliance_check,audit_trail_id
+rec_1a2b3c4d,acct_nubank_001,2026-02-14T10:00:00Z,crypto_settlement,250000.00,USDC_BRL,5.25,Nubank Treasury,ref_crypto_001,reconciled,passed,audit_001
+rec_5e6f7g8h,acct_inter_002,2026-02-14T11:00:00Z,crypto_settlement,180000.00,USDT_BRL,5.30,Inter Digital,ref_crypto_002,reconciled,passed,audit_002
+rec_9i0j1k2l,acct_picpay_003,2026-02-14T12:00:00Z,crypto_settlement,320000.00,USDC_BRL,5.28,PicPay Holdings,ref_crypto_003,reconciled,passed,audit_003
