@@ -55,6 +55,19 @@ type ParsedDataSummary = {
   currency?: string;
 };
 
+type DemoMode = 'auto' | 'batch' | 'transaction';
+
+type BatchSummary = {
+  rowCount?: number;
+  entryCount?: number;
+  sumNotionalUsd?: number;
+  distinctAssets?: string[];
+  highRiskCount?: number;
+  failedCount?: number;
+  batchId?: string;
+  settlementWindow?: string;
+};
+
 function jsonUtf8Headers(extra: Record<string, string> = {}): Record<string, string> {
   return {
     'Content-Type': 'application/json; charset=utf-8',
@@ -213,6 +226,135 @@ async function buildDataSummary(params: { file?: File | null; rawText?: string |
   return { kind: 'unknown', bytes: bytes.length, sha256Hex: sha };
 }
 
+function parseCsvBatchSummary(text: string): BatchSummary {
+  const trimmed = text.trim();
+  if (!trimmed) return {};
+
+  const firstNewline = trimmed.indexOf('\n');
+  const headerLineRaw = firstNewline >= 0 ? trimmed.slice(0, firstNewline) : trimmed;
+  const headerLine = headerLineRaw.replace(/\r$/, '');
+  const header = headerLine.split(',').map((h) => h.trim().toLowerCase());
+
+  const idx = (name: string) => header.indexOf(name);
+
+  const batchIdIdx = idx('settlement_batch_id');
+  const windowIdx = idx('settlement_window');
+  const riskIdx = idx('risk_rating');
+  const statusIdx = idx('settlement_status');
+  const assetIdx = header.indexOf('asset') >= 0 ? header.indexOf('asset') : header.indexOf('token_type');
+
+  const amountUsdIdx = idx('amount_usd');
+  const notionalUsdIdx = idx('notional_usd');
+  const netUsdIdx = idx('net_payout_usd');
+  const costUsdIdx = idx('cost_usd');
+  const prizeUsdIdx = idx('prize_amount_usd');
+  const amountIdx = idx('amount');
+  const fxIdx = idx('fx_rate_usd');
+
+  const assets = new Set<string>();
+  let highRiskCount = 0;
+  let failedCount = 0;
+  let sumNotionalUsd = 0;
+  let sawUsd = false;
+  let batchId: string | undefined;
+  let settlementWindow: string | undefined;
+  let rowCount = 0;
+
+  const maxRows = 5000;
+
+  if (firstNewline < 0) return {};
+  let pos = firstNewline + 1;
+  while (pos < trimmed.length) {
+    let next = trimmed.indexOf('\n', pos);
+    if (next < 0) next = trimmed.length;
+    const rawLine = trimmed.slice(pos, next).replace(/\r$/, '').trim();
+    pos = next + 1;
+    if (!rawLine) continue;
+
+    rowCount++;
+    if (rowCount > maxRows) break;
+
+    const cols = rawLine.split(',').map((c) => c.trim());
+
+    if (!batchId && batchIdIdx >= 0 && batchIdIdx < cols.length) {
+      const v = String(cols[batchIdIdx] || '').trim();
+      if (v) batchId = v;
+    }
+
+    if (!settlementWindow && windowIdx >= 0 && windowIdx < cols.length) {
+      const v = String(cols[windowIdx] || '').trim();
+      if (v) settlementWindow = v;
+    }
+
+    if (assetIdx >= 0 && assetIdx < cols.length) {
+      const v = String(cols[assetIdx] || '').trim();
+      if (v) assets.add(v);
+    }
+
+    if (riskIdx >= 0 && riskIdx < cols.length) {
+      const v = String(cols[riskIdx] || '').trim().toUpperCase();
+      if (v === 'HIGH') highRiskCount++;
+    }
+
+    if (statusIdx >= 0 && statusIdx < cols.length) {
+      const v = String(cols[statusIdx] || '').trim().toLowerCase();
+      if (v && v !== 'settled' && v !== 'completed' && v !== 'reconciled') failedCount++;
+    }
+
+    const pickIdx = (candidates: number[]) => candidates.find((i) => i >= 0 && i < cols.length) ?? -1;
+    const usdIdx = pickIdx([amountUsdIdx, notionalUsdIdx, netUsdIdx, costUsdIdx, prizeUsdIdx]);
+    if (usdIdx >= 0) {
+      const n = Number(String(cols[usdIdx] || '').replace(/[^0-9.+-]/g, ''));
+      if (Number.isFinite(n)) {
+        sumNotionalUsd += n;
+        sawUsd = true;
+      }
+      continue;
+    }
+
+    if (amountIdx >= 0 && amountIdx < cols.length && fxIdx >= 0 && fxIdx < cols.length) {
+      const amount = Number(String(cols[amountIdx] || '').replace(/[^0-9.+-]/g, ''));
+      const fx = Number(String(cols[fxIdx] || '').replace(/[^0-9.+-]/g, ''));
+      if (Number.isFinite(amount) && Number.isFinite(fx)) {
+        sumNotionalUsd += amount * fx;
+        sawUsd = true;
+      }
+    }
+  }
+
+  return {
+    rowCount,
+    sumNotionalUsd: sawUsd ? sumNotionalUsd : undefined,
+    distinctAssets: assets.size ? Array.from(assets).slice(0, 20) : undefined,
+    highRiskCount: highRiskCount || undefined,
+    failedCount: failedCount || undefined,
+    batchId,
+    settlementWindow
+  };
+}
+
+function parseTransactionRowsFromCsv(text: string, maxRows: number): Array<{ rowIndex: number; rawLine: string }> {
+  const trimmed = text.trim();
+  if (!trimmed) return [];
+  const firstNewline = trimmed.indexOf('\n');
+  if (firstNewline < 0) return [];
+  let pos = firstNewline + 1;
+  let rowIndex = 0;
+  const rows: Array<{ rowIndex: number; rawLine: string }> = [];
+
+  while (pos < trimmed.length && rows.length < maxRows) {
+    let next = trimmed.indexOf('\n', pos);
+    if (next < 0) next = trimmed.length;
+    const rawLine = trimmed.slice(pos, next).replace(/\r$/, '').trim();
+    pos = next + 1;
+    if (!rawLine) continue;
+    rowIndex++;
+    rows.push({ rowIndex, rawLine });
+  }
+
+  return rows;
+}
+
 export async function POST(req: Request) {
   try {
     const baseUrl = process.env.PHOENIX_ZERO_PUBLIC_BASE_URL || 'https://phoenix-zero-web.onrender.com';
@@ -251,13 +393,33 @@ export async function POST(req: Request) {
 
     const config = DEMO_CONFIGS[demoType];
 
-    const file = form.get('file');
+    const file = form.get('file') ?? form.get('dataFile');
     const rawText = form.get('rawText');
+
+    const modeRaw = String(form.get('mode') || 'auto').trim().toLowerCase();
+    const mode: DemoMode = modeRaw === 'batch' || modeRaw === 'transaction' || modeRaw === 'auto' ? (modeRaw as DemoMode) : 'auto';
 
     const dataSummary = await buildDataSummary({
       file: file && typeof file === 'object' && 'arrayBuffer' in file ? (file as File) : null,
       rawText: typeof rawText === 'string' ? rawText : null
     });
+
+    const uploadedText = await (async () => {
+      if (file && typeof file === 'object' && 'arrayBuffer' in file) {
+        const buf = await (file as File).arrayBuffer();
+        return new TextDecoder().decode(new Uint8Array(buf));
+      }
+      if (typeof rawText === 'string') return rawText;
+      return '';
+    })();
+
+    const batchSummary = dataSummary.kind === 'csv' ? parseCsvBatchSummary(uploadedText) : {};
+
+    const autoMode: DemoMode = (() => {
+      if (mode !== 'auto') return mode;
+      const size = dataSummary.rows ?? dataSummary.entries ?? 0;
+      return size > 25 ? 'batch' : 'transaction';
+    })();
 
     // Generate unique identifiers
     const timestamp = Date.now();
@@ -267,7 +429,7 @@ export async function POST(req: Request) {
 
     // Build deterministic hashes from real data
     const taskInputHash = `sha256:${dataSummary.sha256Hex}`;
-    const outputCanonical = phoenixZeroStableStringify({ v: 1, demoType, taskId, dataSummary });
+    const outputCanonical = phoenixZeroStableStringify({ v: 1, demoType, taskId, dataSummary, mode: autoMode });
     const taskOutputHash = `sha256:${await sha256HexFromBytes(new TextEncoder().encode(outputCanonical))}`;
 
     // Step 1: Create sovereign pricing profile
@@ -380,7 +542,129 @@ export async function POST(req: Request) {
       throw new Error(`Sovereign contract creation failed: ${contractResponse.status} ${txt}`);
     }
 
-    // Step 4: Create checkout
+    if (autoMode === 'transaction') {
+      const maxTx = 25;
+      const txRows = dataSummary.kind === 'csv' ? parseTransactionRowsFromCsv(uploadedText, maxTx) : [];
+      const txResults: Array<{
+        rowIndex: number;
+        paymentId: string;
+        proofId: string;
+        taskId: string;
+        verifyUrl: string;
+        publicProofUrl: string;
+      }> = [];
+
+      for (const row of txRows) {
+        const txTaskId = `${taskId}_row_${row.rowIndex}`;
+        const txInputCanonical = phoenixZeroStableStringify({ v: 1, demoType, rowIndex: row.rowIndex, rawLine: row.rawLine });
+        const txTaskInputHash = `sha256:${await sha256HexFromBytes(new TextEncoder().encode(txInputCanonical))}`;
+        const txOutputCanonical = phoenixZeroStableStringify({ v: 1, demoType, taskId: txTaskId, dataSummary });
+        const txTaskOutputHash = `sha256:${await sha256HexFromBytes(new TextEncoder().encode(txOutputCanonical))}`;
+
+        const checkoutBody = {
+          currency: 'USD',
+          providerHint: 'crypto',
+          lineItems: [{ operation: config.operation, units: 1 }],
+          proofMeta: {
+            agentId,
+            taskId: txTaskId,
+            taskType: config.taskType,
+            taskInputHash: txTaskInputHash,
+            taskOutputHash: txTaskOutputHash,
+            demoType,
+            realData: dataSummary,
+            mode: 'transaction'
+          }
+        };
+
+        const checkoutResponse = await fetch(`${baseUrl}/api/checkout/create`, {
+          method: 'POST',
+          headers: {
+            'x-api-key': apiKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(checkoutBody)
+        });
+
+        if (!checkoutResponse.ok) {
+          const txt = await checkoutResponse.text().catch(() => '');
+          throw new Error(`Checkout creation failed (row ${row.rowIndex}): ${checkoutResponse.status} ${txt}`);
+        }
+
+        const checkout = await checkoutResponse.json();
+        const paymentId = checkout.paymentId;
+
+        const fallbackResponse = await fetch(`${baseUrl}/api/admin/fallback-paid`, {
+          method: 'POST',
+          headers: {
+            'x-admin-token': adminToken,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ paymentId, tenantId })
+        });
+
+        if (!fallbackResponse.ok) {
+          const txt = await fallbackResponse.text().catch(() => '');
+          throw new Error(`Payment simulation failed (row ${row.rowIndex}): ${fallbackResponse.status} ${txt}`);
+        }
+
+        const executeBody = {
+          taskId: txTaskId,
+          taskType: config.taskType,
+          taskInputHash: txTaskInputHash,
+          taskOutputHash: txTaskOutputHash
+        };
+
+        const executeResponse = await fetch(`${baseUrl}/api/agents/${agentId}/execute`, {
+          method: 'POST',
+          headers: {
+            'x-api-key': apiKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(executeBody)
+        });
+
+        if (!executeResponse.ok) {
+          const txt = await executeResponse.text().catch(() => '');
+          throw new Error(`Task execution failed (row ${row.rowIndex}): ${executeResponse.status} ${txt}`);
+        }
+
+        const execution = await executeResponse.json();
+        const proofId = execution.proofId;
+
+        txResults.push({
+          rowIndex: row.rowIndex,
+          paymentId,
+          proofId,
+          taskId: txTaskId,
+          verifyUrl: `${baseUrl}/verify/${proofId}`,
+          publicProofUrl: `${baseUrl}/api/guarantee-proofs/${proofId}`
+        });
+      }
+
+      return Response.json(
+        {
+          success: true,
+          kind: 'real_business_data_demo',
+          demoType,
+          title: config.title,
+          mode: autoMode,
+          agentId,
+          taskId,
+          timestamp: new Date().toISOString(),
+          dataSummary,
+          batchSummary,
+          transactionResults: txResults,
+          enterprise: {
+            pricing: config.enterprisePrice,
+            roi: config.roiMetric,
+            demoMode: 'Simulated crypto payment for evaluation'
+          }
+        },
+        { status: 200, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
+      );
+    }
+
     const checkoutBody = {
       currency: 'USD',
       providerHint: 'crypto',
@@ -392,7 +676,8 @@ export async function POST(req: Request) {
         taskInputHash,
         taskOutputHash,
         demoType,
-        realData: dataSummary
+        realData: dataSummary,
+        mode: 'batch'
       }
     };
 
@@ -413,7 +698,6 @@ export async function POST(req: Request) {
     const checkout = await checkoutResponse.json();
     const paymentId = checkout.paymentId;
 
-    // Step 5: Simulate payment via fallback-paid (demo mode)
     const fallbackResponse = await fetch(`${baseUrl}/api/admin/fallback-paid`, {
       method: 'POST',
       headers: {
@@ -428,7 +712,6 @@ export async function POST(req: Request) {
       throw new Error(`Payment simulation failed: ${fallbackResponse.status} ${txt}`);
     }
 
-    // Step 6: Execute task
     const executeBody = {
       taskId,
       taskType: config.taskType,
@@ -459,6 +742,7 @@ export async function POST(req: Request) {
         kind: 'real_business_data_demo',
         demoType,
         title: config.title,
+        mode: autoMode,
         paymentId,
         proofId,
         agentId,
@@ -472,6 +756,7 @@ export async function POST(req: Request) {
           taskOutputHash
         },
         dataSummary,
+        batchSummary,
         enterprise: {
           pricing: config.enterprisePrice,
           roi: config.roiMetric,

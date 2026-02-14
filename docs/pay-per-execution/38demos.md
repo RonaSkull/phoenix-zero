@@ -1157,6 +1157,19 @@ $base = "https://phoenix-zero-web.onrender.com"
 $demoToken = "COLE_AQUI_O_TOKEN_DO_RENDER"
 ```
 
+### Modes (hybrid)
+
+This endpoint supports a hybrid processing model via `mode`:
+
+- `mode=auto` (default)
+- `mode=transaction` (small volumes: proof per row; limited)
+- `mode=batch` (enterprise volumes: 1 proof per file + `batchSummary`)
+
+**Safety limits (demo defaults):**
+
+- `transaction` executes up to **25** rows.
+- `batchSummary` aggregates up to **5000** rows.
+
 ### Method 1: Quick Test with rawText (no file)
 
 ```powershell
@@ -1164,6 +1177,7 @@ curl.exe -s -X POST "$base/api/demo/run-with-data" `
   -H "x-demo-run-token: $demoToken" `
   -H "Content-Type: multipart/form-data" `
   -F "demoType=exchange" `
+  -F "mode=auto" `
   -F "rawText=test"
 ```
 
@@ -1171,13 +1185,12 @@ curl.exe -s -X POST "$base/api/demo/run-with-data" `
 
 ### Method 2: Upload CSV File
 
-**Step 1**: Create a sample CSV file
+**Step 1**: Create a sample enterprise CSV file (Exchange)
 ```powershell
 @"
-id,amount,currency
-tx1,100,USD
-tx2,250,USD
-tx3,500,USD
+settlement_batch_id,transaction_id,blockchain,asset,amount,fee_usd,gas_fee_native,tx_hash,block_number,block_timestamp,counterparty_wallet,counterparty_name,kyc_status,risk_rating,settlement_window,fx_rate_usd,order_id,trade_type,regulatory_code,audit_trail_id,settlement_status
+batch_20260214_001,tx_8f72a1b9,ETH,USDC,50000.00,12.50,0.00250000,0xabc123def456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef,18456789,2026-02-14T15:30:00Z,0x742d35Cc6634C0532925a3b844Bc454e4438f4C1,Binance_KYC_Pass,VERIFIED,LOW,T+0,1.0000,ord_9f8e7d6c,buy,FATF_TR_001,audit_crypto_001,settled
+batch_20260214_001,tx_3e45b2c8,BTC,BTC,1.25000000,8.75,0.00015000,3a1b2c3d4e5f6789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01,821234,2026-02-14T15:31:00Z,bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh,Coinbase_Prime,VERIFIED,MEDIUM,T+0,40000.0000,ord_1a2b3c4d,sell,FATF_TR_001,audit_crypto_002,settled
 "@ | Out-File -Encoding utf8 ".\exchange.csv"
 ```
 
@@ -1186,6 +1199,7 @@ tx3,500,USD
 curl.exe -s -X POST "$base/api/demo/run-with-data" `
   -H "x-demo-run-token: $demoToken" `
   -F "demoType=exchange" `
+  -F "mode=batch" `
   -F "file=@.\exchange.csv;type=text/csv"
 ```
 
@@ -1206,6 +1220,7 @@ curl.exe -s -X POST "$base/api/demo/run-with-data" `
 curl.exe -s -X POST "$base/api/demo/run-with-data" `
   -H "x-demo-run-token: $demoToken" `
   -F "demoType=exchange" `
+  -F "mode=auto" `
   -F "file=@.\exchange.json;type=application/json"
 ```
 
@@ -1216,9 +1231,11 @@ curl.exe -s -X POST "$base/api/demo/run-with-data" `
   "success": true,
   "kind": "real_business_data_demo",
   "demoType": "exchange",
+  "mode": "batch",
   "proofId": "ppo_xxxxx",
   "verifyUrl": "https://phoenix-zero-web.onrender.com/verify/ppo_xxxxx",
   "publicProofUrl": "https://phoenix-zero-web.onrender.com/api/guarantee-proofs/ppo_xxxxx",
+  
   "proofMeta": {
     "taskType": "reconcile_psp",
     "taskInputHash": "sha256:...",
@@ -1229,6 +1246,23 @@ curl.exe -s -X POST "$base/api/demo/run-with-data" `
     "rows": 3,
     "sha256Hex": "..."
   },
+  "batchSummary": {
+    "rowCount": 2,
+    "sumNotionalUsd": 50000.0,
+    "distinctAssets": ["USDC", "BTC"],
+    "highRiskCount": 0,
+    "failedCount": 0,
+    "batchId": "batch_20260214_001",
+    "settlementWindow": "T+0"
+  },
+  "transactionResults": [
+    {
+      "rowIndex": 1,
+      "paymentId": "pay_...",
+      "proofId": "ppo_...",
+      "verifyUrl": "https://phoenix-zero-web.onrender.com/verify/ppo_..."
+    }
+  ],
   "enterprise": {
     "pricing": "Starting at $15,000-$25,000/month",
     "roi": "Single cryptographic compliance proof per settlement"
@@ -1244,6 +1278,7 @@ curl.exe -s -X POST "$base/api/demo/run-with-data" `
 | `404 Not Found` | Endpoint not deployed | Verify deploy completed in Render Dashboard |
 | `400 Missing required field: demoType` | Form field missing | Add `-F "demoType=exchange"` |
 | `400 Missing file or rawText` | No data provided | Add file with `-F "file=@..."` or `-F "rawText=..."` |
+| `400 Invalid mode` | Mode not recognized | Use `mode=auto`, `mode=batch`, or `mode=transaction` |
 | PowerShell parsing errors | Quote escaping issues | Use single quotes for JSON, double for variables |
 
 ### PowerShell 7+ Alternative
@@ -1252,6 +1287,8 @@ If you have PowerShell 7+ installed, you can use native multipart:
 ```powershell
 $form = @{
     demoType = "exchange"
+    mode = "batch"
     file = Get-Item ".\exchange.csv"
 }
 Invoke-RestMethod -Uri "$base/api/demo/run-with-data" -Method POST -Headers @{"x-demo-run-token"=$demoToken} -Form $form
+```

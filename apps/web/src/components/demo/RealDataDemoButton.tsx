@@ -11,6 +11,7 @@ interface RealDataDemoButtonProps {
 
 interface DemoResult {
   success: boolean;
+  mode?: 'auto' | 'batch' | 'transaction';
   paymentId?: string;
   proofId?: string;
   verifyUrl?: string;
@@ -21,6 +22,24 @@ interface DemoResult {
     bytes: number;
     sha256Hex: string;
   };
+  batchSummary?: {
+    rowCount?: number;
+    entryCount?: number;
+    sumNotionalUsd?: number;
+    distinctAssets?: string[];
+    highRiskCount?: number;
+    failedCount?: number;
+    batchId?: string;
+    settlementWindow?: string;
+  };
+  transactionResults?: Array<{
+    rowIndex: number;
+    paymentId: string;
+    proofId: string;
+    taskId: string;
+    verifyUrl: string;
+    publicProofUrl: string;
+  }>;
   enterprise?: {
     pricing: string;
     roi: string;
@@ -39,6 +58,7 @@ export function RealDataDemoButton({
   const [file, setFile] = useState<File | null>(null);
   const [rawText, setRawText] = useState('');
   const [useFile, setUseFile] = useState(true);
+  const [mode, setMode] = useState<'auto' | 'batch' | 'transaction'>('auto');
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -61,6 +81,7 @@ export function RealDataDemoButton({
     try {
       const formData = new FormData();
       formData.append('demoType', demoType);
+      formData.append('mode', mode);
       
       if (file) {
         formData.append('file', file);
@@ -87,11 +108,14 @@ export function RealDataDemoButton({
         ]);
         setResult({
           success: true,
+          mode: data.mode,
           paymentId: data.paymentId,
           proofId: data.proofId,
           verifyUrl: data.verifyUrl,
           publicProofUrl: data.publicProofUrl,
           dataSummary: data.dataSummary,
+          batchSummary: data.batchSummary,
+          transactionResults: data.transactionResults,
           enterprise: data.enterprise
         });
       } else {
@@ -140,6 +164,24 @@ export function RealDataDemoButton({
 
   return (
     <div className={`space-y-4 ${className}`}>
+      {/* Mode selector */}
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-300">Processing mode</label>
+        <select
+          value={mode}
+          onChange={(e) => setMode(e.target.value as 'auto' | 'batch' | 'transaction')}
+          disabled={isRunning}
+          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-gray-500 disabled:opacity-50"
+        >
+          <option value="auto">Auto (recommended)</option>
+          <option value="transaction">Per-transaction proofs (small volumes)</option>
+          <option value="batch">Batch proof + summary (enterprise volumes)</option>
+        </select>
+        <p className="text-xs text-gray-500">
+          Auto chooses transaction mode for small files and batch mode for large files.
+        </p>
+      </div>
+
       {/* Toggle between File and Raw Text */}
       <div className="flex gap-2 p-1 bg-gray-800 rounded-lg">
         <button
@@ -240,6 +282,12 @@ export function RealDataDemoButton({
             <span>✓</span>
             <span>Cryptographic proof generated from your data!</span>
           </div>
+
+          {result.mode && (
+            <div className="text-xs text-gray-400">
+              Mode: <span className="text-green-300">{result.mode}</span>
+            </div>
+          )}
           
           {result.dataSummary && (
             <div className="text-sm text-gray-300 bg-gray-800/50 rounded p-3">
@@ -257,29 +305,99 @@ export function RealDataDemoButton({
             </div>
           )}
 
-          <div className="text-sm text-gray-300 space-y-1">
-            <div>Payment ID: <code className="text-green-300">{result.paymentId}</code></div>
-            <div>Proof ID: <code className="text-green-300">{result.proofId}</code></div>
-          </div>
+          {result.batchSummary && (
+            <div className="text-sm text-gray-300 bg-gray-800/50 rounded p-3">
+              <div className="font-medium text-gray-200 mb-2">Batch Summary:</div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {typeof result.batchSummary.rowCount === 'number' && (
+                  <div>Row count: <span className="text-green-300">{result.batchSummary.rowCount}</span></div>
+                )}
+                {typeof result.batchSummary.sumNotionalUsd === 'number' && (
+                  <div>Notional (USD): <span className="text-green-300">{result.batchSummary.sumNotionalUsd.toFixed(2)}</span></div>
+                )}
+                {typeof result.batchSummary.highRiskCount === 'number' && (
+                  <div>High-risk: <span className="text-green-300">{result.batchSummary.highRiskCount}</span></div>
+                )}
+                {typeof result.batchSummary.failedCount === 'number' && (
+                  <div>Failed: <span className="text-green-300">{result.batchSummary.failedCount}</span></div>
+                )}
+                {result.batchSummary.batchId && (
+                  <div className="col-span-2">Batch ID: <span className="text-green-300">{result.batchSummary.batchId}</span></div>
+                )}
+                {result.batchSummary.settlementWindow && (
+                  <div className="col-span-2">Window: <span className="text-green-300">{result.batchSummary.settlementWindow}</span></div>
+                )}
+                {result.batchSummary.distinctAssets?.length ? (
+                  <div className="col-span-2">
+                    Assets: <span className="text-green-300">{result.batchSummary.distinctAssets.join(', ')}</span>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          )}
 
-          <div className="flex flex-wrap gap-2">
-            <a
-              href={result.verifyUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded font-medium transition-colors"
-            >
-              🔍 Verify Proof
-            </a>
-            <a
-              href={result.publicProofUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded font-medium transition-colors"
-            >
-              📄 Public API
-            </a>
-          </div>
+          {result.transactionResults?.length ? (
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-gray-200">Transaction proofs:</div>
+              <div className="space-y-2">
+                {result.transactionResults.map((tx) => (
+                  <div key={tx.rowIndex} className="bg-gray-800/50 rounded border border-gray-700 p-3">
+                    <div className="text-xs text-gray-400">Row {tx.rowIndex}</div>
+                    <div className="text-xs text-gray-300 mt-1">
+                      Payment: <code className="text-green-300">{tx.paymentId}</code>
+                    </div>
+                    <div className="text-xs text-gray-300">
+                      Proof: <code className="text-green-300">{tx.proofId}</code>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <a
+                        href={tx.verifyUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block px-3 py-1 bg-green-600 hover:bg-green-500 text-white rounded text-xs font-medium transition-colors"
+                      >
+                        Verify
+                      </a>
+                      <a
+                        href={tx.publicProofUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white rounded text-xs font-medium transition-colors"
+                      >
+                        API
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="text-sm text-gray-300 space-y-1">
+                <div>Payment ID: <code className="text-green-300">{result.paymentId}</code></div>
+                <div>Proof ID: <code className="text-green-300">{result.proofId}</code></div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href={result.verifyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded font-medium transition-colors"
+                >
+                  🔍 Verify Proof
+                </a>
+                <a
+                  href={result.publicProofUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded font-medium transition-colors"
+                >
+                  📄 Public API
+                </a>
+              </div>
+            </>
+          )}
 
           {result.enterprise && (
             <div className="mt-3 p-3 bg-gray-800/50 rounded border border-gray-700">

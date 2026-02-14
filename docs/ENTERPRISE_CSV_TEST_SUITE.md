@@ -10,6 +10,12 @@
 
 This document defines the enterprise-grade CSV test suite for Phoenix Zero Sovereign vertical demos. These templates replace basic "toy" examples with real-world data structures that enterprise financial teams expect.
 
+This suite supports a **hybrid demo mode**:
+
+- **`transaction`**: generates **one proof per row** (small volumes). Limited for safety.
+- **`batch`**: generates **one proof per file** + `batchSummary` (enterprise volumes).
+- **`auto`**: chooses `transaction` for small files and `batch` for large files.
+
 ---
 
 ## 📊 Enterprise CSV Templates
@@ -155,6 +161,19 @@ rec_1a2b3c4d,acct_nubank_001,2026-02-14T10:00:00Z,crypto_settlement,250000.00,US
 
 ## 🧪 Test Execution Guide
 
+### Modes
+
+Send the `mode` field in the multipart request:
+
+- `mode=auto` (default)
+- `mode=batch`
+- `mode=transaction`
+
+**Safety limits (current demo defaults):**
+
+- `transaction` mode executes up to **25** rows.
+- `batchSummary` aggregates up to **5000** rows to keep CPU bounded on huge files.
+
 ### Quick Test via cURL
 
 ```powershell
@@ -163,45 +182,72 @@ $base = "https://phoenix-zero-web.onrender.com"
 curl.exe -X POST "$base/api/demo/run-with-data" `
   -H "x-demo-run-token: $env:PHOENIX_ZERO_DEMO_RUN_TOKEN" `
   -F "demoType=exchange" `
-  -F "dataFile=@exchange_settlement_template.csv"
+  -F "mode=batch" `
+  -F "file=@exchange_settlement_template.csv"
 
 # 2. AI Marketplace Test
 curl.exe -X POST "$base/api/demo/run-with-data" `
   -H "x-demo-run-token: $env:PHOENIX_ZERO_DEMO_RUN_TOKEN" `
   -F "demoType=ai-marketplace" `
-  -F "dataFile=@ai_marketplace_template.csv"
+  -F "mode=auto" `
+  -F "file=@ai_marketplace_template.csv"
 
 # 3. Gaming Tournament Test
 curl.exe -X POST "$base/api/demo/run-with-data" `
   -H "x-demo-run-token: $env:PHOENIX_ZERO_DEMO_RUN_TOKEN" `
   -F "demoType=gaming" `
-  -F "dataFile=@gaming_tournament_template.csv"
+  -F "mode=transaction" `
+  -F "file=@gaming_tournament_template.csv"
 
 # 4. Banking Reconciliation Test
 curl.exe -X POST "$base/api/demo/run-with-data" `
   -H "x-demo-run-token: $env:PHOENIX_ZERO_DEMO_RUN_TOKEN" `
   -F "demoType=banking" `
-  -F "dataFile=@banking_reconciliation_template.csv"
+  -F "mode=batch" `
+  -F "file=@banking_reconciliation_template.csv"
 ```
 
 ### Expected Response Structure
 
 ```json
 {
-  "ok": true,
+  "success": true,
+  "kind": "real_business_data_demo",
   "demoType": "exchange",
-  "vertical": "Crypto Exchange Settlement",
-  "proof": {
-    "proofId": "ppo_xxxxxxxx",
-    "verifyUrl": "https://phoenix-zero-web.onrender.com/verify/ppo_xxxxxxxx",
-    "status": "confirmed"
+  "title": "Crypto Exchange Settlement Proof",
+  "mode": "batch",
+  "paymentId": "pay_...",
+  "proofId": "ppo_xxxxxxxx",
+  "verifyUrl": "https://phoenix-zero-web.onrender.com/verify/ppo_xxxxxxxx",
+  "publicProofUrl": "https://phoenix-zero-web.onrender.com/api/guarantee-proofs/ppo_xxxxxxxx",
+  "timestamp": "2026-02-14T12:34:56.789Z",
+  "proofMeta": {
+    "taskType": "reconcile_psp",
+    "taskInputHash": "sha256:...",
+    "taskOutputHash": "sha256:..."
   },
   "dataSummary": {
-    "rowCount": 3,
-    "totalAmount": 750000.00,
-    "assets": ["USDC", "BTC", "ETH"]
+    "kind": "csv",
+    "rows": 15000,
+    "sha256Hex": "..."
   },
-  "timingMs": 2345
+  "batchSummary": {
+    "rowCount": 15000,
+    "sumNotionalUsd": 2500000.0,
+    "distinctAssets": ["USDC", "USDT"],
+    "highRiskCount": 3,
+    "failedCount": 12,
+    "batchId": "settlement_20260214_T+0",
+    "settlementWindow": "T+0"
+  },
+  "transactionResults": [
+    {
+      "rowIndex": 1,
+      "paymentId": "pay_...",
+      "proofId": "ppo_...",
+      "verifyUrl": "https://phoenix-zero-web.onrender.com/verify/ppo_..."
+    }
+  ]
 }
 ```
 
@@ -237,7 +283,7 @@ Test directly in browser:
 - [ ] Data hashes are deterministic (same CSV = same hashes)
 - [ ] Row counts match between upload and summary
 - [ ] Total amounts calculate correctly
-- [ ] All verticals return `ok: true` response
+- [ ] All verticals return `success: true` response
 
 ---
 
