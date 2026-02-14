@@ -21,7 +21,7 @@ $DemoConfigs = @{
         Amount = 500
         Description = "Compliance proof for crypto exchanges"
         OverlayTemplate = "exchange-overlay.html"
-        EnterprisePrice = "Starting at $15,000-$25,000/month"
+        EnterprisePrice = 'Starting at $15,000-$25,000/month'
         ROIMetric = "Single cryptographic compliance proof per settlement"
     }
     "ai-marketplace" = @{
@@ -31,7 +31,7 @@ $DemoConfigs = @{
         Amount = 10
         Description = "Agent-to-agent payments without intermediaries"
         OverlayTemplate = "ai-marketplace-overlay.html"
-        EnterprisePrice = "Starting at $10,000-$15,000/month"
+        EnterprisePrice = 'Starting at $10,000-$15,000/month'
         ROIMetric = "Crypto-native autonomous agent settlement with verifiable proof"
     }
     "gaming" = @{
@@ -41,7 +41,7 @@ $DemoConfigs = @{
         Amount = 100
         Description = "Verifiable esports tournament payouts"
         OverlayTemplate = "gaming-overlay.html"
-        EnterprisePrice = "Starting at $15,000-$20,000/month"
+        EnterprisePrice = 'Starting at $15,000-$20,000/month'
         ROIMetric = "Publicly verifiable crypto payout proofs"
     }
     "banking" = @{
@@ -51,7 +51,7 @@ $DemoConfigs = @{
         Amount = 50
         Description = "Automated compliance reconciliation for financial institutions"
         OverlayTemplate = "banking-overlay.html"
-        EnterprisePrice = "Starting at $20,000-$25,000/month"
+        EnterprisePrice = 'Starting at $20,000-$25,000/month'
         ROIMetric = "Crypto settlement reconciliation with cryptographic audit trail"
     }
 }
@@ -494,7 +494,7 @@ try {
     Write-Host ""
     Write-Host "==> ENTERPRISE PRICING & ROI" -ForegroundColor Cyan -BackgroundColor Black
     Write-Host ""
-    Write-Host "   This Demo: FREE (simulated payment for evaluation)" -ForegroundColor Green
+    Write-Host "   This Demo: FREE (simulated crypto payment for evaluation)" -ForegroundColor Green
     Write-Host "   Production: $($config.EnterprisePrice)" -ForegroundColor Yellow
     Write-Host "   ROI: $($config.ROIMetric)" -ForegroundColor Green
     Write-Host ""
@@ -534,6 +534,9 @@ try {
     Write-Host "   2. Review enterprise pricing above" -ForegroundColor White
     Write-Host "   3. Book technical call to discuss production deployment" -ForegroundColor White
     Write-Host ""
+
+    Write-Host "==> FULL OUTPUT (NO TRUNCATION)" -ForegroundColor Cyan -BackgroundColor Black
+    Write-Host ($demoReport | Format-List * | Out-String -Width 4096)
 
     # Output for CI/CD integration
     return $demoReport
