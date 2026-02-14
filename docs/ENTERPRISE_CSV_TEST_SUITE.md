@@ -62,13 +62,14 @@ batch_20260214_001,tx_8f72a1b9,ETH,USDC,50000.00,12.50,0.00250000,0xabc123...,18
 
 ---
 
-### 2. AI Marketplace Agent Transactions (`ai_marketplace_template.csv`)
+### 2. AI Marketplace Agent Transactions (`ai_marketplace_enterprise.csv`)
 
 **Purpose:** LangChain/AutoGPT marketplace execution records
 
-**Schema (11 fields):**
+**Schema (17 fields):**
 | Field | Type | Description |
 |-------|------|-------------|
+| `settlement_batch_id` | string | Batch identifier for a billing/settlement window |
 | `execution_id` | string | Unique execution identifier |
 | `agent_id` | string | Agent identifier |
 | `task_type` | string | Task classification |
@@ -76,46 +77,58 @@ batch_20260214_001,tx_8f72a1b9,ETH,USDC,50000.00,12.50,0.00250000,0xabc123...,18
 | `memory_gb` | integer | Memory allocation |
 | `hours_executed` | decimal | Execution duration |
 | `cost_usd` | decimal | Billing amount |
+| `token_type` | string | Settlement token (USDC/USDT) |
 | `payment_status` | enum | completed/pending/failed |
-| `proof_id` | string | Phoenix Zero proof reference |
+| `settlement_status` | enum | pending/settled/failed |
+| `settlement_window` | string | Settlement window (T+0, T+1, etc.) |
+| `jurisdiction` | string | Jurisdiction/country code |
+| `risk_rating` | enum | LOW/MEDIUM/HIGH |
+| `audit_trail_id` | string | Internal audit trail reference |
 | `parent_task_id` | string | Workflow parent reference |
 | `resource_pool` | string | Infrastructure pool |
 
 **Sample Row:**
 ```csv
-exec_a1b2c3d4,agent_langchain_001,data_analysis,150,8,2.5,75.00,completed,ppo_xyz123,parent_001,gpu_pool_a
+batch_ai_20260214_001,exec_a1b2c3d4,agent_langchain_analyzer_001,data_analysis,150,8,2.5,75.00,USDC,completed,settled,T+0,US,LOW,audit_ai_001,parent_task_001,gpu_pool_a
 ```
 
 **Business Value:**
 - Resource billing via `compute_units` × `hours_executed`
 - Capacity planning via `resource_pool`
 - Workflow tracing via `parent_task_id`
-- Payment verification via `proof_id`
+- Batch auditability via `settlement_batch_id`, `audit_trail_id`
 
 ---
 
-### 3. Gaming Tournament Payouts (`gaming_tournament_template.csv`)
+### 3. Gaming Tournament Payouts (`gaming_enterprise.csv`)
 
 **Purpose:** Twitch/Discord esports tournament payout records
 
-**Schema (11 fields):**
+**Schema (18 fields):**
 | Field | Type | Description |
 |-------|------|-------------|
+| `settlement_batch_id` | string | Batch identifier for a payout window |
 | `payout_id` | string | Unique payout identifier |
 | `player_id` | string | Player identifier |
 | `player_wallet` | address | Crypto wallet for payout |
 | `tournament_id` | string | Tournament reference |
 | `placement` | integer | Ranking position |
 | `prize_amount_usd` | decimal | Gross prize amount |
-| `token_type` | string | Payout token (USDC, USDT) |
-| `payout_status` | enum | completed/pending/failed |
-| `verification_proof` | string | Phoenix Zero proof ID |
 | `platform_fee_usd` | decimal | Platform commission |
 | `net_payout_usd` | decimal | Player net amount |
+| `token_type` | string | Payout token (USDC, USDT) |
+| `payout_status` | enum | completed/pending/failed |
+| `settlement_status` | enum | pending/settled/failed |
+| `settlement_window` | string | Settlement window (T+0, T+1, etc.) |
+| `jurisdiction` | string | Jurisdiction/country code |
+| `risk_rating` | enum | LOW/MEDIUM/HIGH |
+| `match_id` | string | Match identifier (for audit traceability) |
+| `anti_cheat_flag` | boolean | Anti-cheat triggered or not |
+| `audit_trail_id` | string | Internal audit trail reference |
 
 **Sample Row:**
 ```csv
-pay_1a2b3c4d,player_twitch_xxx,0x123456...,tourn_2026_001,1,50000.00,USDC,completed,ppo_gaming_001,2500.00,47500.00
+batch_gaming_20260214_001,pay_1a2b3c4d,player_twitch_xxx,0x123456789abcdef0123456789abcdef0123456789,tourn_esports_2026_001,1,50000.00,2500.00,47500.00,USDC,completed,settled,T+0,US,LOW,match_001,false,audit_gaming_001
 ```
 
 **Business Value:**
@@ -126,29 +139,34 @@ pay_1a2b3c4d,player_twitch_xxx,0x123456...,tourn_2026_001,1,50000.00,USDC,comple
 
 ---
 
-### 4. Banking Reconciliation (`banking_reconciliation_template.csv`)
+### 4. Banking Reconciliation (`banking_enterprise.csv`)
 
 **Purpose:** Digital bank BC/Febraban compliance records
 
-**Schema (12 fields):**
+**Schema (17 fields):**
 | Field | Type | Description |
 |-------|------|-------------|
+| `settlement_batch_id` | string | Batch identifier for a reconciliation window |
 | `reconciliation_id` | string | Unique reconciliation ID |
 | `account_id` | string | Account identifier |
 | `transaction_date` | ISO8601 | Transaction timestamp |
 | `transaction_type` | string | Transaction classification |
 | `amount_usd` | decimal | USD equivalent amount |
+| `asset` | string | Settlement asset (USDC/USDT/etc.) |
 | `currency_pair` | string | FX pair (USDC_BRL) |
 | `exchange_rate` | decimal | Applied FX rate |
 | `counterparty_name` | string | Counterparty entity |
 | `reference_number` | string | Internal reference |
-| `reconciliation_status` | enum | reconciled/pending/exception |
+| `settlement_status` | enum | pending/settled/failed |
+| `settlement_window` | string | Settlement window (T+0, T+1, etc.) |
+| `jurisdiction` | string | Jurisdiction/country code |
+| `risk_rating` | enum | LOW/MEDIUM/HIGH |
 | `compliance_check` | enum | passed/failed/pending |
 | `audit_trail_id` | string | BC audit reference |
 
 **Sample Row:**
 ```csv
-rec_1a2b3c4d,acct_nubank_001,2026-02-14T10:00:00Z,crypto_settlement,250000.00,USDC_BRL,5.25,Nubank Treasury,ref_001,reconciled,passed,audit_001
+batch_bank_20260214_001,rec_1a2b3c4d,acct_nubank_001,2026-02-14T10:00:00Z,crypto_settlement,250000.00,USDC,USDC_BRL,5.25,Nubank Treasury,ref_crypto_001,settled,T+0,BR,LOW,passed,audit_bank_001
 ```
 
 **Business Value:**
