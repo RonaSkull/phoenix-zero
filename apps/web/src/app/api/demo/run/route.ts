@@ -73,14 +73,30 @@ export async function POST(request: NextRequest) {
     const taskId = `demo_task_${new Date().toISOString().replace(/[:.]/g, '').slice(0, 15)}`;
     const pricingProfileId = `sovereign_demo_${demoType}_${timestamp}`;
 
+    const nowIso = new Date().toISOString();
+
     // Step 1: Create sovereign pricing profile
+    // /api/admin/pricing-profiles expects a PricingProfile shape.
     const pricingBody = {
-      pricingProfileId,
-      name: `Sovereign Demo ${demoType}`,
-      description: `Auto-created pricing profile for ${demoType} demo`,
+      id: pricingProfileId,
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      currency: 'USD',
       basePriceCentsByOp: {
-        [config.operation]: 5, // Cheap rate for demos
+        [config.operation]: 5
       },
+      multiplierByClientType: {
+        sovereign: 1
+      },
+      multiplierBySector: {
+        financial_services: 1,
+        technology: 1,
+        gaming_esports: 1
+      },
+      multiplierByCountry: {
+        br: 1,
+        us: 1
+      }
     };
 
     const pricingResponse = await fetch(`${baseUrl}/api/admin/pricing-profiles`, {
@@ -129,7 +145,6 @@ export async function POST(request: NextRequest) {
 
     // Step 3: Create sovereign contract
     const contractId = `sc_${tenantId}_${agentId}_${Math.floor(Date.now() / 1000)}`;
-    const nowIso = new Date().toISOString();
     const contractBody = {
       contract: {
         contractId,
