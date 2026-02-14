@@ -190,21 +190,21 @@ curl.exe -X POST "$base/api/demo/run-with-data" `
   -H "x-demo-run-token: $env:PHOENIX_ZERO_DEMO_RUN_TOKEN" `
   -F "demoType=ai-marketplace" `
   -F "mode=auto" `
-  -F "file=@ai_marketplace_template.csv"
+  -F "file=@ai_marketplace_enterprise.csv"
 
 # 3. Gaming Tournament Test
 curl.exe -X POST "$base/api/demo/run-with-data" `
   -H "x-demo-run-token: $env:PHOENIX_ZERO_DEMO_RUN_TOKEN" `
   -F "demoType=gaming" `
   -F "mode=transaction" `
-  -F "file=@gaming_tournament_template.csv"
+  -F "file=@gaming_enterprise.csv"
 
 # 4. Banking Reconciliation Test
 curl.exe -X POST "$base/api/demo/run-with-data" `
   -H "x-demo-run-token: $env:PHOENIX_ZERO_DEMO_RUN_TOKEN" `
   -F "demoType=banking" `
   -F "mode=batch" `
-  -F "file=@banking_reconciliation_template.csv"
+  -F "file=@banking_enterprise.csv"
 ```
 
 ### Expected Response Structure

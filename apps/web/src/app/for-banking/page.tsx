@@ -146,7 +146,7 @@ export default function BankingLanding() {
             <p className="text-sm text-gray-400">
               <span className="text-cyan-400">💡</span> Don't have transaction data ready? 
               <a 
-                href="/templates/banking_reconciliation_template.csv"
+                href="/templates/banking_enterprise.csv"
                 download
                 className="ml-2 text-cyan-400 hover:text-cyan-300 underline cursor-pointer"
               >

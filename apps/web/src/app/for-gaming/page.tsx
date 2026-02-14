@@ -146,7 +146,7 @@ export default function GamingLanding() {
             <p className="text-sm text-gray-400">
               <span className="text-purple-400">💡</span> Don't have tournament data ready? 
               <a 
-                href="/templates/gaming_tournament_template.csv"
+                href="/templates/gaming_enterprise.csv"
                 download
                 className="ml-2 text-purple-400 hover:text-purple-300 underline cursor-pointer"
               >

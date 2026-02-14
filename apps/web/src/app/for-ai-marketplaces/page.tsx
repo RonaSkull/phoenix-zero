@@ -147,7 +147,7 @@ export default function AIMarketplaceLanding() {
             <p className="text-sm text-gray-400">
               <span className="text-blue-400">💡</span> Don't have agent data ready? 
               <a 
-                href="/templates/ai_marketplace_template.csv"
+                href="/templates/ai_marketplace_enterprise.csv"
                 download
                 className="ml-2 text-blue-400 hover:text-blue-300 underline cursor-pointer"
               >
