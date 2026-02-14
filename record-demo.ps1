@@ -71,7 +71,34 @@ if (-not $env:PHOENIX_ZERO_ADMIN_TOKEN) {
 }
 
 function Invoke-JsonPost($uri, $headers, $bodyObject) {
-    return Invoke-RestMethod -Uri $uri -Method POST -Headers $headers -Body ($bodyObject | ConvertTo-Json -Depth 10)
+    try {
+        return Invoke-RestMethod -Uri $uri -Method POST -Headers $headers -Body ($bodyObject | ConvertTo-Json -Depth 10)
+    } catch {
+        $status = $null
+        try { $status = $_.Exception.Response.StatusCode } catch {}
+
+        Write-Host "   [X] POST failed: $uri" -ForegroundColor Red
+        if ($status) {
+            Write-Host "   Status: $status" -ForegroundColor Red
+        }
+
+        try {
+            $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+            $reader.BaseStream.Position = 0
+            $reader.DiscardBufferedData()
+            $errorBody = $reader.ReadToEnd()
+            if ($errorBody) {
+                Write-Host "   Error response:" -ForegroundColor Red
+                Write-Host "   $errorBody" -ForegroundColor Red
+            }
+        } catch {}
+
+        if ($status -eq 401) {
+            Write-Host "   Hint: check PHOENIX_ZERO_ADMIN_TOKEN (must match Render environment)" -ForegroundColor Yellow
+        }
+
+        throw
+    }
 }
 
 function Ensure-SovereignDemoPricingProfile($baseUrl, $adminToken) {
