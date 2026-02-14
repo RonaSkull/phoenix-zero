@@ -2,3 +2,4 @@
 export { DemoPlayer } from './DemoPlayer';
 export { LiveDemoButton } from './LiveDemoButton';
 export { ProofCard } from './ProofCard';
+export { RealDataDemoButton } from './RealDataDemoButton';

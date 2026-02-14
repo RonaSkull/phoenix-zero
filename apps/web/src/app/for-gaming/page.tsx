@@ -1,10 +1,10 @@
 // app/for-gaming/page.tsx
-import { DemoPlayer, LiveDemoButton, ProofCard } from '@/components/demo';
+import { LiveDemoButton, RealDataDemoButton } from '@/components/demo';
 import Link from 'next/link';
 
 export const metadata = {
   title: 'Fraud-Proof Tournament Payouts | Phoenix Zero for Gaming',
-  description: 'Every payout generates a public proof showing exactly who won and how much they received. Players verify themselves. Trust is everything.',
+  description: 'Every payout generates a public proof showing exactly who won and how much they received. Upload your tournament data and see cryptographic verification.',
 };
 
 export default function GamingLanding() {
@@ -26,20 +26,20 @@ export default function GamingLanding() {
             </h1>
             
             <p className="text-xl text-gray-400 max-w-3xl mx-auto mb-8">
-              Your $100k tournament loses <span className="text-white font-semibold">$15k/month</span> in player churn due to 
-              payout <span className="text-red-400 font-semibold">manipulation complaints</span>. Trust is everything.
+              Phoenix Zero Sovereign emits a public proof per crypto payout.
+              Upload your tournament results and generate verifiable proof for every winner.
             </p>
             
             <div className="flex flex-wrap justify-center gap-4">
               <LiveDemoButton 
                 demoType="gaming" 
-                buttonText="⚡ Run Live Demo"
+                buttonText="⚡ Quick Demo (Simulated)"
               />
               <a 
-                href="#watch-demo" 
-                className="px-8 py-4 rounded-lg font-bold text-lg border border-gray-600 hover:border-gray-400 hover:bg-gray-800/50 transition-all"
+                href="#real-data" 
+                className="px-8 py-4 rounded-lg font-bold text-lg border border-purple-500/50 hover:border-purple-400 hover:bg-purple-900/20 transition-all"
               >
-                📺 Watch Demo
+                🏆 Try with Tournament Data
               </a>
             </div>
           </div>
@@ -53,15 +53,15 @@ export default function GamingLanding() {
               <ul className="space-y-3 text-gray-400">
                 <li className="flex items-start gap-2">
                   <span className="text-red-500">•</span>
-                  Players accuse you of favoritism and manipulation
+                  Players dispute results and payouts without independently verifiable evidence
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-red-500">•</span>
-                  Hours defending integrity on Discord and forums
+                  Incident response becomes screenshots, logs, and trust-based arguments
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-red-500">•</span>
-                  One scandal = player exodus and revenue collapse
+                  Partners and sponsors demand stronger integrity guarantees
                 </li>
               </ul>
             </div>
@@ -73,15 +73,15 @@ export default function GamingLanding() {
               <ul className="space-y-3 text-gray-400">
                 <li className="flex items-start gap-2">
                   <span className="text-purple-500">•</span>
-                  Every payout generates a public, verifiable proof
+                  Upload tournament CSV/JSON → get cryptographic proof in 60s
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-purple-500">•</span>
-                  Players verify themselves — no trust required
+                  Each payout emits a public verify URL (no trust required)
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-purple-500">•</span>
-                  Transform from gaming platform to trust institution
+                  Players verify independently — complete payout transparency
                 </li>
               </ul>
             </div>
@@ -89,31 +89,123 @@ export default function GamingLanding() {
         </div>
       </section>
 
-      {/* Demo Video Section */}
-      <section id="watch-demo" className="py-16 px-6 bg-gray-900/30">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-8">See Proven-Fair Payouts In Action</h2>
-          <DemoPlayer 
-            src="/demos/gaming-demo.mp4" 
-            title="Esports Tournament Payout Demo"
-            poster="/demo-thumbnails/gaming.jpg"
-          />
+      {/* Real Data Demo Section */}
+      <section id="real-data" className="py-16 px-6 bg-gray-900/30 border-y border-gray-800">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-sm mb-4">
+              <span>🔥</span> Live Tournament Data Processing
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Upload Your Tournament Results
+            </h2>
+            <p className="text-gray-400 max-w-2xl mx-auto">
+              See how your actual tournament data transforms into cryptographic payout proofs. 
+              No mock data — your real winners and prizes hashed and verified.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="bg-gray-900/50 backdrop-blur rounded-xl border border-gray-700 p-6">
+              <h3 className="text-lg font-semibold text-purple-400 mb-4 flex items-center gap-2">
+                <span>🚀</span> Run with Real Tournament Data
+              </h3>
+              <RealDataDemoButton 
+                demoType="gaming" 
+                buttonText="Process My Tournament Data"
+              />
+            </div>
+
+            <div className="bg-gray-900/50 backdrop-blur rounded-xl border border-gray-700 p-6">
+              <h3 className="text-lg font-semibold text-gray-300 mb-4">
+                What Happens Next?
+              </h3>
+              <ol className="space-y-3 text-sm text-gray-400">
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs font-bold">1</span>
+                  <span>Your tournament CSV/JSON is hashed (SHA-256)</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs font-bold">2</span>
+                  <span>Sovereign checkout created for mass payout</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs font-bold">3</span>
+                  <span>Payment confirmed → payouts execute with proof</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs font-bold">4</span>
+                  <span>Public verify URLs generated — players verify wins</span>
+                </li>
+              </ol>
+            </div>
+          </div>
+
+          {/* Sample Data Download */}
+          <div className="mt-8 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+            <p className="text-sm text-gray-400">
+              <span className="text-purple-400">💡</span> Don't have tournament data ready? 
+              <button 
+                onClick={() => {
+                  const sample = 'player_id,prize,currency,rank\nplayer1,1000,USDC,1\nplayer2,500,USDC,2\nplayer3,250,USDC,3\nplayer4,100,USDC,4';
+                  const blob = new Blob([sample], { type: 'text/csv' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'sample-tournament-results.csv';
+                  a.click();
+                }}
+                className="ml-2 text-purple-400 hover:text-purple-300 underline cursor-pointer"
+              >
+                Download sample CSV
+              </button>
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* Proof Example */}
+      {/* Watch Demo Section */}
+      <section id="watch-demo" className="py-16 px-6 bg-gray-900/30">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-8">Watch the Overlay (Recorded Demo Template)</h2>
+          <div className="rounded-xl overflow-hidden border border-gray-700 bg-gray-900 shadow-2xl">
+            <iframe
+              src="/demos/gaming-overlay.html"
+              title="Gaming demo overlay"
+              className="w-full"
+              style={{ height: 520 }}
+              sandbox="allow-scripts allow-same-origin"
+            />
+          </div>
+          <div className="text-sm text-gray-400 mt-3 text-center">
+            Overlay source:{' '}
+            <a className="underline" href="/demos/gaming-overlay.html" target="_blank" rel="noreferrer">
+              /demos/gaming-overlay.html
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Output Artifact */}
       <section className="py-16 px-6">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-8">What Players See</h2>
-          <ProofCard 
-            proofId="ppo_ESPORTS_1ST"
-            title="Fraud-Proof Tournament Results"
-            description="Every payout is cryptographically proven. Players don't need to trust you — they can verify the math themselves."
-            metrics={[
-              { label: '1st Place', value: '$50K' },
-              { label: 'Verifiable', value: '100%' },
-            ]}
-          />
+          <h2 className="text-3xl font-bold text-center mb-8">What You Get</h2>
+          <div className="bg-gray-900/50 backdrop-blur rounded-xl border border-purple-500/20 p-6">
+            <div className="text-gray-300" style={{ lineHeight: 1.75 }}>
+              After you run the live demo, you receive:
+              <div className="mt-3 grid gap-2">
+                <div>
+                  - A <strong>proofId</strong> and a public <strong>verify URL</strong>
+                </div>
+                <div>
+                  - A JSON artifact saved at{' '}
+                  <a className="underline" href="/demos/gaming-report.json" target="_blank" rel="noreferrer">
+                    /demos/gaming-report.json
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -122,7 +214,7 @@ export default function GamingLanding() {
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-4xl font-bold mb-6">Ready to Become a Trust Institution?</h2>
           <p className="text-xl text-gray-400 mb-8">
-            Join leading esports platforms that turned Discord drama into mathematical certainty.
+            Bring one real payout flow. We validate the proof semantics end-to-end in a short technical call.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link 

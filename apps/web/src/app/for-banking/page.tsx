@@ -1,10 +1,10 @@
 // app/for-banking/page.tsx
-import { DemoPlayer, LiveDemoButton, ProofCard } from '@/components/demo';
+import { DemoPlayer, LiveDemoButton, ProofCard, RealDataDemoButton } from '@/components/demo';
 import Link from 'next/link';
 
 export const metadata = {
   title: 'BC/Febraban Reconciliation in 1 Click | Phoenix Zero for Digital Banks',
-  description: 'Every transaction automatically generates BC/Febraban compliant audit trails. Close your books in 2 minutes, not 3 days. 90% cost reduction.',
+  description: 'Every transaction automatically generates BC/Febraban compliant audit trails. Upload your transaction batch and see cryptographic verification.',
 };
 
 export default function BankingLanding() {
@@ -27,19 +27,19 @@ export default function BankingLanding() {
             
             <p className="text-xl text-gray-400 max-w-3xl mx-auto mb-8">
               Your digital bank spends <span className="text-white font-semibold">$500k/year</span> on manual reconciliation. 
-              <span className="text-red-400 font-semibold">3 days/month</span> lost to manual work.
+              Upload your transaction batch and see cryptographic audit trails in seconds.
             </p>
             
             <div className="flex flex-wrap justify-center gap-4">
               <LiveDemoButton 
                 demoType="banking" 
-                buttonText="⚡ Run Live Demo"
+                buttonText="⚡ Quick Demo (Simulated)"
               />
               <a 
-                href="#watch-demo" 
-                className="px-8 py-4 rounded-lg font-bold text-lg border border-gray-600 hover:border-gray-400 hover:bg-gray-800/50 transition-all"
+                href="#real-data" 
+                className="px-8 py-4 rounded-lg font-bold text-lg border border-cyan-500/50 hover:border-cyan-400 hover:bg-cyan-900/20 transition-all"
               >
-                📺 Watch Demo
+                🏦 Try with Transaction Data
               </a>
             </div>
           </div>
@@ -73,18 +73,93 @@ export default function BankingLanding() {
               <ul className="space-y-3 text-gray-400">
                 <li className="flex items-start gap-2">
                   <span className="text-cyan-500">•</span>
-                  Every transaction auto-generates BC/Febraban audit trail
+                  Upload transaction batch → get cryptographic audit trail in 60s
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-cyan-500">•</span>
-                  Close your books in 2 minutes, not 3 days
+                  Every transaction auto-generates BC/Febraban proof
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-cyan-500">•</span>
-                  90% operational cost reduction, zero reconciliation errors
+                  90% cost reduction, zero reconciliation errors
                 </li>
               </ul>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Real Data Demo Section */}
+      <section id="real-data" className="py-16 px-6 bg-gray-900/30 border-y border-gray-800">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm mb-4">
+              <span>🔥</span> Live Transaction Batch Processing
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Upload Your Transaction Batch
+            </h2>
+            <p className="text-gray-400 max-w-2xl mx-auto">
+              See how your actual transaction data transforms into BC/Febraban compliant audit trails. 
+              No mock data — your real transactions hashed and verified.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="bg-gray-900/50 backdrop-blur rounded-xl border border-gray-700 p-6">
+              <h3 className="text-lg font-semibold text-cyan-400 mb-4 flex items-center gap-2">
+                <span>🚀</span> Run with Real Transaction Data
+              </h3>
+              <RealDataDemoButton 
+                demoType="banking" 
+                buttonText="Process My Transaction Batch"
+              />
+            </div>
+
+            <div className="bg-gray-900/50 backdrop-blur rounded-xl border border-gray-700 p-6">
+              <h3 className="text-lg font-semibold text-gray-300 mb-4">
+                What Happens Next?
+              </h3>
+              <ol className="space-y-3 text-sm text-gray-400">
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs font-bold">1</span>
+                  <span>Your transaction CSV/JSON is hashed (SHA-256)</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs font-bold">2</span>
+                  <span>Sovereign checkout created for batch reconciliation</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs font-bold">3</span>
+                  <span>Payment confirmed → reconciliation executes with proof</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs font-bold">4</span>
+                  <span>BC/Febraban proof generated — auditors verify</span>
+                </li>
+              </ol>
+            </div>
+          </div>
+
+          {/* Sample Data Download */}
+          <div className="mt-8 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+            <p className="text-sm text-gray-400">
+              <span className="text-cyan-400">💡</span> Don't have transaction data ready? 
+              <button 
+                onClick={() => {
+                  const sample = 'batch_id,amount,currency,type,date\nbatch_001,50000,USD,credit,2024-01-15\nbatch_002,25000,USD,debit,2024-01-15\nbatch_003,100000,USDC,settlement,2024-01-16';
+                  const blob = new Blob([sample], { type: 'text/csv' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'sample-transactions.csv';
+                  a.click();
+                }}
+                className="ml-2 text-cyan-400 hover:text-cyan-300 underline cursor-pointer"
+              >
+                Download sample CSV
+              </button>
+            </p>
           </div>
         </div>
       </section>

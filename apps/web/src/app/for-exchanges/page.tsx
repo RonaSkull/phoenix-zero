@@ -1,10 +1,11 @@
 // app/for-exchanges/page.tsx
-import { DemoPlayer, LiveDemoButton, ProofCard } from '@/components/demo';
+import { LiveDemoButton, RealDataDemoButton } from '@/components/demo';
 import Link from 'next/link';
 
 export const metadata = {
   title: 'Regulatory Proof in 60 Seconds | Phoenix Zero for Crypto Exchanges',
-  description: 'Eliminate manual compliance audits. Every crypto payment generates a cryptographically verifiable proof that regulators can verify in 10 seconds.',
+  description:
+    'Every crypto settlement can emit a public, cryptographically verifiable proof. Regulators and counterparties can verify without trusting your infrastructure.',
 };
 
 export default function ExchangeLanding() {
@@ -26,20 +27,20 @@ export default function ExchangeLanding() {
             </h1>
             
             <p className="text-xl text-gray-400 max-w-3xl mx-auto mb-8">
-              Your exchange spends <span className="text-white font-semibold">$250k–$1M/year</span> on manual compliance audits. 
-              One SEC failure can cost <span className="text-red-400 font-semibold">$10M+</span> in fines.
+              Phoenix Zero Sovereign is crypto-only infrastructure that generates a public proof per settlement.
+              Upload your actual settlement data and see cryptographic proof in seconds.
             </p>
             
             <div className="flex flex-wrap justify-center gap-4">
               <LiveDemoButton 
                 demoType="exchange" 
-                buttonText="⚡ Run Live Demo"
+                buttonText="⚡ Quick Demo (Simulated)"
               />
               <a 
-                href="#watch-demo" 
-                className="px-8 py-4 rounded-lg font-bold text-lg border border-gray-600 hover:border-gray-400 hover:bg-gray-800/50 transition-all"
+                href="#real-data" 
+                className="px-8 py-4 rounded-lg font-bold text-lg border border-green-500/50 hover:border-green-400 hover:bg-green-900/20 transition-all"
               >
-                📺 Watch Demo
+                � Try with Real Data
               </a>
             </div>
           </div>
@@ -53,15 +54,15 @@ export default function ExchangeLanding() {
               <ul className="space-y-3 text-gray-400">
                 <li className="flex items-start gap-2">
                   <span className="text-red-500">•</span>
-                  Days generating settlement reports for regulators
+                  Settlement evidence lives in internal systems and screenshots
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-red-500">•</span>
-                  Manual reconciliation of thousands of transactions
+                  Auditors and counterparties must trust your exports and logs
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-red-500">•</span>
-                  One mistake = millions in fines + reputation damage
+                  Any mismatch becomes a high-cost, high-latency investigation
                 </li>
               </ul>
             </div>
@@ -73,15 +74,15 @@ export default function ExchangeLanding() {
               <ul className="space-y-3 text-gray-400">
                 <li className="flex items-start gap-2">
                   <span className="text-green-500">•</span>
-                  Every payment generates cryptographic proof automatically
+                  Upload your settlement CSV → get cryptographic proof in 60s
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-500">•</span>
-                  Regulators verify in 10 seconds — no trust required
+                  Each settlement emits a public verify URL (no trust required)
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-500">•</span>
-                  Immutable audit trail exists independently of your infrastructure
+                  Regulators verify independently without accessing your systems
                 </li>
               </ul>
             </div>
@@ -89,31 +90,117 @@ export default function ExchangeLanding() {
         </div>
       </section>
 
-      {/* Demo Video Section */}
-      <section id="watch-demo" className="py-16 px-6 bg-gray-900/30">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-8">See It In Action</h2>
-          <DemoPlayer 
-            src="/demos/exchange-demo.mp4" 
-            title="Crypto Exchange Compliance Demo"
-            poster="/demo-thumbnails/exchange.jpg"
-          />
+      {/* Real Data Demo Section */}
+      <section id="real-data" className="py-16 px-6 bg-gray-900/30 border-y border-gray-800">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-sm mb-4">
+              <span>🔥</span> Live Real Data Processing
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Upload Your Settlement Data
+            </h2>
+            <p className="text-gray-400 max-w-2xl mx-auto">
+              See how your actual settlement CSV transforms into a cryptographic proof. 
+              No mock data — your real transactions hashed and verified.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="bg-gray-900/50 backdrop-blur rounded-xl border border-gray-700 p-6">
+              <h3 className="text-lg font-semibold text-green-400 mb-4 flex items-center gap-2">
+                <span>🚀</span> Run with Real Data
+              </h3>
+              <RealDataDemoButton 
+                demoType="exchange" 
+                buttonText="Process My Settlement Data"
+              />
+            </div>
+
+            <div className="bg-gray-900/50 backdrop-blur rounded-xl border border-gray-700 p-6">
+              <h3 className="text-lg font-semibold text-gray-300 mb-4">
+                What Happens Next?
+              </h3>
+              <ol className="space-y-3 text-sm text-gray-400">
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center text-xs font-bold">1</span>
+                  <span>Your CSV/JSON is hashed (SHA-256) for integrity</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center text-xs font-bold">2</span>
+                  <span>Sovereign checkout created for settlement execution</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center text-xs font-bold">3</span>
+                  <span>Payment confirmed → task executes with proof</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center text-xs font-bold">4</span>
+                  <span>Public verify URL generated — share with auditors</span>
+                </li>
+              </ol>
+            </div>
+          </div>
+
+          {/* Sample Data Download */}
+          <div className="mt-8 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+            <p className="text-sm text-gray-400">
+              <span className="text-green-400">💡</span> Don't have data ready? 
+              <button 
+                onClick={() => {
+                  const sample = 'id,amount,currency,date\ntx1,1000,USDC,2024-01-15\ntx2,2500,USDC,2024-01-15\ntx3,5000,USDT,2024-01-16';
+                  const blob = new Blob([sample], { type: 'text/csv' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'sample-settlement.csv';
+                  a.click();
+                }}
+                className="ml-2 text-green-400 hover:text-green-300 underline cursor-pointer"
+              >
+                Download sample CSV
+              </button>
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* Proof Example */}
+      {/* Watch Demo Section */}
+      <section id="watch-demo" className="py-16 px-6 bg-gray-900/30">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-8">Watch the Overlay (Recorded Demo Template)</h2>
+          <div className="rounded-xl overflow-hidden border border-gray-700 bg-gray-900 shadow-2xl">
+            <iframe
+              src="/demos/exchange-overlay.html"
+              title="Exchange demo overlay"
+              className="w-full"
+              style={{ height: 520 }}
+              sandbox="allow-scripts allow-same-origin"
+            />
+          </div>
+          <div className="text-sm text-gray-400 mt-3 text-center">
+            Overlay source: <a className="underline" href="/demos/exchange-overlay.html" target="_blank" rel="noreferrer">/demos/exchange-overlay.html</a>
+          </div>
+        </div>
+      </section>
+
+      {/* Output Artifact */}
       <section className="py-16 px-6">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-8">What Regulators See</h2>
-          <ProofCard 
-            proofId="ppo_EXCHANGE_DEMO"
-            title="Compliance Proof Generated"
-            description="This is what a Chief Compliance Officer shares with the SEC. Zero trust required — they can verify independently."
-            metrics={[
-              { label: 'Settlement Amount', value: '$500K' },
-              { label: 'Verification Time', value: '<10s' },
-            ]}
-          />
+          <h2 className="text-3xl font-bold text-center mb-8">What You Get</h2>
+          <div className="bg-gray-900/50 backdrop-blur rounded-xl border border-green-500/20 p-6">
+            <div className="text-gray-300" style={{ lineHeight: 1.75 }}>
+              After you run the live demo, you receive:
+              <div className="mt-3 grid gap-2">
+                <div>
+                  - A <strong>proofId</strong> and a public <strong>verify URL</strong>
+                </div>
+                <div>
+                  - A JSON artifact saved at <a className="underline" href="/demos/exchange-report.json" target="_blank" rel="noreferrer">/demos/exchange-report.json</a>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -122,7 +209,7 @@ export default function ExchangeLanding() {
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-4xl font-bold mb-6">Ready to Eliminate Manual Audits?</h2>
           <p className="text-xl text-gray-400 mb-8">
-            Join leading exchanges that turned 3-day compliance processes into 10-second URL shares.
+            Bring one real settlement flow. We run a short technical call and validate the proof semantics end-to-end.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link 
