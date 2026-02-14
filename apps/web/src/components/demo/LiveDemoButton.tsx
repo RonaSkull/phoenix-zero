@@ -19,7 +19,7 @@ interface DemoResult {
 
 export function LiveDemoButton({ 
   demoType, 
-  buttonText = "Run Sandbox",
+  buttonText = "Run end-to-end demo",
   className = ""
 }: LiveDemoButtonProps) {
   const [isRunning, setIsRunning] = useState(false);
@@ -29,7 +29,7 @@ export function LiveDemoButton({
   const runDemo = async () => {
     setIsRunning(true);
     setResult(null);
-    setLogs(['Starting sandbox run...']);
+    setLogs(['Starting end-to-end run (payment confirmation is simulated for demo)...']);
 
     try {
       const response = await fetch('/api/demo/run', {
@@ -96,7 +96,7 @@ export function LiveDemoButton({
       {result?.success && (
         <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4" style={{ display: 'grid', gap: 10 }}>
           <div className="text-green-300" style={{ fontWeight: 700 }}>
-            Sandbox run completed
+            End-to-end demo completed
           </div>
           <div className="text-sm text-gray-200" style={{ display: 'grid', gap: 6 }}>
             <div style={{ display: 'grid', gap: 2 }}>

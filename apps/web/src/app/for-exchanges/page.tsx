@@ -46,10 +46,14 @@ export default function ExchangeLanding() {
           </div>
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-            <LiveDemoButton demoType="exchange" buttonText="Sandbox run (end-to-end)" />
+            <LiveDemoButton demoType="exchange" buttonText="Run end-to-end demo" />
             <a href="#real-data" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none' }}>
               Run with Real Data
             </a>
+          </div>
+
+          <div style={{ marginTop: 2, color: 'rgba(255,255,255,0.68)', fontSize: 12, lineHeight: 1.65, maxWidth: 920 }}>
+            This demo uses the same production infrastructure and APIs. For demo purposes only, payment confirmation is simulated.
           </div>
 
           <div className="pz-split-single" style={{ marginTop: 8 }}>
@@ -75,11 +79,32 @@ export default function ExchangeLanding() {
           </div>
         </section>
 
+        <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
+          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>After your demo</h2>
+          <div style={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
+            <div style={{ display: 'grid', gap: 6 }}>
+              <div>- Public verify URL (<code>/verify/&lt;proofId&gt;</code>) to share with auditors</div>
+              <div>- JSON artifact (<code>/demos/exchange-report.json</code>) for your engineering team</div>
+              <div>- SHA-256 hash binding the proof to your exact input file</div>
+              <div>- 30-minute technical call to map your settlement model to the template and agree proof semantics</div>
+              <div>- Production rollout: 48 hours (same APIs used in the demo)</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 2 }}>
+            <Link href="/enterprise-demo" className="pz-btn pz-btn-primary" style={{ textDecoration: 'none' }}>
+              Schedule technical call
+            </Link>
+            <Link href="/proofs" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none', opacity: 0.9 }}>
+              See proofs
+            </Link>
+          </div>
+        </section>
+
         {/* Watch Demo Section */}
         <section id="watch-demo" className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
-          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Watch the overlay (recorded template)</h2>
+          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Overlay preview (UI template)</h2>
           <div style={{ color: 'rgba(255,255,255,0.72)', fontSize: 13, lineHeight: 1.65, maxWidth: 920 }}>
-            This is a static overlay template. It is not the sandbox output.
+            This is a static overlay template. It is not the live demo output.
             Use it to understand what an auditor/counterparty sees when you share a verify URL.
           </div>
           <div style={{ border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, overflow: 'hidden', background: 'rgba(0,0,0,0.16)' }}>

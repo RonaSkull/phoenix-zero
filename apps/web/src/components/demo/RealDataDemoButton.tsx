@@ -49,7 +49,7 @@ interface DemoResult {
 
 export function RealDataDemoButton({ 
   demoType, 
-  buttonText = "⚡ Run Demo with Your Data",
+  buttonText = "Run with your data",
   className = ""
 }: RealDataDemoButtonProps) {
   const [isRunning, setIsRunning] = useState(false);
@@ -58,25 +58,25 @@ export function RealDataDemoButton({
   const [file, setFile] = useState<File | null>(null);
   const [rawText, setRawText] = useState('');
   const [useFile, setUseFile] = useState(true);
-  const [mode, setMode] = useState<'auto' | 'batch' | 'transaction'>('auto');
+  const [mode, setMode] = useState<'batch' | 'transaction'>('batch');
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
-      setLogs([`📄 Selected file: ${selectedFile.name} (${selectedFile.size} bytes)`]);
+      setLogs([`Selected file: ${selectedFile.name} (${selectedFile.size} bytes)`]);
     }
   }, []);
 
   const runDemo = async () => {
     if (!file && !rawText.trim()) {
-      setLogs(['❌ Please select a file or enter raw text']);
+      setLogs(['Please select a file or paste data']);
       return;
     }
 
     setIsRunning(true);
     setResult(null);
-    setLogs(prev => [...prev, '🚀 Starting demo with real business data...']);
+    setLogs(prev => [...prev, 'Starting run...']);
 
     try {
       const formData = new FormData();
@@ -85,10 +85,10 @@ export function RealDataDemoButton({
       
       if (file) {
         formData.append('file', file);
-        setLogs(prev => [...prev, `📤 Uploading ${file.name}...`]);
+        setLogs(prev => [...prev, `Uploading ${file.name}...`]);
       } else {
         formData.append('rawText', rawText);
-        setLogs(prev => [...prev, '📤 Sending data...']);
+        setLogs(prev => [...prev, 'Sending data...']);
       }
 
       const response = await fetch('/api/demo/run-with-data', {
@@ -101,10 +101,10 @@ export function RealDataDemoButton({
       if (data.success) {
         setLogs(prev => [
           ...prev, 
-          '✅ Data uploaded and hashed',
-          '💳 Checkout created',
-          '💰 Payment confirmed',
-          '⚡ Task executed with cryptographic proof'
+          'Data hashed (SHA-256)',
+          'Checkout created',
+          'Payment confirmed',
+          'Proof generated'
         ]);
         setResult({
           success: true,
@@ -119,12 +119,12 @@ export function RealDataDemoButton({
           enterprise: data.enterprise
         });
       } else {
-        setLogs(prev => [...prev, `❌ Error: ${data.error || data.reason}`]);
+        setLogs(prev => [...prev, `Error: ${data.error || data.reason}`]);
         setResult({ success: false, error: data.error || data.reason });
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setLogs(prev => [...prev, `❌ Failed: ${errorMessage}`]);
+      setLogs(prev => [...prev, `Failed: ${errorMessage}`]);
       setResult({ success: false, error: errorMessage });
     } finally {
       setIsRunning(false);
@@ -167,19 +167,35 @@ export function RealDataDemoButton({
       {/* Mode selector */}
       <div className="space-y-2">
         <label className="block text-sm font-medium text-gray-300">Processing mode</label>
-        <select
-          value={mode}
-          onChange={(e) => setMode(e.target.value as 'auto' | 'batch' | 'transaction')}
-          disabled={isRunning}
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-gray-500 disabled:opacity-50"
-        >
-          <option value="auto">Auto (recommended)</option>
-          <option value="transaction">Per-transaction proofs (small volumes)</option>
-          <option value="batch">Batch proof + summary (enterprise volumes)</option>
-        </select>
-        <p className="text-xs text-gray-500">
-          Auto chooses transaction mode for small files and batch mode for large files.
-        </p>
+        <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+          <button
+            type="button"
+            onClick={() => setMode('transaction')}
+            disabled={isRunning}
+            className={`px-3 py-2 rounded-lg text-left border transition-colors disabled:opacity-50 ${
+              mode === 'transaction'
+                ? 'bg-gray-700 border-gray-500 text-gray-100'
+                : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600'
+            }`}
+          >
+            <div style={{ fontWeight: 700, fontSize: 13 }}>Transaction mode</div>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>≤ 1,000 rows · proof per transaction</div>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('batch')}
+            disabled={isRunning}
+            className={`px-3 py-2 rounded-lg text-left border transition-colors disabled:opacity-50 ${
+              mode === 'batch'
+                ? 'bg-gray-700 border-gray-500 text-gray-100'
+                : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600'
+            }`}
+          >
+            <div style={{ fontWeight: 700, fontSize: 13 }}>Batch mode (default)</div>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>≥ 1,001 rows · one proof + summary</div>
+          </button>
+        </div>
+        <p className="text-xs text-gray-500">Use Transaction for small uploads. Use Batch for enterprise volumes.</p>
       </div>
 
       {/* Toggle between File and Raw Text */}
@@ -190,7 +206,7 @@ export function RealDataDemoButton({
             useFile ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'
           }`}
         >
-          📁 Upload File
+          Upload file
         </button>
         <button
           onClick={() => setUseFile(false)}
@@ -198,7 +214,7 @@ export function RealDataDemoButton({
             !useFile ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'
           }`}
         >
-          ✏️ Paste Data
+          Paste data
         </button>
       </div>
 
