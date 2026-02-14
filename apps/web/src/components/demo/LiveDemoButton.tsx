@@ -19,7 +19,7 @@ interface DemoResult {
 
 export function LiveDemoButton({ 
   demoType, 
-  buttonText = "⚡ Run Live Demo",
+  buttonText = "Run Sandbox",
   className = ""
 }: LiveDemoButtonProps) {
   const [isRunning, setIsRunning] = useState(false);
@@ -29,7 +29,7 @@ export function LiveDemoButton({
   const runDemo = async () => {
     setIsRunning(true);
     setResult(null);
-    setLogs(['🚀 Starting live demo...']);
+    setLogs(['Starting sandbox run...']);
 
     try {
       const response = await fetch('/api/demo/run', {
@@ -41,7 +41,7 @@ export function LiveDemoButton({
       const data = await response.json();
 
       if (data.success) {
-        setLogs(prev => [...prev, '✅ Checkout created', '💰 Payment confirmed', '⚡ Task executed']);
+        setLogs(prev => [...prev, 'Checkout created', 'Payment confirmed', 'Execution completed']);
         setResult({
           success: true,
           paymentId: data.paymentId,
@@ -49,12 +49,12 @@ export function LiveDemoButton({
           verifyUrl: data.verifyUrl
         });
       } else {
-        setLogs(prev => [...prev, `❌ Error: ${data.error}`]);
+        setLogs(prev => [...prev, `Error: ${data.error}`]);
         setResult({ success: false, error: data.error });
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setLogs(prev => [...prev, `❌ Failed: ${errorMessage}`]);
+      setLogs(prev => [...prev, `Failed: ${errorMessage}`]);
       setResult({ success: false, error: errorMessage });
     } finally {
       setIsRunning(false);
@@ -62,7 +62,7 @@ export function LiveDemoButton({
   };
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`space-y-4 ${className}`} style={{ lineHeight: 1.55 }}>
       <button
         onClick={runDemo}
         disabled={isRunning}
@@ -90,22 +90,23 @@ export function LiveDemoButton({
           {logs.map((log, i) => (
             <div key={i} className="text-gray-300">{log}</div>
           ))}
-          <div className="flex items-center gap-2 mt-2 text-green-400">
-            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-            Processing...
-          </div>
         </div>
       )}
 
       {result?.success && (
-        <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4 space-y-2">
-          <div className="flex items-center gap-2 text-green-400 font-semibold">
-            <span>✓</span>
-            <span>Demo completed successfully!</span>
+        <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4" style={{ display: 'grid', gap: 10 }}>
+          <div className="text-green-300" style={{ fontWeight: 700 }}>
+            Sandbox run completed
           </div>
-          <div className="text-sm text-gray-300 space-y-1">
-            <div>Payment ID: <code className="text-green-300">{result.paymentId}</code></div>
-            <div>Proof ID: <code className="text-green-300">{result.proofId}</code></div>
+          <div className="text-sm text-gray-200" style={{ display: 'grid', gap: 6 }}>
+            <div style={{ display: 'grid', gap: 2 }}>
+              <div style={{ color: 'rgba(255,255,255,0.7)' }}>Payment ID</div>
+              <code className="text-green-300" style={{ wordBreak: 'break-all' }}>{result.paymentId}</code>
+            </div>
+            <div style={{ display: 'grid', gap: 2 }}>
+              <div style={{ color: 'rgba(255,255,255,0.7)' }}>Proof ID</div>
+              <code className="text-green-300" style={{ wordBreak: 'break-all' }}>{result.proofId}</code>
+            </div>
           </div>
           <a
             href={result.verifyUrl}
@@ -113,14 +114,14 @@ export function LiveDemoButton({
             rel="noopener noreferrer"
             className="inline-block mt-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded font-medium transition-colors"
           >
-            🔍 Verify Proof
+            Verify proof
           </a>
         </div>
       )}
 
       {result?.error && (
         <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 text-red-400">
-          <span className="font-semibold">✗ Demo failed:</span> {result.error}
+          <span className="font-semibold">Run failed:</span> {result.error}
         </div>
       )}
     </div>

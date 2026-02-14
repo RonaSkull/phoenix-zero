@@ -46,7 +46,7 @@ export default function ExchangeLanding() {
           </div>
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-            <LiveDemoButton demoType="exchange" buttonText="⚡ Sandbox Run (End-to-end)" />
+            <LiveDemoButton demoType="exchange" buttonText="Sandbox run (end-to-end)" />
             <a href="#real-data" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none' }}>
               Run with Real Data
             </a>
@@ -72,6 +72,30 @@ export default function ExchangeLanding() {
                 </ul>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Watch Demo Section */}
+        <section id="watch-demo" className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
+          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Watch the overlay (recorded template)</h2>
+          <div style={{ color: 'rgba(255,255,255,0.72)', fontSize: 13, lineHeight: 1.65, maxWidth: 920 }}>
+            This is a static overlay template. It is not the sandbox output.
+            Use it to understand what an auditor/counterparty sees when you share a verify URL.
+          </div>
+          <div style={{ border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, overflow: 'hidden', background: 'rgba(0,0,0,0.16)' }}>
+            <iframe
+              src="/demos/exchange-overlay.html"
+              title="Exchange demo overlay"
+              className="w-full"
+              style={{ height: 520, border: 0 }}
+              sandbox="allow-scripts allow-same-origin"
+            />
+          </div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.68)' }}>
+            Overlay source:{' '}
+            <a className="pz-link" href="/demos/exchange-overlay.html" target="_blank" rel="noreferrer">
+              /demos/exchange-overlay.html
+            </a>
           </div>
         </section>
 
@@ -131,23 +155,6 @@ export default function ExchangeLanding() {
           </div>
         </section>
 
-        {/* Watch Demo Section */}
-        <section id="watch-demo" className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
-          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Watch the Overlay (Recorded Demo Template)</h2>
-          <div style={{ border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, overflow: 'hidden', background: 'rgba(0,0,0,0.16)' }}>
-            <iframe
-              src="/demos/exchange-overlay.html"
-              title="Exchange demo overlay"
-              className="w-full"
-              style={{ height: 520, border: 0 }}
-              sandbox="allow-scripts allow-same-origin"
-            />
-          </div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.68)' }}>
-            Overlay source: <a className="pz-link" href="/demos/exchange-overlay.html" target="_blank" rel="noreferrer">/demos/exchange-overlay.html</a>
-          </div>
-        </section>
-
         {/* Output Artifact */}
         <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
           <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Outputs</h2>
@@ -183,18 +190,21 @@ export default function ExchangeLanding() {
 
         {/* CTA */}
         <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
-          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Next step: technical validation</h2>
+          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Next step</h2>
           <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', fontSize: 14, lineHeight: 1.65, maxWidth: 920 }}>
-            Bring one real settlement flow and one sample file.
-            In a 30-minute call we validate: input schema, proof semantics, and rollout plan.
+            Start with a self-serve run using your own settlement file.
+            If you want help mapping your settlement model to the template and defining proof semantics, use the Enterprise Demo entrypoint.
           </p>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 2 }}>
-            <Link href="/contact" className="pz-btn pz-btn-primary" style={{ textDecoration: 'none' }}>
-              Schedule Enterprise Demo
+            <Link href="/enterprise-demo" className="pz-btn pz-btn-primary" style={{ textDecoration: 'none' }}>
+              Enterprise Demo
             </Link>
-            <a href="/docs/enterprise-demos" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none', opacity: 0.9 }}>
-              View Documentation
-            </a>
+            <Link href="/ppe" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none', opacity: 0.9 }}>
+              API overview
+            </Link>
+            <Link href="/faq" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none', opacity: 0.9 }}>
+              FAQ
+            </Link>
           </div>
         </section>
       </div>

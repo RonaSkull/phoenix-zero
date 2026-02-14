@@ -45,7 +45,7 @@ export default function BankingLanding() {
           </div>
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-            <LiveDemoButton demoType="banking" buttonText="⚡ Sandbox Run (End-to-end)" />
+            <LiveDemoButton demoType="banking" buttonText="Sandbox run (end-to-end)" />
             <a href="#real-data" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none' }}>
               Run with Real Data
             </a>
@@ -168,18 +168,21 @@ export default function BankingLanding() {
 
         {/* CTA */}
         <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
-          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Next step: technical validation</h2>
+          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Next step</h2>
           <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', fontSize: 14, lineHeight: 1.65, maxWidth: 920 }}>
-            Bring one reconciliation flow and one sample file.
-            In a 30-minute call we validate: schema, proof semantics, and rollout plan.
+            Start with a self-serve run using your own reconciliation batch.
+            If you want help mapping your data model to the template and defining proof semantics, use the Enterprise Demo entrypoint.
           </p>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 2 }}>
-            <Link href="/contact" className="pz-btn pz-btn-primary" style={{ textDecoration: 'none' }}>
-              Schedule Enterprise Demo
+            <Link href="/enterprise-demo" className="pz-btn pz-btn-primary" style={{ textDecoration: 'none' }}>
+              Enterprise Demo
             </Link>
-            <a href="/docs/enterprise-demos" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none', opacity: 0.9 }}>
-              View Documentation
-            </a>
+            <Link href="/ppe" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none', opacity: 0.9 }}>
+              API overview
+            </Link>
+            <Link href="/faq" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none', opacity: 0.9 }}>
+              FAQ
+            </Link>
           </div>
         </section>
       </div>
