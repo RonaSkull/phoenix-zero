@@ -1,5 +1,3 @@
-"use client";
-
 // app/for-banking/page.tsx
 import { DemoPlayer, LiveDemoButton, ProofCard, RealDataDemoButton } from '@/components/demo';
 import Link from 'next/link';

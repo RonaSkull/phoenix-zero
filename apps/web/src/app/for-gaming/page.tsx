@@ -1,5 +1,3 @@
-"use client";
-
 // app/for-gaming/page.tsx
 import { LiveDemoButton, RealDataDemoButton } from '@/components/demo';
 import Link from 'next/link';

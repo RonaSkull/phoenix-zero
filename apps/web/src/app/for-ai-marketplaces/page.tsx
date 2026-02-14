@@ -1,5 +1,3 @@
-"use client";
-
 // app/for-ai-marketplaces/page.tsx
 import { LiveDemoButton, RealDataDemoButton } from '@/components/demo';
 import Link from 'next/link';
