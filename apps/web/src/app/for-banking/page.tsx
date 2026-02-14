@@ -9,174 +9,124 @@ export const metadata = {
 
 export default function BankingLanding() {
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      {/* Hero Section */}
-      <section className="relative py-20 px-6">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-gray-950 to-cyan-900/20" />
-        
-        <div className="relative max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm mb-6">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-              For Digital Banks
-            </div>
-            
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-cyan-400 to-blue-300 bg-clip-text text-transparent">
+    <main className="pz-shell pz-shell--mono pz-shell--scroll">
+      <div className="pz-grid" />
+      <div className="pz-glow" />
+
+      <div className="pz-container" style={{ paddingTop: 14, paddingBottom: 18 }}>
+        <div className="pz-topline">
+          <div className="pz-kicker">Phoenix ZerØ</div>
+          <div className="pz-rule" />
+        </div>
+
+        <nav style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginTop: 10 }}>
+          <Link href="/enterprise-demo" className="pz-btn" style={{ textDecoration: 'none' }}>
+            Enterprise Demo
+          </Link>
+          <Link href="/proofs" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none' }}>
+            Proofs
+          </Link>
+          <Link href="/" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none', marginLeft: 'auto', opacity: 0.85 }}>
+            Back
+          </Link>
+        </nav>
+
+        {/* Hero Section */}
+        <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 12 }}>
+          <div style={{ display: 'grid', gap: 8 }}>
+            <div className="pz-kicker">For Digital Banks</div>
+            <h1 style={{ margin: 0, fontSize: 'clamp(26px, 3.4vw, 44px)', lineHeight: 1.08, maxWidth: 860 }}>
               BC/Febraban Reconciliation in 1 Click
             </h1>
-            
-            <p className="text-xl text-gray-400 max-w-3xl mx-auto mb-8">
-              Your digital bank spends <span className="text-white font-semibold">$500k/year</span> on manual reconciliation. 
+            <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', fontSize: 15, lineHeight: 1.65, maxWidth: 920 }}>
+              Your digital bank spends <span style={{ color: 'rgba(255,255,255,0.92)', fontWeight: 800 }}>$500k/year</span> on manual reconciliation.
               Upload your transaction batch and see cryptographic audit trails in seconds.
             </p>
-            
-            <div className="flex flex-wrap justify-center gap-4">
-              <LiveDemoButton 
-                demoType="banking" 
-                buttonText="⚡ Quick Demo (Simulated)"
-              />
-              <a 
-                href="#real-data" 
-                className="px-8 py-4 rounded-lg font-bold text-lg border border-cyan-500/50 hover:border-cyan-400 hover:bg-cyan-900/20 transition-all"
-              >
-                🏦 Try with Transaction Data
-              </a>
-            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+            <LiveDemoButton demoType="banking" buttonText="⚡ Quick Demo (Simulated)" />
+            <a href="#real-data" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none' }}>
+              🏦 Try with Transaction Data
+            </a>
           </div>
 
           {/* Problem/Solution Cards */}
-          <div className="grid md:grid-cols-2 gap-6 mb-16">
-            <div className="bg-gray-900/50 backdrop-blur rounded-xl border border-red-500/20 p-6">
-              <h3 className="text-red-400 font-semibold text-lg mb-4 flex items-center gap-2">
-                <span>❌</span> The Problem
-              </h3>
-              <ul className="space-y-3 text-gray-400">
-                <li className="flex items-start gap-2">
-                  <span className="text-red-500">•</span>
-                  3 days per month reconciling PIX and crypto transactions
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-red-500">•</span>
-                  Manual exports, spreadsheet juggling, error-prone submissions
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-red-500">•</span>
-                  One mistake = regulatory headache and BC penalties
-                </li>
-              </ul>
-            </div>
-            
-            <div className="bg-gray-900/50 backdrop-blur rounded-xl border border-cyan-500/20 p-6">
-              <h3 className="text-cyan-400 font-semibold text-lg mb-4 flex items-center gap-2">
-                <span>✓</span> Our Solution
-              </h3>
-              <ul className="space-y-3 text-gray-400">
-                <li className="flex items-start gap-2">
-                  <span className="text-cyan-500">•</span>
-                  Upload transaction batch → get cryptographic audit trail in 60s
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-cyan-500">•</span>
-                  Every transaction auto-generates BC/Febraban proof
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-cyan-500">•</span>
-                  90% cost reduction, zero reconciliation errors
-                </li>
-              </ul>
+          <div className="pz-split-single" style={{ marginTop: 8 }}>
+            <div className="pz-split-panel">
+              <div style={{ display: 'grid', gap: 8, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
+                <div className="pz-field-label">❌ The Problem</div>
+                <ul style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
+                  <li>3 days per month reconciling PIX and crypto transactions</li>
+                  <li>Manual exports, spreadsheet juggling, error-prone submissions</li>
+                  <li>One mistake = regulatory headache and BC penalties</li>
+                </ul>
+              </div>
+
+              <div style={{ display: 'grid', gap: 8, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
+                <div className="pz-field-label">✓ Our Solution</div>
+                <ul style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
+                  <li>Upload transaction batch → get cryptographic audit trail in 60s</li>
+                  <li>Every transaction auto-generates BC/Febraban proof</li>
+                  <li>90% cost reduction, zero reconciliation errors</li>
+                </ul>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Real Data Demo Section */}
-      <section id="real-data" className="py-16 px-6 bg-gray-900/30 border-y border-gray-800">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm mb-4">
-              <span>🔥</span> Live Transaction Batch Processing
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Upload Your Transaction Batch
-            </h2>
-            <p className="text-gray-400 max-w-2xl mx-auto">
-              See how your actual transaction data transforms into BC/Febraban compliant audit trails. 
-              No mock data — your real transactions hashed and verified.
+        {/* Real Data Demo Section */}
+        <section id="real-data" className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 12 }}>
+          <div style={{ display: 'grid', gap: 6 }}>
+            <div className="pz-field-label">🔥 Live Transaction Batch Processing</div>
+            <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Upload Your Transaction Batch</h2>
+            <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', fontSize: 14, lineHeight: 1.65, maxWidth: 920 }}>
+              See how your actual transaction data transforms into BC/Febraban compliant audit trails. No mock data — your real transactions hashed and verified.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-gray-900/50 backdrop-blur rounded-xl border border-gray-700 p-6">
-              <h3 className="text-lg font-semibold text-cyan-400 mb-4 flex items-center gap-2">
-                <span>🚀</span> Run with Real Transaction Data
-              </h3>
-              <RealDataDemoButton 
-                demoType="banking" 
-                buttonText="Process My Transaction Batch"
-              />
+          <div className="pz-split-live">
+            <div style={{ display: 'grid', gap: 10, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
+              <div className="pz-field-label">🚀 Run with Real Transaction Data</div>
+              <RealDataDemoButton demoType="banking" buttonText="Process My Transaction Batch" />
             </div>
 
-            <div className="bg-gray-900/50 backdrop-blur rounded-xl border border-gray-700 p-6">
-              <h3 className="text-lg font-semibold text-gray-300 mb-4">
-                What Happens Next?
-              </h3>
-              <ol className="space-y-3 text-sm text-gray-400">
-                <li className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs font-bold">1</span>
-                  <span>Your transaction CSV/JSON is hashed (SHA-256)</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs font-bold">2</span>
-                  <span>Sovereign checkout created for batch reconciliation</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs font-bold">3</span>
-                  <span>Payment confirmed → reconciliation executes with proof</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs font-bold">4</span>
-                  <span>BC/Febraban proof generated — auditors verify</span>
-                </li>
+            <div style={{ display: 'grid', gap: 8, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
+              <div className="pz-field-label">What Happens Next?</div>
+              <ol style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75, fontSize: 13 }}>
+                <li>Your transaction CSV/JSON is hashed (SHA-256)</li>
+                <li>Sovereign checkout created for batch reconciliation</li>
+                <li>Payment confirmed → reconciliation executes with proof</li>
+                <li>BC/Febraban proof generated — auditors verify</li>
               </ol>
             </div>
           </div>
 
           {/* Sample Data Download */}
-          <div className="mt-8 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-            <p className="text-sm text-gray-400">
-              <span className="text-cyan-400">💡</span> Don't have transaction data ready? 
-              <a 
-                href="/templates/banking_enterprise.csv"
-                download
-                className="ml-2 text-cyan-400 hover:text-cyan-300 underline cursor-pointer"
-              >
+          <div style={{ marginTop: 2, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.78)', lineHeight: 1.65 }}>
+              <span style={{ opacity: 0.85 }}>💡</span> Don't have transaction data ready?{' '}
+              <a href="/templates/banking_enterprise.csv" download className="pz-link" style={{ marginLeft: 6 }}>
                 Download enterprise reconciliation template
               </a>
-            </p>
-            <p className="text-xs text-gray-500 mt-2">
-              Includes: reconciliation_id, account_id, transaction_date, transaction_type, amount_usd, currency_pair, exchange_rate, counterparty_name, reference_number, reconciliation_status, compliance_check, audit_trail_id
-            </p>
+            </div>
+            <div style={{ marginTop: 6, fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
+              Includes: settlement_batch_id, reconciliation_id, account_id, transaction_date, transaction_type, amount_usd, asset, currency_pair, exchange_rate,
+              counterparty_name, reference_number, settlement_status, settlement_window, jurisdiction, risk_rating, compliance_check, audit_trail_id
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Demo Video Section */}
-      <section id="watch-demo" className="py-16 px-6 bg-gray-900/30">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-8">See Automated Reconciliation In Action</h2>
-          <DemoPlayer 
-            src="/demos/banking-demo.mp4" 
-            title="Digital Bank BC/Febraban Reconciliation Demo"
-            poster="/demo-thumbnails/banking.jpg"
-          />
-        </div>
-      </section>
+        {/* Demo Video Section */}
+        <section id="watch-demo" className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
+          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>See Automated Reconciliation In Action</h2>
+          <DemoPlayer src="/demos/banking-demo.mp4" title="Digital Bank BC/Febraban Reconciliation Demo" poster="/demo-thumbnails/banking.jpg" />
+        </section>
 
-      {/* Proof Example */}
-      <section className="py-16 px-6">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-8">What the CFO Sees</h2>
-          <ProofCard 
+        {/* Proof Example */}
+        <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
+          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>What the CFO Sees</h2>
+          <ProofCard
             proofId="ppo_BANKING_RECON_001"
             title="BC/Febraban Reconciliation Ready"
             description="Monthly reconciliation that used to take 3 days now takes 2 minutes. Every transaction is born audit-ready for BC compliance."
@@ -185,32 +135,24 @@ export default function BankingLanding() {
               { label: 'Transactions', value: '15K+' },
             ]}
           />
-        </div>
-      </section>
+        </section>
 
-      {/* CTA */}
-      <section className="py-20 px-6">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6">Ready for 90% Cost Reduction?</h2>
-          <p className="text-xl text-gray-400 mb-8">
+        {/* CTA */}
+        <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
+          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Ready for 90% Cost Reduction?</h2>
+          <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', fontSize: 14, lineHeight: 1.65, maxWidth: 920 }}>
             Join leading digital banks that turned 3-day reconciliation processes into single API calls.
           </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link 
-              href="/contact"
-              className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-lg font-bold text-lg transition-all shadow-lg hover:shadow-cyan-500/25"
-            >
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 2 }}>
+            <Link href="/contact" className="pz-btn pz-btn-primary" style={{ textDecoration: 'none' }}>
               Schedule Enterprise Demo
             </Link>
-            <a 
-              href="/docs/enterprise-demos"
-              className="px-8 py-4 border border-gray-600 hover:border-gray-400 rounded-lg font-bold text-lg transition-all"
-            >
+            <a href="/docs/enterprise-demos" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none', opacity: 0.9 }}>
               View Documentation
             </a>
           </div>
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
+    </main>
   );
 }

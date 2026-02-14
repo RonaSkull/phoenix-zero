@@ -9,225 +9,166 @@ export const metadata = {
 
 export default function GamingLanding() {
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      {/* Hero Section */}
-      <section className="relative py-20 px-6">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-gray-950 to-pink-900/20" />
-        
-        <div className="relative max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-sm mb-6">
-              <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-              For Gaming & Esports
-            </div>
-            
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-purple-400 to-pink-300 bg-clip-text text-transparent">
+    <main className="pz-shell pz-shell--mono pz-shell--scroll">
+      <div className="pz-grid" />
+      <div className="pz-glow" />
+
+      <div className="pz-container" style={{ paddingTop: 14, paddingBottom: 18 }}>
+        <div className="pz-topline">
+          <div className="pz-kicker">Phoenix ZerØ</div>
+          <div className="pz-rule" />
+        </div>
+
+        <nav style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginTop: 10 }}>
+          <Link href="/enterprise-demo" className="pz-btn" style={{ textDecoration: 'none' }}>
+            Enterprise Demo
+          </Link>
+          <Link href="/proofs" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none' }}>
+            Proofs
+          </Link>
+          <Link href="/" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none', marginLeft: 'auto', opacity: 0.85 }}>
+            Back
+          </Link>
+        </nav>
+
+        {/* Hero Section */}
+        <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 12 }}>
+          <div style={{ display: 'grid', gap: 8 }}>
+            <div className="pz-kicker">For Gaming & Esports</div>
+            <h1 style={{ margin: 0, fontSize: 'clamp(26px, 3.4vw, 44px)', lineHeight: 1.08, maxWidth: 860 }}>
               Fraud-Proof Tournament Payouts
             </h1>
-            
-            <p className="text-xl text-gray-400 max-w-3xl mx-auto mb-8">
-              Phoenix Zero Sovereign emits a public proof per crypto payout.
-              Upload your tournament results and generate verifiable proof for every winner.
+            <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', fontSize: 15, lineHeight: 1.65, maxWidth: 920 }}>
+              Phoenix Zero Sovereign emits a public proof per crypto payout. Upload your tournament results and generate verifiable proof for every winner.
             </p>
-            
-            <div className="flex flex-wrap justify-center gap-4">
-              <LiveDemoButton 
-                demoType="gaming" 
-                buttonText="⚡ Quick Demo (Simulated)"
-              />
-              <a 
-                href="#real-data" 
-                className="px-8 py-4 rounded-lg font-bold text-lg border border-purple-500/50 hover:border-purple-400 hover:bg-purple-900/20 transition-all"
-              >
-                🏆 Try with Tournament Data
-              </a>
-            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+            <LiveDemoButton demoType="gaming" buttonText="⚡ Quick Demo (Simulated)" />
+            <a href="#real-data" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none' }}>
+              🏆 Try with Tournament Data
+            </a>
           </div>
 
           {/* Problem/Solution Cards */}
-          <div className="grid md:grid-cols-2 gap-6 mb-16">
-            <div className="bg-gray-900/50 backdrop-blur rounded-xl border border-red-500/20 p-6">
-              <h3 className="text-red-400 font-semibold text-lg mb-4 flex items-center gap-2">
-                <span>❌</span> The Problem
-              </h3>
-              <ul className="space-y-3 text-gray-400">
-                <li className="flex items-start gap-2">
-                  <span className="text-red-500">•</span>
-                  Players dispute results and payouts without independently verifiable evidence
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-red-500">•</span>
-                  Incident response becomes screenshots, logs, and trust-based arguments
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-red-500">•</span>
-                  Partners and sponsors demand stronger integrity guarantees
-                </li>
-              </ul>
-            </div>
-            
-            <div className="bg-gray-900/50 backdrop-blur rounded-xl border border-purple-500/20 p-6">
-              <h3 className="text-purple-400 font-semibold text-lg mb-4 flex items-center gap-2">
-                <span>✓</span> Our Solution
-              </h3>
-              <ul className="space-y-3 text-gray-400">
-                <li className="flex items-start gap-2">
-                  <span className="text-purple-500">•</span>
-                  Upload tournament CSV/JSON → get cryptographic proof in 60s
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-purple-500">•</span>
-                  Each payout emits a public verify URL (no trust required)
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-purple-500">•</span>
-                  Players verify independently — complete payout transparency
-                </li>
-              </ul>
+          <div className="pz-split-single" style={{ marginTop: 8 }}>
+            <div className="pz-split-panel">
+              <div style={{ display: 'grid', gap: 8, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
+                <div className="pz-field-label">❌ The Problem</div>
+                <ul style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
+                  <li>Players dispute results and payouts without independently verifiable evidence</li>
+                  <li>Incident response becomes screenshots, logs, and trust-based arguments</li>
+                  <li>Partners and sponsors demand stronger integrity guarantees</li>
+                </ul>
+              </div>
+
+              <div style={{ display: 'grid', gap: 8, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
+                <div className="pz-field-label">✓ Our Solution</div>
+                <ul style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
+                  <li>Upload tournament CSV/JSON → get cryptographic proof in 60s</li>
+                  <li>Each payout emits a public verify URL (no trust required)</li>
+                  <li>Players verify independently — complete payout transparency</li>
+                </ul>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Real Data Demo Section */}
-      <section id="real-data" className="py-16 px-6 bg-gray-900/30 border-y border-gray-800">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-sm mb-4">
-              <span>🔥</span> Live Tournament Data Processing
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Upload Your Tournament Results
-            </h2>
-            <p className="text-gray-400 max-w-2xl mx-auto">
-              See how your actual tournament data transforms into cryptographic payout proofs. 
-              No mock data — your real winners and prizes hashed and verified.
+        {/* Real Data Demo Section */}
+        <section id="real-data" className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 12 }}>
+          <div style={{ display: 'grid', gap: 6 }}>
+            <div className="pz-field-label">🔥 Live Tournament Data Processing</div>
+            <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Upload Your Tournament Results</h2>
+            <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', fontSize: 14, lineHeight: 1.65, maxWidth: 920 }}>
+              See how your actual tournament data transforms into cryptographic payout proofs. No mock data — your real winners and prizes hashed and verified.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-gray-900/50 backdrop-blur rounded-xl border border-gray-700 p-6">
-              <h3 className="text-lg font-semibold text-purple-400 mb-4 flex items-center gap-2">
-                <span>🚀</span> Run with Real Tournament Data
-              </h3>
-              <RealDataDemoButton 
-                demoType="gaming" 
-                buttonText="Process My Tournament Data"
-              />
+          <div className="pz-split-live">
+            <div style={{ display: 'grid', gap: 10, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
+              <div className="pz-field-label">🚀 Run with Real Tournament Data</div>
+              <RealDataDemoButton demoType="gaming" buttonText="Process My Tournament Data" />
             </div>
 
-            <div className="bg-gray-900/50 backdrop-blur rounded-xl border border-gray-700 p-6">
-              <h3 className="text-lg font-semibold text-gray-300 mb-4">
-                What Happens Next?
-              </h3>
-              <ol className="space-y-3 text-sm text-gray-400">
-                <li className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs font-bold">1</span>
-                  <span>Your tournament CSV/JSON is hashed (SHA-256)</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs font-bold">2</span>
-                  <span>Sovereign checkout created for mass payout</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs font-bold">3</span>
-                  <span>Payment confirmed → payouts execute with proof</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs font-bold">4</span>
-                  <span>Public verify URLs generated — players verify wins</span>
-                </li>
+            <div style={{ display: 'grid', gap: 8, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
+              <div className="pz-field-label">What Happens Next?</div>
+              <ol style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75, fontSize: 13 }}>
+                <li>Your tournament CSV/JSON is hashed (SHA-256)</li>
+                <li>Sovereign checkout created for mass payout</li>
+                <li>Payment confirmed → payouts execute with proof</li>
+                <li>Public verify URLs generated — players verify wins</li>
               </ol>
             </div>
           </div>
 
           {/* Sample Data Download */}
-          <div className="mt-8 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-            <p className="text-sm text-gray-400">
-              <span className="text-purple-400">💡</span> Don't have tournament data ready? 
-              <a 
-                href="/templates/gaming_enterprise.csv"
-                download
-                className="ml-2 text-purple-400 hover:text-purple-300 underline cursor-pointer"
-              >
+          <div style={{ marginTop: 2, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.78)', lineHeight: 1.65 }}>
+              <span style={{ opacity: 0.85 }}>💡</span> Don't have tournament data ready?{' '}
+              <a href="/templates/gaming_enterprise.csv" download className="pz-link" style={{ marginLeft: 6 }}>
                 Download enterprise tournament payout template
               </a>
-            </p>
-            <p className="text-xs text-gray-500 mt-2">
-              Includes: payout_id, player_id, player_wallet, tournament_id, placement, prize_amount_usd, token_type, payout_status, verification_proof, platform_fee_usd, net_payout_usd
-            </p>
+            </div>
+            <div style={{ marginTop: 6, fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
+              Includes: settlement_batch_id, payout_id, player_id, player_wallet, tournament_id, placement, prize_amount_usd, platform_fee_usd, net_payout_usd,
+              token_type, payout_status, settlement_status, settlement_window, jurisdiction, risk_rating, match_id, anti_cheat_flag, audit_trail_id
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Watch Demo Section */}
-      <section id="watch-demo" className="py-16 px-6 bg-gray-900/30">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-8">Watch the Overlay (Recorded Demo Template)</h2>
-          <div className="rounded-xl overflow-hidden border border-gray-700 bg-gray-900 shadow-2xl">
+        {/* Watch Demo Section */}
+        <section id="watch-demo" className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
+          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Watch the Overlay (Recorded Demo Template)</h2>
+          <div style={{ border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, overflow: 'hidden', background: 'rgba(0,0,0,0.16)' }}>
             <iframe
               src="/demos/gaming-overlay.html"
               title="Gaming demo overlay"
               className="w-full"
-              style={{ height: 520 }}
+              style={{ height: 520, border: 0 }}
               sandbox="allow-scripts allow-same-origin"
             />
           </div>
-          <div className="text-sm text-gray-400 mt-3 text-center">
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.68)' }}>
             Overlay source:{' '}
-            <a className="underline" href="/demos/gaming-overlay.html" target="_blank" rel="noreferrer">
+            <a className="pz-link" href="/demos/gaming-overlay.html" target="_blank" rel="noreferrer">
               /demos/gaming-overlay.html
             </a>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Output Artifact */}
-      <section className="py-16 px-6">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-8">What You Get</h2>
-          <div className="bg-gray-900/50 backdrop-blur rounded-xl border border-purple-500/20 p-6">
-            <div className="text-gray-300" style={{ lineHeight: 1.75 }}>
-              After you run the live demo, you receive:
-              <div className="mt-3 grid gap-2">
-                <div>
-                  - A <strong>proofId</strong> and a public <strong>verify URL</strong>
-                </div>
-                <div>
-                  - A JSON artifact saved at{' '}
-                  <a className="underline" href="/demos/gaming-report.json" target="_blank" rel="noreferrer">
-                    /demos/gaming-report.json
-                  </a>
-                </div>
+        {/* Output Artifact */}
+        <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
+          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>What You Get</h2>
+          <div style={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
+            After you run the live demo, you receive:
+            <div style={{ marginTop: 10, display: 'grid', gap: 6 }}>
+              <div>- A <strong>proofId</strong> and a public <strong>verify URL</strong></div>
+              <div>
+                - A JSON artifact saved at{' '}
+                <a className="pz-link" href="/demos/gaming-report.json" target="_blank" rel="noreferrer">
+                  /demos/gaming-report.json
+                </a>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* CTA */}
-      <section className="py-20 px-6">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6">Ready to Become a Trust Institution?</h2>
-          <p className="text-xl text-gray-400 mb-8">
+        {/* CTA */}
+        <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
+          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Ready to Become a Trust Institution?</h2>
+          <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', fontSize: 14, lineHeight: 1.65, maxWidth: 920 }}>
             Bring one real payout flow. We validate the proof semantics end-to-end in a short technical call.
           </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link 
-              href="/contact"
-              className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-400 hover:to-pink-500 text-white rounded-lg font-bold text-lg transition-all shadow-lg hover:shadow-purple-500/25"
-            >
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 2 }}>
+            <Link href="/contact" className="pz-btn pz-btn-primary" style={{ textDecoration: 'none' }}>
               Schedule Enterprise Demo
             </Link>
-            <a 
-              href="/docs/enterprise-demos"
-              className="px-8 py-4 border border-gray-600 hover:border-gray-400 rounded-lg font-bold text-lg transition-all"
-            >
+            <a href="/docs/enterprise-demos" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none', opacity: 0.9 }}>
               View Documentation
             </a>
           </div>
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
+    </main>
   );
 }
