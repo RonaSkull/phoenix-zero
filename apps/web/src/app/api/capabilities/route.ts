@@ -9,6 +9,7 @@ const OFFERINGS = [
     landingUrl: '/for-exchanges',
     templateUrl: '/templates/exchange_settlement_template.csv',
     defaultTaskTypes: ['reconcile_psp'],
+    allowedOperations: ['reconcile_psp', 'audit_bc_compliance'],
     pricingHint: 'enterprise_volume_tiered'
   },
   {
@@ -17,6 +18,7 @@ const OFFERINGS = [
     landingUrl: '/for-banking',
     templateUrl: '/templates/banking_reconciliation_template.csv',
     defaultTaskTypes: ['reconcile_psp'],
+    allowedOperations: ['reconcile_psp', 'audit_bc_compliance'],
     pricingHint: 'enterprise_volume_tiered'
   },
   {
@@ -25,6 +27,7 @@ const OFFERINGS = [
     landingUrl: '/for-ai-marketplaces',
     templateUrl: '/templates/ai_marketplace_template.csv',
     defaultTaskTypes: ['agent_compute'],
+    allowedOperations: ['agent_compute'],
     pricingHint: 'usage_based_ppe'
   },
   {
@@ -33,6 +36,7 @@ const OFFERINGS = [
     landingUrl: '/for-gaming',
     templateUrl: '/templates/gaming_tournament_template.csv',
     defaultTaskTypes: ['payout_mass'],
+    allowedOperations: ['payout_mass'],
     pricingHint: 'enterprise_volume_tiered'
   }
 ] as const;
