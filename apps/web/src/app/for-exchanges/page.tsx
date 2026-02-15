@@ -9,12 +9,31 @@ export const metadata = {
 };
 
 export default function ExchangeLanding() {
+  const aiServiceLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'Phoenix Zero PPE',
+    applicationCategory: 'DeveloperApplication',
+    operatingSystem: 'Any',
+    url: 'https://phoenix-zero-web.onrender.com',
+    description: 'Pay-Per-Execution (PPE) service discovery and payment-gated execution for agents.',
+    additionalProperty: [
+      { '@type': 'PropertyValue', name: 'aiServiceDiscovery', value: '/.well-known/ai-service.json' },
+      { '@type': 'PropertyValue', name: 'capabilities', value: '/api/capabilities' },
+      { '@type': 'PropertyValue', name: 'pricing', value: '/api/pricing' },
+      { '@type': 'PropertyValue', name: 'compatibility', value: '/api/compatibility' },
+      { '@type': 'PropertyValue', name: 'agentIntegrationContract', value: '/api/docs/agent-integration-contract' },
+      { '@type': 'PropertyValue', name: 'goLiveContract', value: '/api/docs/go-live-contract' }
+    ]
+  };
+
   return (
     <main className="pz-shell pz-shell--mono pz-shell--scroll">
       <div className="pz-grid" />
       <div className="pz-glow" />
 
       <div className="pz-container" style={{ paddingTop: 14, paddingBottom: 18 }}>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(aiServiceLd) }} />
         <div className="pz-topline">
           <div className="pz-kicker">Phoenix ZerØ</div>
           <div className="pz-rule" />
@@ -74,6 +93,30 @@ export default function ExchangeLanding() {
                   <li>Integrity: SHA-256 hash of your exact file content</li>
                   <li>Verification is public — no access to your internal systems required</li>
                 </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
+          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>AI agent integration</h2>
+          <div style={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
+            For agent-native operation and machine-readable discovery:
+            <div style={{ marginTop: 10, display: 'grid', gap: 6 }}>
+              <div>
+                <a className="pz-link" href="/.well-known/ai-service.json">/.well-known/ai-service.json</a>
+              </div>
+              <div>
+                <a className="pz-link" href="/api/capabilities">/api/capabilities</a>
+              </div>
+              <div>
+                <a className="pz-link" href="/api/pricing">/api/pricing</a>
+              </div>
+              <div>
+                <a className="pz-link" href="/api/docs/agent-integration-contract">/api/docs/agent-integration-contract</a>
+              </div>
+              <div>
+                <a className="pz-link" href="/api/docs/go-live-contract">/api/docs/go-live-contract</a>
               </div>
             </div>
           </div>
