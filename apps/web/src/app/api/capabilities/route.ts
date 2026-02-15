@@ -2,6 +2,41 @@ import { getPricingProfile } from '../../../lib/pricing';
 
 export const runtime = 'nodejs';
 
+const OFFERINGS = [
+  {
+    offeringId: 'exchange',
+    name: 'Exchange',
+    landingUrl: '/for-exchanges',
+    templateUrl: '/templates/exchange_settlement_template.csv',
+    defaultTaskTypes: ['reconcile_psp'],
+    pricingHint: 'enterprise_volume_tiered'
+  },
+  {
+    offeringId: 'banking',
+    name: 'Banking',
+    landingUrl: '/for-banking',
+    templateUrl: '/templates/banking_reconciliation_template.csv',
+    defaultTaskTypes: ['reconcile_psp'],
+    pricingHint: 'enterprise_volume_tiered'
+  },
+  {
+    offeringId: 'ai-marketplace',
+    name: 'AI Marketplace',
+    landingUrl: '/for-ai-marketplaces',
+    templateUrl: '/templates/ai_marketplace_template.csv',
+    defaultTaskTypes: ['agent_compute'],
+    pricingHint: 'usage_based_ppe'
+  },
+  {
+    offeringId: 'gaming',
+    name: 'Gaming',
+    landingUrl: '/for-gaming',
+    templateUrl: '/templates/gaming_tournament_template.csv',
+    defaultTaskTypes: ['payout_mass'],
+    pricingHint: 'enterprise_volume_tiered'
+  }
+] as const;
+
 function jsonUtf8Headers(extra: Record<string, string> = {}): Record<string, string> {
   return {
     'Content-Type': 'application/json; charset=utf-8',
@@ -63,7 +98,8 @@ export async function GET() {
         idempotency: {
           webhooks: true,
           checkoutCreate: 'x-idempotency-key makes POST /api/checkout/create replay-safe per tenant'
-        }
+        },
+        offerings: OFFERINGS
       },
       { status: 200, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
     );

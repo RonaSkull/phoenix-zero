@@ -1,6 +1,8 @@
 {
   "serviceId": "phoenix-zero-ppe-v1",
+  "version": "v1",
   "wellKnown": "/.well-known/ai-service.json",
+  "baseUrl": "https://phoenix-zero-web.onrender.com",
   "pricing": "/api/pricing",
   "capabilities": "/api/capabilities",
   "compatibility": "/api/compatibility",
@@ -9,7 +11,45 @@
     "goLiveContract": "/api/docs/go-live-contract",
     "agentIntegrationContract": "/api/docs/agent-integration-contract"
   },
-  "sandbox": true,
+  "environment": "production",
+  "demoMode": {
+    "usesProductionInfrastructure": true,
+    "paymentConfirmation": "simulated"
+  },
+  "offerings": [
+    {
+      "offeringId": "exchange",
+      "name": "Exchange",
+      "landingUrl": "/for-exchanges",
+      "templateUrl": "/templates/exchange_settlement_template.csv",
+      "defaultTaskTypes": ["reconcile_psp"],
+      "pricingHint": "enterprise_volume_tiered"
+    },
+    {
+      "offeringId": "banking",
+      "name": "Banking",
+      "landingUrl": "/for-banking",
+      "templateUrl": "/templates/banking_reconciliation_template.csv",
+      "defaultTaskTypes": ["reconcile_psp"],
+      "pricingHint": "enterprise_volume_tiered"
+    },
+    {
+      "offeringId": "ai-marketplace",
+      "name": "AI Marketplace",
+      "landingUrl": "/for-ai-marketplaces",
+      "templateUrl": "/templates/ai_marketplace_template.csv",
+      "defaultTaskTypes": ["agent_compute"],
+      "pricingHint": "usage_based_ppe"
+    },
+    {
+      "offeringId": "gaming",
+      "name": "Gaming",
+      "landingUrl": "/for-gaming",
+      "templateUrl": "/templates/gaming_tournament_template.csv",
+      "defaultTaskTypes": ["payout_mass"],
+      "pricingHint": "enterprise_volume_tiered"
+    }
+  ],
   "notes": {
     "sandboxMode": "admin_only",
     "sandboxDetail": "Sandbox PPO issuance is admin-only in production (requires x-admin-token on POST /api/admin/fallback-paid).",
