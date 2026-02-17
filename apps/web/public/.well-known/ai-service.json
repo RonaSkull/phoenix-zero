@@ -11,6 +11,7 @@
     "goLiveContract": "/api/docs/go-live-contract",
     "agentIntegrationContract": "/api/docs/agent-integration-contract"
   },
+  "packaging": "/api/packaging",
   "environment": "production",
   "demoMode": {
     "usesProductionInfrastructure": true,

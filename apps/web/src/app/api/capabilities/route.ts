@@ -71,6 +71,7 @@ export async function GET() {
         discovery: {
           wellKnown: '/.well-known/ai-service.json',
           pricing: '/api/pricing',
+          packaging: '/api/packaging',
           compatibility: '/api/compatibility',
           docs: '/api/docs/ai-service-discovery',
           goLiveContract: '/api/docs/go-live-contract',
@@ -81,6 +82,7 @@ export async function GET() {
           public: [
             '/.well-known/ai-service.json',
             '/api/pricing',
+            '/api/packaging',
             '/api/compatibility',
             '/api/docs/ai-service-discovery',
             '/api/docs/go-live-contract',
