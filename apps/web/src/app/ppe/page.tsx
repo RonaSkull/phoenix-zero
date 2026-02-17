@@ -20,7 +20,7 @@ export default function PpeLandingPage() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginTop: 10 }}>
-          <h1 style={{ margin: 0, fontSize: 'clamp(26px, 4.2vw, 40px)', lineHeight: 1.12 }}>Pay-per-execution AI agents.</h1>
+          <h1 style={{ margin: 0, fontSize: 'clamp(26px, 4.2vw, 40px)', lineHeight: 1.12 }}>Enterprise agent execution.</h1>
           <Link href="/" className="pz-btn" style={{ textDecoration: 'none', opacity: 0.85 }}>
             Back
           </Link>
@@ -28,6 +28,7 @@ export default function PpeLandingPage() {
 
         <p style={{ marginTop: 10, marginBottom: 14, color: 'rgba(255,255,255,0.72)', fontSize: 15, lineHeight: 1.6 }}>
           Run AI agents securely. Execution is released only after payment confirmation.
+          Go-live commercial model is Activation Fee + Platform Access.
         </p>
 
         <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '0 auto', display: 'grid', gap: 12 }}>
@@ -54,8 +55,8 @@ export default function PpeLandingPage() {
               <div className="pz-field-label">Why this exists</div>
               <ul style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
                 <li>No unpaid executions</li>
-                <li>No human approval</li>
-                <li>Fully automated</li>
+                <li>Governance and controlled approvals (agent-assisted by default)</li>
+                <li>Automation with verifiable receipts</li>
                 <li>Built for agents and developers</li>
               </ul>
             </div>
@@ -128,7 +129,7 @@ export default function PpeLandingPage() {
           <details style={{ marginTop: 2 }}>
             <summary style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.88)', fontWeight: 700 }}>Pricing</summary>
             <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.65 }}>
-              Transparent. Per execution. No hidden fees.
+              Go-live pricing is Activation Fee + Platform Access. Machine-readable catalog: <a href="/api/packaging" target="_blank" rel="noreferrer">/api/packaging</a>
             </div>
           </details>
 
@@ -153,7 +154,7 @@ export default function PpeLandingPage() {
               </div>
               <div>
                 <strong style={{ color: 'rgba(255,255,255,0.88)' }}>Is this subscription-based?</strong>
-                <div>No. Pay only for what you execute.</div>
+                <div>Go-live model is Activation Fee + Platform Access (monthly).</div>
               </div>
               <div>
                 <strong style={{ color: 'rgba(255,255,255,0.88)' }}>Do you support crypto?</strong>

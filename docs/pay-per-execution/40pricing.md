@@ -1,4 +1,3 @@
-Pay‑per‑use funciona? Sim — mas não sozinho (senão você morre antes do volume)
 # PRICING (GO-LIVE) — OPTION 1: Activation Fee + Platform Access
 
 This document defines the go-live pricing model for Phoenix Zero under **Option 1**.

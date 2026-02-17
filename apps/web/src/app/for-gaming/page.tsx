@@ -244,14 +244,14 @@ export default function GamingLanding() {
         <section className="pz-card-flat" style={{ maxWidth: 980, width: '100%', margin: '14px auto 0 auto', display: 'grid', gap: 10 }}>
           <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.3vw, 26px)' }}>Enterprise pricing & scale</h2>
           <div style={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
-            Volume-based tiers (indicative):
+            Go-live pricing (Option 1):
             <div style={{ marginTop: 10, display: 'grid', gap: 6 }}>
-              <div>- Starter: <strong>$15,000/month</strong> (≤ 10,000 payouts/month)</div>
-              <div>- Growth: <strong>$25,000/month</strong> (≤ 100,000 payouts/month)</div>
-              <div>- Enterprise: custom (100,000+ payouts/month)</div>
+              <div>- Capacity starts at <strong>$15,000/month</strong> (Platform Access)</div>
+              <div>- Activation Fee starts at <strong>$12,000</strong> (one-time)</div>
+              <div>- Higher tiers, rate limits, and contractual overage are available upon request</div>
             </div>
             <div style={{ marginTop: 10, fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>
-              Includes: 99.95% uptime SLA and evidence packaging suitable for disputes (proof URLs + deterministic hashing).
+              Source of truth: <a className="pz-link" href="/api/packaging">/api/packaging</a>
             </div>
           </div>
         </section>
@@ -265,8 +265,11 @@ export default function GamingLanding() {
           </p>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 2 }}>
             <Link href="/enterprise-demo" className="pz-btn pz-btn-primary" style={{ textDecoration: 'none' }}>
-              Enterprise Demo
+              Request quote
             </Link>
+            <a href="/api/packaging" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none', opacity: 0.9 }}>
+              View packaging
+            </a>
             <Link href="/ppe" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none', opacity: 0.9 }}>
               API overview
             </Link>
