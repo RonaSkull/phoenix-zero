@@ -60,7 +60,7 @@ export default async function ProvasPage() {
 
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div>
-          <div style={{ fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.7 }}>Phoenix ZerØ</div>
+          <div style={{ fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.7 }}>Sovereign PPE</div>
           <h1 style={{ margin: '6px 0 0 0', fontSize: 22 }}>Public Proofs</h1>
         </div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>

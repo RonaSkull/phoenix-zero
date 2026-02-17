@@ -13,6 +13,8 @@ services:
         value: production
       - key: PHOENIX_ZERO_PUBLIC_BASE_URL
         value: https://phoenix-zero-web.onrender.com
+      - key: SOVEREIGN_MODE
+        value: "true"
       - key: DATABASE_URL
         sync: false
       - key: PGSSLMODE

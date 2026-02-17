@@ -1,7 +1,12 @@
 import type { CSSProperties } from 'react';
 import Script from 'next/script';
+import { notFound } from 'next/navigation';
 
 export default function GlobalLandingPage() {
+  if (String(process.env.SOVEREIGN_MODE || '').trim().toLowerCase() === 'true') {
+    notFound();
+  }
+
   const box: CSSProperties = {
     marginTop: 16,
     padding: 16,

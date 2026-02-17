@@ -1,13 +1,13 @@
-# Phoenix Zero — AI Service Discovery (PPE)
+# Sovereign PPE — AI Service Discovery
 
 ## Objective
-This document defines the **agent-native** discovery and enforcement protocol for Phoenix Zero Pay-Per-Execution (PPE).
+This document defines the **agent-native** discovery and enforcement protocol for Sovereign Pay-Per-Execution (PPE).
 
-Phoenix Zero PPE is designed so autonomous agents can:
-- Discover supported paid operations
-- Create checkouts for a specific number of execution units
-- Obtain a Proof of Payment Object (PPO)
-- Execute tasks until units are exhausted
+Sovereign PPE is designed so autonomous agents can:
+- Discover supported operations
+- Validate compatibility
+- Pass a hard economic gate
+- Execute tasks with deterministic auditability
 
 ---
 
@@ -68,13 +68,13 @@ At minimum, a PPO proof must bind:
 ```json
 {
   "proofId": "ppo_xxx",
-  "operation": "protect_video",
+  "operation": "execution_validation",
   "totalUnits": 10,
   "usedUnits": 3,
   "remainingUnits": 7,
   "tenantId": "t_xxx",
   "agentId": "ag_xxx",
-  "status": "paid_confirmed"
+  "status": "confirmed"
 }
 ```
 
@@ -89,7 +89,7 @@ When blocked:
 {
   "ok": false,
   "reason": "PPO_NO_UNITS",
-  "suggestion": "create_new_checkout"
+  "suggestion": "obtain_new_units"
 }
 ```
 
@@ -148,8 +148,8 @@ Example request:
 
 ```json
 {
-  "operation": "protect_video",
-  "intent": "analyze_video",
+  "operation": "execution_validation",
+  "intent": "validate_execution",
   "agentType": "autonomous",
   "supportsPpo": true
 }
@@ -161,7 +161,7 @@ Example response:
 {
   "ok": true,
   "compatible": true,
-  "operation": "protect_video"
+  "operation": "execution_validation"
 }
 ```
 
@@ -172,7 +172,6 @@ Example response:
 1. Call `GET /.well-known/ai-service.json`
 2. Call `GET /api/pricing`
 3. Choose an `operation`
-4. Create checkout with `lineItems[].units`
-5. Wait payment confirmation
-6. Execute `POST /api/agents/{agentId}/execute` until units are exhausted
+4. Check gate with `GET /api/agents/{agentId}/gate`
+5. Execute `POST /api/agents/{agentId}/execute` until units are exhausted
 

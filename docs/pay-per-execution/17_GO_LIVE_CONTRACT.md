@@ -1,6 +1,6 @@
 # PPE — Go‑Live Contract (Public API)
 
-This document defines the **explicit operational contract** for Phoenix Zero PPE at go‑live.
+This document defines the **explicit operational contract** for PPE at go‑live.
 
 Objective:
 
@@ -31,7 +31,7 @@ POST /api/agents/{agentId}/execute
 
 Currency:
 
-- PIX/Asaas: `currency` **MUST be `BRL`**.
+- Crypto settlement: supported currencies are stablecoin pairs (typically `USD` / `USDC`).
 
 - Without `x-idempotency-key`: **not idempotent**.
   - Each **successful** request creates a new `paymentId`.
@@ -69,7 +69,7 @@ Finality:
 - **`failed` is final at go‑live.**
 - Transitions `failed -> paid` are ignored by design.
 
-## 3) Webhooks (PIX/Asaas and Crypto/NowPayments)
+## 3) Webhooks (Crypto/NowPayments)
 
 - Events are deduplicated by the provider `eventId`.
 - Delivery order is not guaranteed.
@@ -108,5 +108,4 @@ Retries:
 
 ## 8) Go-live scope
 
-- PIX/Asaas: supported.
-- Crypto/NowPayments: beta/experimental (supported, but subject to operational availability; may be disabled by operational decision).
+- Crypto/NowPayments: supported (subject to operational availability; may be disabled by operational decision).

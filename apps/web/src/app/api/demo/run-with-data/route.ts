@@ -357,9 +357,16 @@ function parseTransactionRowsFromCsv(text: string, maxRows: number): Array<{ row
 
 export async function POST(req: Request) {
   try {
-    const baseUrl = process.env.PHOENIX_ZERO_PUBLIC_BASE_URL || 'https://phoenix-zero-web.onrender.com';
+    const baseUrl = String(process.env.PHOENIX_ZERO_PUBLIC_BASE_URL || '').trim();
     const adminToken = String(process.env.PHOENIX_ZERO_ADMIN_TOKEN || '').trim();
     const demoRunToken = String(process.env.PHOENIX_ZERO_DEMO_RUN_TOKEN || '').trim();
+
+    if (!baseUrl) {
+      return Response.json(
+        { success: false, error: 'Public base URL not configured (set PHOENIX_ZERO_PUBLIC_BASE_URL)' },
+        { status: 500, headers: jsonUtf8Headers({ 'Cache-Control': 'no-store' }) }
+      );
+    }
 
     if (!adminToken) {
       return Response.json({ success: false, error: 'Admin token not configured' }, { status: 500, headers: jsonUtf8Headers() });

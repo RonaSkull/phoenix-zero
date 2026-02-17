@@ -56,9 +56,10 @@ export async function GET() {
   try {
     const pricingProfile = await getPricingProfile('default', 'USD');
 
+    const allowedOps = new Set<string>(OFFERINGS.flatMap((o) => Array.from(o.allowedOperations || [])) as string[]);
     const operations = Object.keys(pricingProfile.basePriceCentsByOp || {})
       .map((x) => normalizeKey(x))
-      .filter((x) => Boolean(x));
+      .filter((x) => Boolean(x) && allowedOps.has(x));
 
     operations.sort((a, b) => a.localeCompare(b));
 
@@ -67,7 +68,7 @@ export async function GET() {
     return Response.json(
       {
         ok: true,
-        serviceId: 'phoenix-zero-ppe-v1',
+        serviceId: 'sovereign-ppe-v1',
         discovery: {
           wellKnown: '/.well-known/ai-service.json',
           pricing: '/api/pricing',
@@ -76,7 +77,7 @@ export async function GET() {
           docs: '/api/docs/ai-service-discovery',
           goLiveContract: '/api/docs/go-live-contract',
           agentIntegrationContract: '/api/docs/agent-integration-contract',
-          howAgentsPay: '/api/docs/how-agents-pay'
+          agentTrustModel: '/api/docs/agent-trust-model'
         },
         auth: {
           public: [
@@ -99,7 +100,7 @@ export async function GET() {
         },
         publicTenant: {
           configured: hasPublicTenantConfigured,
-          notes: 'Public pricing requires PHOENIX_ZERO_PUBLIC_API_KEY to be configured on the server'
+          notes: 'Public pricing requires server configuration'
         },
         idempotency: {
           webhooks: true,

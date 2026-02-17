@@ -1,15 +1,15 @@
 # PPE — Agent Integration Contract (AIC)
 
-This document defines the **agent-facing** integration contract for Phoenix Zero Pay‑Per‑Execution (PPE).
+This document defines the **agent-facing** integration contract for Pay‑Per‑Execution (PPE).
 
 Scope:
 
 - an autonomous agent (or an SDK used by an agent) integrating via HTTP
 - what endpoints exist, what they mean, and how to retry safely
 
-Public base (production):
+Public base:
 
-- `https://phoenix-zero-web.onrender.com`
+- `https://<YOUR_BASE_URL>`
 
 ## Quickstart (end-to-end)
 
@@ -93,14 +93,14 @@ Headers:
 Body (high level):
 
 - `currency`
-- `providerHint`: `pix` | `crypto`
+- `providerHint`: `crypto`
 - `lineItems[]`: must include at least `operation` and `units`
 - `proofMeta`: binds the payment to the execution context
 
 Currency notes:
 
 - `currency` is a per-checkout parameter. The signup `currency` is a tenant default.
-- If `providerHint=pix`, `currency` **must be `BRL`**.
+- Settlement is crypto-only at go-live.
 
 Important invariants:
 

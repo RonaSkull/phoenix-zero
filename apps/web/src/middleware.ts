@@ -16,6 +16,33 @@ function newFp(): string {
 }
 
 export function middleware(req: NextRequest) {
+  const sovereignMode = String(process.env.SOVEREIGN_MODE || '').trim().toLowerCase() === 'true';
+  if (sovereignMode) {
+    const path = req.nextUrl.pathname || '/';
+    const blockedPrefixes = [
+      '/api/phoenix-zero',
+      '/api/global-',
+      '/phoenix-zero-',
+      '/global',
+      '/ppe',
+      '/demo',
+      '/pricing',
+      '/tools',
+      '/agent-playground.html',
+      '/playground.html'
+    ];
+
+    const isBlocked = blockedPrefixes.some((p) => {
+      if (path === p) return true;
+      if (p.endsWith('-')) return path.startsWith(p);
+      return path.startsWith(`${p}/`);
+    });
+
+    if (isBlocked) {
+      return new NextResponse(null, { status: 404 });
+    }
+  }
+
   const existing = req.cookies.get('pz_fp')?.value || '';
   const fp = existing || newFp();
 
@@ -48,5 +75,15 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/api/:path*']
+  matcher: [
+    '/api/:path*',
+    '/agent-playground.html',
+    '/playground.html',
+    '/phoenix-zero-:path*',
+    '/ppe/:path*',
+    '/pricing/:path*',
+    '/global/:path*',
+    '/demo/:path*',
+    '/tools/:path*'
+  ]
 };

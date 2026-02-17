@@ -3,7 +3,7 @@ import { LiveDemoButton, RealDataDemoButton } from '@/components/demo';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Cryptographic Proof for Every Agent Settlement | Phoenix Zero for AI Marketplaces',
+  title: 'Cryptographic Proof for Every Agent Settlement | Sovereign PPE for AI Marketplaces',
   description:
     'Agent-to-agent settlement runs with deterministic hashing and a public verify URL (/verify/<proofId>). Upload an execution batch file to generate proofs.',
 };
@@ -12,11 +12,11 @@ export default function AIMarketplaceLanding() {
   const aiServiceLd = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: 'Phoenix Zero PPE',
+    name: 'Sovereign PPE',
     applicationCategory: 'DeveloperApplication',
     operatingSystem: 'Any',
-    url: 'https://phoenix-zero-web.onrender.com',
-    description: 'Pay-Per-Execution (PPE) service discovery and payment-gated execution for agents.',
+    url: '/.well-known/ai-service.json',
+    description: 'Pay-Per-Execution (PPE) service discovery and proof-gated execution for agents.',
     additionalProperty: [
       { '@type': 'PropertyValue', name: 'aiServiceDiscovery', value: '/.well-known/ai-service.json' },
       { '@type': 'PropertyValue', name: 'capabilities', value: '/api/capabilities' },
@@ -35,7 +35,7 @@ export default function AIMarketplaceLanding() {
       <div className="pz-container" style={{ paddingTop: 14, paddingBottom: 18 }}>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(aiServiceLd) }} />
         <div className="pz-topline">
-          <div className="pz-kicker">Phoenix ZerØ</div>
+          <div className="pz-kicker">Sovereign PPE</div>
           <div className="pz-rule" />
         </div>
 
@@ -59,7 +59,7 @@ export default function AIMarketplaceLanding() {
               Cryptographic proof for every agent settlement.
             </h1>
             <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', fontSize: 15, lineHeight: 1.65, maxWidth: 920 }}>
-              Phoenix Zero Sovereign generates a public proof per settlement run.
+              Sovereign PPE generates a public proof per settlement run.
               Third parties verify independently at <code>/verify/&lt;proofId&gt;</code>.
             </p>
           </div>
@@ -72,7 +72,7 @@ export default function AIMarketplaceLanding() {
           </div>
 
           <div style={{ marginTop: 2, color: 'rgba(255,255,255,0.68)', fontSize: 12, lineHeight: 1.65, maxWidth: 920 }}>
-            This demo uses the same production infrastructure and APIs. For demo purposes only, payment confirmation is simulated.
+            This demo uses the same production infrastructure and APIs.
           </div>
 
           {/* Problem/Solution Cards */}
@@ -81,7 +81,7 @@ export default function AIMarketplaceLanding() {
               <div style={{ display: 'grid', gap: 8, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
                 <div className="pz-field-label">❌ The Problem</div>
                 <ul style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75 }}>
-                  <li>Your marketplace becomes the trust bottleneck for agent payments</li>
+                  <li>Your marketplace becomes the trust bottleneck for agent settlement evidence</li>
                   <li>Disputes fall back to internal logs and manual review</li>
                   <li>Counterparties cannot independently verify execution/settlement evidence</li>
                 </ul>
@@ -196,7 +196,7 @@ export default function AIMarketplaceLanding() {
               <ol style={{ margin: 0, paddingLeft: 18, color: 'rgba(255,255,255,0.78)', lineHeight: 1.75, fontSize: 13 }}>
                 <li>Data integrity: your file is hashed (SHA-256)</li>
                 <li>Settlement run is created with your provided batch and execution IDs</li>
-                <li>Payment event is confirmed (sandbox run uses controlled confirmation)</li>
+                <li>Settlement evidence is recorded deterministically</li>
                 <li>We generate a proof and publish a verify URL</li>
               </ol>
               <div style={{ marginTop: 10, fontSize: 12, color: 'rgba(255,255,255,0.62)', lineHeight: 1.55 }}>
@@ -219,7 +219,7 @@ export default function AIMarketplaceLanding() {
             </div>
             <div style={{ marginTop: 6, fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
               Includes: settlement_batch_id, execution_id, agent_id, task_type, compute_units, memory_gb, hours_executed, cost_usd, token_type,
-              payment_status, settlement_status, settlement_window, jurisdiction, risk_rating, audit_trail_id, parent_task_id, resource_pool
+              settlement_status, settlement_window, jurisdiction, risk_rating, audit_trail_id, parent_task_id, resource_pool
             </div>
           </div>
         </section>

@@ -57,7 +57,7 @@ export default async function HomePage() {
 
       <div className="pz-container" style={{ paddingTop: 14, paddingBottom: 18 }}>
         <div className="pz-topline">
-          <div className="pz-kicker">Phoenix ZerØ</div>
+          <div className="pz-kicker">Sovereign PPE</div>
           <div className="pz-rule" />
         </div>
 
@@ -107,9 +107,6 @@ export default async function HomePage() {
               <Link href="/faq" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none', justifyContent: 'flex-start' }}>
                 FAQ
               </Link>
-              <Link href="/tools/watermark" className="pz-btn pz-btn-ghost" style={{ textDecoration: 'none', justifyContent: 'flex-start' }}>
-                Watermarking Tools
-              </Link>
             </div>
           </details>
         </nav>
@@ -122,7 +119,7 @@ export default async function HomePage() {
               with verifiable proofs per transaction.
             </h1>
             <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', fontSize: 15, lineHeight: 1.65, maxWidth: 920 }}>
-              Every confirmed payment can produce a public proof that anyone can verify at <code>/verify/&lt;proofId&gt;</code>. We focus on verifiable
+              Every confirmed settlement event can produce a public proof that anyone can verify at <code>/verify/&lt;proofId&gt;</code>. We focus on verifiable
               evidence (proof URLs, hardening, idempotency) instead of unprovable ROI claims.
             </p>
           </div>
@@ -170,9 +167,9 @@ export default async function HomePage() {
             </div>
 
             <div style={{ display: 'grid', gap: 8, border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: 12, background: 'rgba(0,0,0,0.16)' }}>
-              <div className="pz-field-label">Payments</div>
+              <div className="pz-field-label">Settlement assurance</div>
               <div style={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.65 }}>
-                Crypto checkout via a liquidity provider (configurable). Phoenix ZerØ focuses on proof generation, ordering, and settlement state.
+                Crypto-only settlement. This service focuses on proof generation, ordering, and deterministic settlement state.
               </div>
             </div>
 

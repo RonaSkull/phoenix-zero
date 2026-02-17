@@ -40,7 +40,7 @@ export default function PpeSignupPage() {
   const [email, setEmail] = useState('');
   const [agentType, setAgentType] = useState('buyer');
   const [intendedUse, setIntendedUse] = useState('autonomous agent integration');
-  const [currency, setCurrency] = useState<'USD' | 'BRL'>('USD');
+  const [currency, setCurrency] = useState<'USD'>('USD');
 
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -104,7 +104,7 @@ export default function PpeSignupPage() {
 
       <div className="pz-container" style={{ paddingTop: 14, paddingBottom: 18 }}>
         <div className="pz-topline">
-          <div className="pz-kicker">Phoenix ZerØ</div>
+          <div className="pz-kicker">Sovereign PPE</div>
           <div className="pz-rule" />
         </div>
 
@@ -146,7 +146,6 @@ export default function PpeSignupPage() {
                 <div className="pz-field-label">Currency</div>
                 <select className="pz-input" value={currency} onChange={(e) => setCurrency(e.target.value as any)}>
                   <option value="USD">USD</option>
-                  <option value="BRL">BRL</option>
                 </select>
               </div>
             </div>

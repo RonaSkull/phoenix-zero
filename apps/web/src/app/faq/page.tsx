@@ -11,7 +11,7 @@ export default function FAQPage() {
 
       <div className="pz-container" style={{ paddingTop: 14, paddingBottom: 18 }}>
         <div className="pz-topline">
-          <div className="pz-kicker">Phoenix ZerØ</div>
+          <div className="pz-kicker">Sovereign PPE</div>
           <div className="pz-rule" />
         </div>
 
@@ -38,7 +38,7 @@ export default function FAQPage() {
           <div style={{ display: 'grid', gap: 10 }}>
             <details open>
               <summary style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.88)', fontWeight: 800 }}>
-                What is a “proof” in Phoenix ZerØ?
+                What is a “proof”?
               </summary>
               <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, fontSize: 13 }}>
                 A proof is a public, immutable JSON payload that represents a single confirmed payment + the task hashes it settles.
@@ -52,7 +52,7 @@ export default function FAQPage() {
               </summary>
               <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, fontSize: 13 }}>
                 Sovereign reconciliation binds a confirmed payment to a specific reconciliation batch via cryptographic hashes.
-                You submit <code>taskInputHash</code> and <code>taskOutputHash</code> (the batch evidence), pay via PIX or crypto, and Phoenix ZerØ
+                You submit <code>taskInputHash</code> and <code>taskOutputHash</code> (the batch evidence), pay via crypto, and the service
                 publishes a public proof URL (<code>/verify/&lt;proofId&gt;</code>) plus an auditable ledger trail.
               </div>
             </details>
@@ -88,7 +88,7 @@ export default function FAQPage() {
               </summary>
               <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, fontSize: 13 }}>
                 We create a payment intent and generate a crypto invoice via a provider (NowPayments). When the provider confirms the payment,
-                a webhook updates the intent to <code>paid</code>, and Phoenix ZerØ generates a public proof.
+                a webhook updates the intent to <code>paid</code>, and the service generates a public proof.
               </div>
             </details>
 
@@ -97,7 +97,7 @@ export default function FAQPage() {
                 Do you store or process our content?
               </summary>
               <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, fontSize: 13 }}>
-                No. Phoenix ZerØ is designed to store payment metadata, execution metadata, and cryptographic hashes.
+                No. The service is designed to store payment metadata, execution metadata, and cryptographic hashes.
                 You can structure tasks so that sensitive inputs never leave your boundary.
               </div>
             </details>
@@ -130,7 +130,7 @@ export default function FAQPage() {
                 What happens on refund/chargeback?
               </summary>
               <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.7, fontSize: 13 }}>
-                If the provider reports a refund/chargeback, Phoenix ZerØ can revert settlement state and the proof will no longer be public
+                If the provider reports a refund/chargeback, the service can revert settlement state and the proof will no longer be public
                 (<code>/verify</code> will show “not available”).
               </div>
             </details>

@@ -43,6 +43,10 @@ function paidAtFromBody(body: any): string | undefined {
 }
 
 export async function POST(req: Request) {
+  if (String(process.env.SOVEREIGN_MODE || '').trim().toLowerCase() === 'true') {
+    return new Response(null, { status: 404 });
+  }
+
   const expectedToken = String(process.env.ASAAS_WEBHOOK_SECRET || '').trim();
   if (expectedToken) {
     const got = String(req.headers.get('asaas-access-token') || '').trim();

@@ -195,12 +195,9 @@ export async function POST(req: Request) {
 
     return Response.json(
       {
-        ok: true,
-        status: 'pending_review',
-        requestId: rec.id,
-        createdAt: rec.createdAt,
-        useCase: useCaseNormalized,
-        nextSteps: ['We will contact you to schedule a technical demo and discuss an enterprise contract.']
+        status: 'submitted',
+        access: 'provisioned_after_review',
+        message: 'Sovereign access is granted after verification.'
       },
       { status: 200, headers: jsonUtf8Headers() }
     );

@@ -79,7 +79,7 @@ export default async function VerifyProofPage(props: { params: { proofId: string
 
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <div>
-            <div style={{ fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.7 }}>Phoenix ZerØ</div>
+            <div style={{ fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.7 }}>Sovereign PPE</div>
             <h1 style={{ margin: '6px 0 0 0', fontSize: 22, lineHeight: 1.15 }}>
               Proof
               <br />
@@ -126,7 +126,7 @@ export default async function VerifyProofPage(props: { params: { proofId: string
 
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <div>
-            <div style={{ fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.7 }}>Phoenix ZerØ</div>
+            <div style={{ fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.7 }}>Sovereign PPE</div>
             <h1 style={{ margin: '6px 0 0 0', fontSize: 22, lineHeight: 1.15 }}>
               Proof
               <br />
@@ -171,7 +171,7 @@ export default async function VerifyProofPage(props: { params: { proofId: string
 
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div>
-          <div style={{ fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.7 }}>Phoenix ZerØ</div>
+          <div style={{ fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.7 }}>Sovereign PPE</div>
           <h1 style={{ margin: '6px 0 0 0', fontSize: 22, lineHeight: 1.15 }}>
             Proof
             <br />

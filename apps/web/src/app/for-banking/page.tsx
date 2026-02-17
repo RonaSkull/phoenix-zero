@@ -3,7 +3,7 @@ import { DemoPlayer, LiveDemoButton, ProofCard, RealDataDemoButton } from '@/com
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Cryptographic Audit Trail for Every Transaction Batch | Phoenix Zero for Digital Banks',
+  title: 'Cryptographic Audit Trail for Every Transaction Batch | Sovereign PPE for Digital Banks',
   description: 'Generate deterministic hashes and public verify URLs for reconciliation batches. Upload enterprise transaction batches to produce cryptographic audit trails.',
 };
 
@@ -11,10 +11,10 @@ export default function BankingLanding() {
   const aiServiceLd = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: 'Phoenix Zero PPE',
+    name: 'Sovereign PPE',
     applicationCategory: 'DeveloperApplication',
     operatingSystem: 'Any',
-    url: 'https://phoenix-zero-web.onrender.com',
+    url: '/.well-known/ai-service.json',
     description: 'Pay-Per-Execution (PPE) service discovery and payment-gated execution for agents.',
     additionalProperty: [
       { '@type': 'PropertyValue', name: 'aiServiceDiscovery', value: '/.well-known/ai-service.json' },
@@ -34,7 +34,7 @@ export default function BankingLanding() {
       <div className="pz-container" style={{ paddingTop: 14, paddingBottom: 18 }}>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(aiServiceLd) }} />
         <div className="pz-topline">
-          <div className="pz-kicker">Phoenix ZerØ</div>
+          <div className="pz-kicker">Sovereign PPE</div>
           <div className="pz-rule" />
         </div>
 
@@ -71,7 +71,7 @@ export default function BankingLanding() {
           </div>
 
           <div style={{ marginTop: 2, color: 'rgba(255,255,255,0.68)', fontSize: 12, lineHeight: 1.65, maxWidth: 920 }}>
-            This demo uses the same production infrastructure and APIs. For demo purposes only, payment confirmation is simulated.
+            This demo uses the same production infrastructure and APIs.
           </div>
 
           {/* Problem/Solution Cards */}

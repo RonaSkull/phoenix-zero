@@ -254,41 +254,13 @@ export async function POST(req: Request) {
       );
     }
 
-    if (isSovereignOperation(operation)) {
-      return Response.json(
-        {
-          ok: true,
-          compatible: false,
-          reasonCode: 'CUSTOM_PRICING_REQUIRED',
-          message: 'Sovereign operations require an enterprise contract.'
-        },
-        { status: 200, headers: { 'Cache-Control': 'no-store' } }
-      );
-    }
-
-    const supportedOperations = new Set(['protect_video', 'protect_image', 'protect_audio', 'protect_live', 'protect_report']);
-    if (!supportedOperations.has(operation)) {
+    if (!isSovereignOperation(operation)) {
       return Response.json(
         {
           ok: true,
           compatible: false,
           reasonCode: 'UNSUPPORTED_OPERATION',
           message: `Operation '${operation}' is not supported.`,
-          suggestions: [{ operation: 'protect_video' }],
-          requiredCapabilities: ['ppo-gated-execution', 'replay-safe']
-        },
-        { status: 200, headers: { 'Cache-Control': 'no-store' } }
-      );
-    }
-
-    if (intent && intent.includes('live') && operation !== 'protect_live') {
-      return Response.json(
-        {
-          ok: true,
-          compatible: false,
-          reasonCode: 'UNSUPPORTED_INTENT',
-          message: `Intent '${intent}' is not supported for '${operation}'.`,
-          suggestions: [{ operation: 'protect_live', intent }],
           requiredCapabilities: ['ppo-gated-execution', 'replay-safe']
         },
         { status: 200, headers: { 'Cache-Control': 'no-store' } }
@@ -301,6 +273,7 @@ export async function POST(req: Request) {
         compatible: true,
         operation,
         intent: intent || undefined,
+        notes: ['Sovereign-only service: execution remains payment-gated and entitlement-enforced per tenant.'],
         agentPolicy: {
           requiresProofOfPayment: true,
           executionWithoutPPO: 'deny'

@@ -4,7 +4,7 @@
   "scripts": {
     "predev": "node -e \"require('fs').mkdirSync(process.env.PHOENIX_ZERO_TMP_DIR || require('path').join(require('os').tmpdir(),'phoenix-zero','tmp'),{recursive:true})\"",
     "dev": "next dev",
-    "prebuild": "node ./scripts/clean-next.cjs",
+    "prebuild": "node ./scripts/clean-next.cjs && node ./scripts/sovereign-isolate-assets.cjs",
     "build": "next build",
     "prestart": "node -e \"require('fs').mkdirSync(process.env.PHOENIX_ZERO_TMP_DIR || require('path').join(require('os').tmpdir(),'phoenix-zero','tmp'),{recursive:true})\"",
     "start": "next start"

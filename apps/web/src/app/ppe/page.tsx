@@ -15,7 +15,7 @@ export default function PpeLandingPage() {
 
       <div className="pz-container" style={{ paddingTop: 14, paddingBottom: 18 }}>
         <div className="pz-topline">
-          <div className="pz-kicker">Phoenix ZerØ</div>
+          <div className="pz-kicker">Sovereign PPE</div>
           <div className="pz-rule" />
         </div>
 
@@ -36,7 +36,7 @@ export default function PpeLandingPage() {
             <div style={{ display: 'grid', gap: 6 }}>
               <div className="pz-field-label">What this is</div>
               <div style={{ color: 'rgba(255,255,255,0.78)', lineHeight: 1.65 }}>
-                Phoenix ZerØ PPE is an API-first payment-gated execution layer for AI agents.
+                Sovereign PPE is an API-first payment-gated execution layer for AI agents.
                 <span style={{ opacity: 0.92 }}> Humans can use this page to get started; agents use the HTTP API directly.</span>
               </div>
             </div>
@@ -76,9 +76,6 @@ export default function PpeLandingPage() {
             <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.78)', lineHeight: 1.6, fontSize: 13 }}>
               <div style={{ opacity: 0.9 }}>Use the tenant API key in header <code style={{ opacity: 0.9 }}>x-api-key</code>.</div>
               <div style={{ marginTop: 10, opacity: 0.9 }}>
-                Public summary: <a href="/api/pricing/public-info" target="_blank" rel="noreferrer">/api/pricing/public-info</a>
-              </div>
-              <div style={{ marginTop: 10, opacity: 0.9 }}>
                 Operational contract: <a href="/api/docs/go-live-contract" target="_blank" rel="noreferrer">/api/docs/go-live-contract</a>
               </div>
               <div style={{ marginTop: 6, opacity: 0.9 }}>
@@ -88,18 +85,18 @@ export default function PpeLandingPage() {
                 Agent trust model: <a href="/api/docs/agent-trust-model" target="_blank" rel="noreferrer">/api/docs/agent-trust-model</a>
               </div>
               <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: '#0b1020', color: '#e5e7eb', padding: 14, borderRadius: 12, marginTop: 10 }}>
-{`curl -s -X POST https://phoenix-zero-web.onrender.com/api/checkout/create \
+{`curl -s -X POST https://YOUR_BASE_URL/api/checkout/create \
   -H "content-type: application/json" \
   -H "x-api-key: YOUR_API_KEY" \
   -H "x-idempotency-key: YOUR_REQUEST_KEY" \
   -d '{
     "currency":"USD",
     "providerHint":"crypto",
-    "lineItems":[{"operation":"protect_video","units":1}],
+    "lineItems":[{"operation":"reconcile_psp","units":1}],
     "proofMeta":{
       "agentId":"ag_demo",
       "taskId":"task_demo",
-      "taskType":"protect_video",
+      "taskType":"reconcile_psp",
       "taskInputHash":"demo",
       "taskOutputHash":"demo"
     }
@@ -108,7 +105,7 @@ export default function PpeLandingPage() {
                 Then poll status:
               </div>
               <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: '#0b1020', color: '#e5e7eb', padding: 14, borderRadius: 12, marginTop: 10 }}>
-{`curl -s "https://phoenix-zero-web.onrender.com/api/checkout/status?paymentId=PAYMENT_ID" \
+{`curl -s "https://YOUR_BASE_URL/api/checkout/status?paymentId=PAYMENT_ID" \
   -H "x-api-key: YOUR_API_KEY"`}</pre>
             </div>
           </details>

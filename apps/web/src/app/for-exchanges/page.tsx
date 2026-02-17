@@ -3,7 +3,7 @@ import { LiveDemoButton, RealDataDemoButton } from '@/components/demo';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Cryptographic Proof for Every Settlement | Phoenix Zero for Crypto Exchanges',
+  title: 'Cryptographic Proof for Every Settlement | Sovereign PPE for Crypto Exchanges',
   description:
     'Generate a public, cryptographically verifiable proof for each settlement file. Third parties can verify independently via /verify/<proofId>.',
 };
@@ -12,10 +12,10 @@ export default function ExchangeLanding() {
   const aiServiceLd = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: 'Phoenix Zero PPE',
+    name: 'Sovereign PPE',
     applicationCategory: 'DeveloperApplication',
     operatingSystem: 'Any',
-    url: 'https://phoenix-zero-web.onrender.com',
+    url: '/.well-known/ai-service.json',
     description: 'Pay-Per-Execution (PPE) service discovery and payment-gated execution for agents.',
     additionalProperty: [
       { '@type': 'PropertyValue', name: 'aiServiceDiscovery', value: '/.well-known/ai-service.json' },
@@ -35,7 +35,7 @@ export default function ExchangeLanding() {
       <div className="pz-container" style={{ paddingTop: 14, paddingBottom: 18 }}>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(aiServiceLd) }} />
         <div className="pz-topline">
-          <div className="pz-kicker">Phoenix ZerØ</div>
+          <div className="pz-kicker">Sovereign PPE</div>
           <div className="pz-rule" />
         </div>
 
@@ -59,7 +59,7 @@ export default function ExchangeLanding() {
               Cryptographic proof for every crypto settlement.
             </h1>
             <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', fontSize: 15, lineHeight: 1.65, maxWidth: 920 }}>
-              Phoenix Zero Sovereign generates a public proof per settlement run.
+              Sovereign PPE generates a public proof per settlement run.
               Third parties verify independently at <code>/verify/&lt;proofId&gt;</code>.
             </p>
           </div>
@@ -72,7 +72,7 @@ export default function ExchangeLanding() {
           </div>
 
           <div style={{ marginTop: 2, color: 'rgba(255,255,255,0.68)', fontSize: 12, lineHeight: 1.65, maxWidth: 920 }}>
-            This demo uses the same production infrastructure and APIs. For demo purposes only, payment confirmation is simulated.
+            This demo uses the same production infrastructure and APIs.
           </div>
 
           <div className="pz-split-single" style={{ marginTop: 8 }}>

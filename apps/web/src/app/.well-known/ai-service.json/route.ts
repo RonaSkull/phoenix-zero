@@ -1,6 +1,23 @@
-import { getPricingProfile } from '../../../lib/pricing';
-
 export const runtime = 'nodejs';
+
+const OFFERINGS = [
+  {
+    offeringId: 'exchange',
+    allowedOperations: ['reconcile_psp', 'audit_bc_compliance']
+  },
+  {
+    offeringId: 'banking',
+    allowedOperations: ['reconcile_psp', 'audit_bc_compliance']
+  },
+  {
+    offeringId: 'ai-marketplace',
+    allowedOperations: ['agent_compute']
+  },
+  {
+    offeringId: 'gaming',
+    allowedOperations: ['payout_mass']
+  }
+] as const;
 
 function jsonUtf8Headers(extra: Record<string, string> = {}): Record<string, string> {
   return {
@@ -12,22 +29,18 @@ function jsonUtf8Headers(extra: Record<string, string> = {}): Record<string, str
 
 export async function GET() {
   try {
-    const pricingProfile = await getPricingProfile('default', 'USD');
-
     const hasPublicTenantConfigured = Boolean((process.env.PHOENIX_ZERO_PUBLIC_API_KEY || '').trim());
 
     return Response.json(
       {
         ok: true,
-        serviceId: 'phoenix-zero-ppe-v1',
+        serviceId: 'sovereign-ppe-v1',
         protocolVersion: '2026-01-v1',
-        description: 'Phoenix ZerØ Pay-Per-Execution (PPE) — payment-gated execution for autonomous agents.',
+        description: 'Sovereign Pay-Per-Execution (PPE) — cryptographic proof and settlement assurance for agents.',
         endpoints: {
           capabilities: '/api/capabilities',
           pricing: '/api/pricing',
           compatibility: '/api/compatibility',
-          checkoutCreate: '/api/checkout/create',
-          checkoutStatus: '/api/checkout/status?paymentId=...',
           gate: '/api/agents/{agentId}/gate',
           execute: '/api/agents/{agentId}/execute'
         },
@@ -55,23 +68,9 @@ export async function GET() {
           }
         },
         pricing: {
-          model: 'pay_per_execution_units',
+          model: 'pay_per_execution',
           catalog: '/api/pricing',
-          quote: '/api/pricing/quote',
-          operationsCount: Object.keys(pricingProfile.basePriceCentsByOp || {}).length
-        },
-        payment: {
-          providers: [
-            { providerHint: 'pix', currency: 'BRL' },
-            { providerHint: 'crypto', currency: 'USD|USDC' }
-          ],
-          currencyRules: {
-            pix: { requiredCurrency: 'BRL' },
-            crypto: { allowedCurrencies: ['USD', 'USDC'] }
-          },
-          idempotency: {
-            checkoutCreateHeader: 'x-idempotency-key'
-          }
+          operationsCount: Array.from(new Set<string>(OFFERINGS.flatMap((o) => Array.from(o.allowedOperations || [])) as string[])).length
         }
       },
       { status: 200, headers: jsonUtf8Headers() }

@@ -57,8 +57,15 @@ export async function POST(request: NextRequest) {
     }
 
     const config = DEMO_CONFIGS[demoType as keyof typeof DEMO_CONFIGS];
-    const baseUrl = process.env.PHOENIX_ZERO_PUBLIC_BASE_URL || 'https://phoenix-zero-web.onrender.com';
+    const baseUrl = String(process.env.PHOENIX_ZERO_PUBLIC_BASE_URL || '').trim();
     const adminToken = process.env.PHOENIX_ZERO_ADMIN_TOKEN;
+
+    if (!baseUrl) {
+      return Response.json(
+        { success: false, error: 'Public base URL not configured (set PHOENIX_ZERO_PUBLIC_BASE_URL)' },
+        { status: 500 }
+      );
+    }
 
     if (!adminToken) {
       return Response.json(
@@ -122,7 +129,7 @@ export async function POST(request: NextRequest) {
               demoType === 'ai-marketplace' ? 'technology' :
               demoType === 'gaming' ? 'gaming_esports' : 'financial_services',
       country: 'BR',
-      currency: 'BRL',
+      currency: 'USD',
       pricingProfile: pricingProfileId,
     };
 

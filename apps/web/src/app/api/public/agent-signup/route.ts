@@ -228,7 +228,7 @@ export async function POST(req: Request) {
               clientRiskScore >= 80
                 ? Math.max(100, Math.floor(envInt('PHOENIX_ZERO_PUBLIC_SIGNUP_MAX_AMOUNT_CENTS', 5000) / 2))
                 : envInt('PHOENIX_ZERO_PUBLIC_SIGNUP_MAX_AMOUNT_CENTS', 5000),
-            allowedOperations: ['protect_video']
+            allowedOperations: ['reconcile_psp', 'audit_bc_compliance', 'agent_compute', 'payout_mass']
           }
         },
         nextSteps: [
