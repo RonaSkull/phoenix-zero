@@ -55,6 +55,46 @@ export async function GET(req: Request) {
 
     const base = getPublicBaseUrl(requestBaseFromReq(req));
 
+    if (action === 'contract') {
+      return Response.json(
+        {
+          ok: true,
+          endpoint: '/api/compatibility',
+          methods: {
+            GET: {
+              description: 'Social-preview / OpenGraph inspection and this self-documenting contract. No auth required except makeShare.',
+              queryParam: 'action',
+              actions: {
+                contract: 'Returns this machine-readable contract (public, no auth).',
+                inspect: 'Inspects OG/twitter tags of a share link. Query: id (required), ua (optional).',
+                makeShare: 'Creates a share link + OG assets. REQUIRES tenant auth (x-api-key). Query: assetVersion, videoUrl, proofUrl.',
+                platforms: 'Lists supported social platforms and their User-Agents (public).'
+              }
+            },
+            POST: {
+              description: 'Operation compatibility check for sovereign execution. Public (no auth).',
+              body: {
+                operation: 'string (required)',
+                intent: 'string (optional)',
+                agentType: 'string (optional)',
+                supportsPpo: 'boolean (optional)'
+              },
+              supportedExactOperations: ['reconcile_psp', 'payout_mass', 'audit_bc_compliance'],
+              supportedOperationPrefixes: ['reconcile_', 'settle_', 'payout_', 'audit_'],
+              semantics: 'Returns compatible:true only for sovereign operations; otherwise compatible:false with reasonCode UNSUPPORTED_OPERATION. Execution always remains payment-gated (PPO) and entitlement-enforced per tenant.'
+            }
+          },
+          auth: {
+            header: 'x-api-key',
+            requiredFor: ['GET action=makeShare'],
+            public: ['GET action=contract', 'GET action=inspect', 'GET action=platforms', 'POST']
+          },
+          note: 'This endpoint is intentionally multi-purpose: POST is the compatibility gate; GET actions serve social-preview/OG tooling and self-documentation.'
+        },
+        { status: 200, headers: { 'Cache-Control': 'no-store' } }
+      );
+    }
+
     if (action === 'makeShare') {
       const auth = await requireTenant(req);
       if (!auth.ok) {
