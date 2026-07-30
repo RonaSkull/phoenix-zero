@@ -16,6 +16,12 @@ export async function GET(_req: Request) {
       goLiveModel: 'option_1_activation_plus_access',
       currencyAnchor: 'USD',
       pricesExcludeTaxes: true,
+      instanceReality: {
+        currentInstanceTier: 'free',
+        currentBehavior: 'The public instance runs on a free tier: it spins down on inactivity (~50s cold start) and uses WEB_CONCURRENCY=1. The slaTarget on each tier below is a CONTRACTUAL target and is guaranteed only on a paid instance (Starter or above, no spin-down, WEB_CONCURRENCY>1).',
+        doNotRouteProductionAgentTraffic: true,
+        note: 'Treat slaTarget values as commitments that activate upon contracting a paid tier, not as the live behavior of this free demo instance.'
+      },
       unitModel: {
         canonicalUnit: 'execution_unit',
         description: 'One verified execution consuming reserved system capacity'
@@ -35,7 +41,7 @@ export async function GET(_req: Request) {
           delivery_partner: 0.2
         },
         overagePublic: false,
-        notes: 'Go-live public model is Activation Fee + Platform Access. Overage is available only by contract (enterprise/growth).' 
+        notes: 'Go-live public model is Activation Fee + Platform Access. Overage is available only by contract (enterprise/growth).'
       },
       tiers: [
         {
