@@ -24,8 +24,16 @@ export async function GET(req: Request) {
     return NextResponse.json(
       {
         model: 'pay_per_execution',
-        currency: ['USDC', 'USDT'],
+        currency: ['USDC', 'USDT', 'BTC', 'ETH', 'DAI', 'SOL', 'BNB'],
+        currencyAnchor: 'USD',
         settlement: 'crypto-only',
+        settlementNote: 'Listed assets are accepted at go-live via NowPayments; prices are anchored in USD and converted at payment time. PIX (Asaas) is sandbox until compliance sign-off and is not part of the public crypto settlement set.',
+        canonicalCommercialModel: '/api/packaging',
+        modelReconciliation: {
+          note: 'The per-operation values in "operations" are reference unit costs (metering granularity) expressed in USD per execution_unit component. The public go-live COMMERCIAL model is Activation Fee + Platform Access (tiers) defined in /api/packaging, which is the source of truth for contracts. Overage is contractual only (not public).',
+          meteringUnit: 'execution_unit',
+          operationsAre: 'reference_unit_costs_usd'
+        },
         operations: {
           execution_validation: 0.12,
           proof_generation: 0.05,
