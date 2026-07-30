@@ -1,0 +1,39 @@
+# Phoenix ZerØ — CI (Layer 1 build gate + Layer 2 offline core tests)
+# Build steps mirror the Render buildCommand: if this passes, the Render deploy passes.
+# NOTE: real-payment tests (test:agentic:real*) are intentionally NOT here (they would
+# charge real money on every push). They run only via harness against a separate DB.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-core-test:
+    name: Build gate + core tests (offline)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install root deps
+        run: npm ci --include=dev
+
+      - name: Install web deps
+        run: npm --prefix ./apps/web ci --include=dev
+
+      - name: Build core (tsc)
+        run: npm run build:core
+
+      - name: Build web (next build) - mirrors Render
+        run: npm run build:web
+
+      - name: Core unit tests (offline: proof create/encode/verify + tamper check)
+        run: npm run test:core
