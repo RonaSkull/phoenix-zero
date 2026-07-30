@@ -1,0 +1,4 @@
+Contact: https://phoenix-zero.onrender.com/enterprise-demo
+Expires: 2027-07-31T23:59:59.000Z
+Preferred-Languages: en, pt
+Canonical: https://phoenix-zero.onrender.com/.well-known/security.txt
