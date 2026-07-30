@@ -1,0 +1,28 @@
+# Phoenix ZerØ
+
+> Sovereign execution layer for autonomous agents: pay-per-execution with a public, verifiable proof per transaction, post-quantum anchored, plus deepfake-resistant media provenance.
+
+## Discovery
+- [AI Service Card](https://phoenix-zero.onrender.com/.well-known/ai-service.json): machine-readable service manifest for agents
+- [Capabilities](https://phoenix-zero.onrender.com/api/capabilities): endpoints, auth map (public vs x-api-key), idempotency contract
+- [Pricing](https://phoenix-zero.onrender.com/api/pricing): pay-per-execution rates
+- [Packaging](https://phoenix-zero.onrender.com/api/packaging): enterprise tiers and SLA targets
+- [Compatibility](https://phoenix-zero.onrender.com/api/compatibility): integration compatibility checks (POST)
+
+## Agent Integration
+- [Agent Integration Contract (AIC)](https://phoenix-zero.onrender.com/api/docs/agent-integration-contract): end-to-end quickstart for autonomous agents
+- [AI Service Discovery doc](https://phoenix-zero.onrender.com/api/docs/ai-service-discovery)
+- [Go-Live Contract](https://phoenix-zero.onrender.com/api/docs/go-live-contract)
+- [Public proofs](https://phoenix-zero.onrender.com/proofs): verifiable settlement receipts
+- [Verify a proof](https://phoenix-zero.onrender.com/verify/{proofId}): replace {proofId} with a real id from /proofs
+
+## Verticals
+- [For Exchanges](https://phoenix-zero.onrender.com/for-exchanges)
+- [For Banking](https://phoenix-zero.onrender.com/for-banking)
+- [For AI Marketplaces](https://phoenix-zero.onrender.com/for-ai-marketplaces)
+- [For Gaming](https://phoenix-zero.onrender.com/for-gaming)
+
+## Operational Notes
+- Settlement is crypto-only at go-live (product supports USDC, USDT, BTC, ETH, DAI, SOL, BNB); PIX is sandbox until compliance sign-off.
+- The public instance runs on a free tier and spins down; do not route production agent traffic through it (see the SLA note in the AI Service Card).
+- Tenant API key: obtain at /ppe/signup and send as header x-api-key. Discovery and /verify endpoints are public.
